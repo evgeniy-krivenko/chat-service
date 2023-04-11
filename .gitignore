@@ -7,3 +7,5 @@
 *.test
 /chat-service
 configs/config.toml
+
+/tools/bin/

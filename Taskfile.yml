@@ -16,6 +16,11 @@ vars:
     github.com/daixiang0/gci@v0.8.0
     mvdan.cc/gofumpt@v0.4.0
 
+  WORKDIR:
+    sh: echo "$(pwd)"
+
+  DEV_TOOLS_PATH: /tools/bin
+
 tasks:
   default:
     # Последовательно выполняем таски tidy, fmt, lint, tests и build
@@ -23,7 +28,7 @@ tasks:
       - task: tidy
       - task: fmt
       - task: lint
-      - task: test
+      - task: tests
       - task: build
 
   tidy:
@@ -37,8 +42,8 @@ tasks:
 
   fmt:
     - echo "- Format"
-    - gofumpt -w  {{.GO_FILES}}
-    - gci write -s standard -s default -s "prefix({{.GO_MODULE}})" {{.GO_FILES}}
+    - .{{.DEV_TOOLS_PATH}}/gofumpt -w  {{.GO_FILES}}
+    - .{{.DEV_TOOLS_PATH}}/gci write -s standard -s default -s "prefix({{.GO_MODULE}})" {{.GO_FILES}}
 
   lint:
     cmds:
@@ -69,5 +74,8 @@ tasks:
   dev-tools:install:
     cmds:
       - echo "- Install dev tools"
-      - go install github.com/daixiang0/gci@v0.8.0
-      - go install mvdan.cc/gofumpt@v0.4.0
+      - mkdir -p .{{.DEV_TOOLS_PATH}}
+      - |
+        {{range $tool := .DEV_TOOLS | trim | splitLines -}}
+          GOBIN={{$.WORKDIR}}{{$.DEV_TOOLS_PATH}} go install {{$tool}}
+        {{end -}}
