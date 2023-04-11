@@ -1,9 +1,11 @@
 package config
 
 import (
-	"github.com/BurntSushi/toml"
-	"github.com/evgeniy-krivenko/chat-service/internal/validator"
 	"os"
+
+	"github.com/BurntSushi/toml"
+
+	"github.com/evgeniy-krivenko/chat-service/internal/validator"
 )
 
 func ParseAndValidate(filename string) (Config, error) {
