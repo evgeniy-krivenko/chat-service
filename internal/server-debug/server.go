@@ -4,13 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"golang.org/x/sync/errgroup"
 	"net/http"
+	"net/http/pprof"
 	"time"
 
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"golang.org/x/sync/errgroup"
+
+	"github.com/evgeniy-krivenko/chat-service/internal/buildinfo"
+	"github.com/evgeniy-krivenko/chat-service/internal/logger"
 )
 
 const (
@@ -29,7 +34,9 @@ type Server struct {
 }
 
 func New(opts Options) (*Server, error) {
-	// FIXME: валидация опций
+	if err := opts.Validate(); err != nil {
+		return nil, fmt.Errorf("validate build server options: %v", err)
+	}
 
 	lg := zap.L().Named("server-debug")
 
@@ -47,13 +54,23 @@ func New(opts Options) (*Server, error) {
 	index := newIndexPage()
 
 	e.GET("/version", s.Version)
+	e.PUT("/log/level", s.SetLogLevel)
+
 	index.addPage("/version", "Get build information")
-
-	// FIXME: Обработка "/log/level"
-
-	// FIXME: Обработка "/debug/pprof/" и связанных команд
+	index.addPage("/debug/pprof/", "Go to std profiler")
+	index.addPage("/debug/pprof/profile?seconds=30", "Take half-min profile")
 
 	e.GET("/", index.handler)
+
+	r := http.NewServeMux()
+	r.Handle("/", e)
+	r.HandleFunc("/debug/pprof/", pprof.Index)
+	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	r.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	r.HandleFunc("/debug/pprof/trace", pprof.Trace)
+
+	s.srv.Handler = r
 	return s, nil
 }
 
@@ -82,6 +99,18 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 func (s *Server) Version(eCtx echo.Context) error {
-	// FIXME: Вернуть информацию о сборке в формате JSON
+	return eCtx.JSON(http.StatusOK, buildinfo.BuildInfo)
+}
+
+func (s *Server) SetLogLevel(eCtx echo.Context) error {
+	level := eCtx.FormValue("level")
+
+	l, err := zapcore.ParseLevel(level)
+	if err != nil {
+		return fmt.Errorf("parse level: %v", err)
+	}
+
+	logger.SetLevel(l)
+	s.lg.Info("setting log level", zap.String("level", level))
 	return nil
 }

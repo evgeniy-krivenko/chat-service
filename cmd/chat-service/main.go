@@ -5,12 +5,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"golang.org/x/sync/errgroup"
 	"log"
 	"os/signal"
 	"syscall"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/evgeniy-krivenko/chat-service/internal/config"
+	"github.com/evgeniy-krivenko/chat-service/internal/logger"
 	serverdebug "github.com/evgeniy-krivenko/chat-service/internal/server-debug"
 )
 
@@ -33,9 +35,18 @@ func run() (errReturned error) {
 		return fmt.Errorf("parse and validate config %q: %v", *configPath, err)
 	}
 
-	// FIXME: logger.Init & logger.Sync
+	logOpts := logger.NewOptions(
+		cfg.Log.Level,
+		logger.WithProductionMode(cfg.Global.Env == "prod"),
+	)
 
-	srvDebug, err := serverdebug.New( /* ... */ ) // FIXME
+	err = logger.Init(logOpts)
+	if err != nil {
+		return fmt.Errorf("init logger with opts %+v: %v", logOpts, err)
+	}
+	defer logger.Sync()
+
+	srvDebug, err := serverdebug.New(serverdebug.NewOptions(cfg.Servers.Debug.Addr))
 	if err != nil {
 		return fmt.Errorf("init debug server: %v", err)
 	}

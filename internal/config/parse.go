@@ -2,7 +2,9 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/BurntSushi/toml"
+
 	"github.com/evgeniy-krivenko/chat-service/internal/validator"
 )
 
