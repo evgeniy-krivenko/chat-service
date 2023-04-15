@@ -32,6 +32,11 @@ tasks:
       - task: tests
       - task: build
 
+  gen:
+    cmds:
+      - echo "- Generate files"
+      - export PATH=$PATH:{{.WORKDIR}}{{.DEV_TOOLS_PATH}} && go generate ./...
+
   tidy:
     - echo "- Tidy"
     - go mod tidy

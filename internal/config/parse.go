@@ -1,24 +1,16 @@
 package config
 
 import (
-	"os"
-
+	"fmt"
 	"github.com/BurntSushi/toml"
-
 	"github.com/evgeniy-krivenko/chat-service/internal/validator"
 )
 
 func ParseAndValidate(filename string) (Config, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return Config{}, err
-	}
-	defer file.Close()
-
 	var conf Config
-	_, err = toml.NewDecoder(file).Decode(&conf)
+	_, err := toml.DecodeFile(filename, &conf)
 	if err != nil {
-		return Config{}, err
+		return Config{}, fmt.Errorf("decode file: %v", err)
 	}
 
 	err = validator.Validator.Struct(conf)

@@ -6,7 +6,6 @@
 *.out
 *.test
 /chat-service
-configs/config.toml
 
 /tools/bin/
 /configs/config.toml
