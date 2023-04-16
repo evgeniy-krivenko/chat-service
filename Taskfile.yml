@@ -22,6 +22,16 @@ vars:
 
   DEV_TOOLS_PATH: /tools/bin
 
+  DOCKER_COMPOSE_PATHS: |
+    ./deploy/local/docker-compose.yml
+
+  DOCKER_FILES: |
+    {{range $file := .DOCKER_COMPOSE_PATHS | trim | splitLines -}}
+      -f {{$file}}\
+    {{end -}}
+
+  DOCKER_COMPOSE_CMD: docker compose
+
 tasks:
   default:
     # Последовательно выполняем таски tidy, fmt, lint, tests и build
@@ -85,3 +95,34 @@ tasks:
         {{range $tool := .DEV_TOOLS | trim | splitLines -}}
           GOBIN={{$.WORKDIR}}{{$.DEV_TOOLS_PATH}} go install {{$tool}}
         {{end -}}
+        
+  deps:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} up -d"
+
+  deps:cmd:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} {{.CLI_ARGS}}"
+
+  deps:status:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} ps"
+
+  deps:logs:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} logs {{.CLI_ARGS}}"
+
+  deps:stop:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} stop"
+
+  deps:reset-psql:
+    cmds:
+      - task: deps:reset
+        vars:
+          SERVICE: postgres
+
+  deps:reset:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} rm -fsv {{.SERVICE}}"
+      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} up -d {{.SERVICE}}"
