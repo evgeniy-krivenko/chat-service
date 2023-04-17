@@ -1,0 +1,11 @@
+.DS_Store
+
+.idea/
+.env
+
+*.out
+*.test
+/chat-service
+
+/tools/bin/
+/configs/config.toml
