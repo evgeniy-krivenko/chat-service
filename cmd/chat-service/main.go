@@ -38,6 +38,8 @@ func run() (errReturned error) {
 	logOpts := logger.NewOptions(
 		cfg.Log.Level,
 		logger.WithProductionMode(cfg.Global.IsProduction()),
+		logger.WithDns(cfg.Sentry.Dns),
+		logger.WithEnv(cfg.Global.Env),
 	)
 
 	err = logger.Init(logOpts)

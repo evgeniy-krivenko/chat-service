@@ -3,6 +3,7 @@ package logger
 import (
 	"errors"
 	"fmt"
+	"github.com/evgeniy-krivenko/chat-service/internal/buildinfo"
 	stdlog "log"
 	"os"
 	"syscall"
@@ -17,6 +18,8 @@ var atom zap.AtomicLevel
 type Options struct {
 	level          string `option:"mandatory" validate:"required,oneof=debug info warn error"`
 	productionMode bool
+	dns            string `validate:"url"`
+	env            string `validate:"oneof=dev stage prod"`
 }
 
 func MustInit(opts Options) {
@@ -57,6 +60,21 @@ func Init(opts Options) error {
 			atom,
 		),
 	}
+
+	if opts.dns != "" {
+		client, err := NewSentryClient(opts.dns, opts.env, buildinfo.BuildInfo.GoVersion)
+		if err != nil {
+			return fmt.Errorf("sentry client: %v", err)
+		}
+
+		core, err := CoreSentry(client)
+		if err != nil {
+			return fmt.Errorf("zapsentry core: %v", err)
+		}
+
+		cores = append(cores, core)
+	}
+
 	l := zap.New(zapcore.NewTee(cores...))
 	zap.ReplaceGlobals(l)
 

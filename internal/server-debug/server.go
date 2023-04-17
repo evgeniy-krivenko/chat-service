@@ -55,10 +55,12 @@ func New(opts Options) (*Server, error) {
 
 	e.GET("/version", s.Version)
 	e.PUT("/log/level", s.SetLogLevel)
+	e.GET("/debug/error", s.Error)
 
 	index.addPage("/version", "Get build information")
 	index.addPage("/debug/pprof/", "Go to std profiler")
 	index.addPage("/debug/pprof/profile?seconds=30", "Take half-min profile")
+	index.addPage("/debug/error", "Debug Sentry error event")
 
 	e.GET("/", index.handler)
 
@@ -113,4 +115,9 @@ func (s *Server) SetLogLevel(eCtx echo.Context) error {
 	logger.SetLevel(l)
 	s.lg.Info("setting log level", zap.String("level", level))
 	return nil
+}
+
+func (s *Server) Error(eCtx echo.Context) error {
+	zap.L().Error("look at my in Sentry")
+	return eCtx.String(http.StatusOK, "event was sent")
 }

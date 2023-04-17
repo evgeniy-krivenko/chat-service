@@ -9,3 +9,4 @@
 
 /tools/bin/
 /configs/config.toml
+/deploy/local/.cert/
