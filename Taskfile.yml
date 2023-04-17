@@ -24,10 +24,15 @@ vars:
 
   DOCKER_COMPOSE_PATHS: |
     ./deploy/local/docker-compose.yml
+    ./deploy/local/docker-compose.sentry.yml
+
+  # if it will be decided generate key with every deps running
+  SENTRY_SECRET_KEY_DEPS: |
+    {{if eq $.COMPOSE_PROFILES "sentry"}} `docker run --platform linux/amd64 --rm sentry config generate-secret-key` {{end}}
 
   DOCKER_FILES: |
     {{range $file := .DOCKER_COMPOSE_PATHS | trim | splitLines -}}
-      -f {{$file}}\
+      \-f {{$file}} \
     {{end -}}
 
   DOCKER_COMPOSE_CMD: docker compose
@@ -101,10 +106,16 @@ tasks:
       - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} up -d"
 
   deps:cmd:
+    env:
+      # for seeing containers status without throwing env
+      COMPOSE_PROFILES: sentry
     cmds:
       - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} {{.CLI_ARGS}}"
 
   deps:status:
+    env:
+      # for seeing containers status without throwing env
+      COMPOSE_PROFILES: sentry
     cmds:
       - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} ps"
 

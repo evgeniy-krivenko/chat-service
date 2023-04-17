@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis
+    profiles:
+      - sentry
+    networks:
+      - sentry
+
+  sentry:
+    image: sentry
+    platform: linux/amd64
+    environment:
+      SENTRY_SECRET_KEY: z6jhr!wltp8xq+o9w3@8@y*d-@e&ms^=6bo^^_)a5_v6dg*-n(
+      SENTRY_POSTGRES_HOST: host.docker.internal
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_PASSWORD: sentry
+      SENTRY_REDIS_HOST: redis
+    profiles:
+      - sentry
+    networks:
+      - sentry
+      - host
+    ports:
+      - "8082:9000"
+
+  cron:
+    image: sentry
+    platform: linux/amd64
+    command: "sentry run cron"
+    environment:
+      SENTRY_SECRET_KEY: z6jhr!wltp8xq+o9w3@8@y*d-@e&ms^=6bo^^_)a5_v6dg*-n(
+      SENTRY_POSTGRES_HOST: host.docker.internal
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_PASSWORD: sentry
+      SENTRY_REDIS_HOST: redis
+    profiles:
+      - sentry
+    networks:
+      - sentry
+
+  worker:
+    image: sentry
+    platform: linux/amd64
+    command: "sentry run worker"
+    environment:
+      SENTRY_SECRET_KEY: z6jhr!wltp8xq+o9w3@8@y*d-@e&ms^=6bo^^_)a5_v6dg*-n(
+      SENTRY_POSTGRES_HOST: host.docker.internal
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_PASSWORD: sentry
+      SENTRY_REDIS_HOST: redis
+    profiles:
+      - sentry
+    networks:
+      - sentry
+
+networks:
+  sentry:
+  host:
+
