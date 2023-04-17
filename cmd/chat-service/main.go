@@ -37,7 +37,7 @@ func run() (errReturned error) {
 
 	logOpts := logger.NewOptions(
 		cfg.Log.Level,
-		logger.WithProductionMode(cfg.Global.Env == "prod"),
+		logger.WithProductionMode(cfg.Global.IsProduction()),
 	)
 
 	err = logger.Init(logOpts)
