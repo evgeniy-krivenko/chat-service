@@ -4,6 +4,8 @@ go 1.20
 
 require (
 	github.com/BurntSushi/toml v1.2.1
+	github.com/TheZeroSlave/zapsentry v1.15.0
+	github.com/getsentry/sentry-go v0.20.0
 	github.com/go-playground/validator/v10 v10.12.0
 	github.com/kazhuravlev/options-gen v0.28.4
 	github.com/labstack/echo/v4 v4.10.2
