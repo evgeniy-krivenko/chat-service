@@ -3,10 +3,13 @@ module github.com/evgeniy-krivenko/chat-service
 go 1.20
 
 require (
+	entgo.io/ent v0.12.1
 	github.com/BurntSushi/toml v1.2.1
 	github.com/TheZeroSlave/zapsentry v1.15.0
 	github.com/getsentry/sentry-go v0.20.0
 	github.com/go-playground/validator/v10 v10.12.0
+	github.com/golang/mock v1.6.0
+	github.com/google/uuid v1.3.0
 	github.com/kazhuravlev/options-gen v0.28.4
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/stretchr/testify v1.8.2
