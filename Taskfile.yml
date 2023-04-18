@@ -37,6 +37,14 @@ vars:
 
   DOCKER_COMPOSE_CMD: docker compose
 
+  TYPES: |
+    ChatID
+    MessageID
+    ProblemID
+    UserID
+  TYPES_PKG: types
+  TYPES_DST: ./internal/types/types.gen.go
+
 tasks:
   default:
     # Последовательно выполняем таски tidy, fmt, lint, tests и build
@@ -47,10 +55,23 @@ tasks:
       - task: tests
       - task: build
 
-  gen:
+  gen:types:
     cmds:
-      - echo "- Generate files"
+      - echo "Generate types..."
+      - |
+        go run ./cmd/gen-types {{.TYPES_PKG}} \
+        {{range $index, $type := .TYPES | trim | splitLines -}}
+        {{if $index}},{{- end -}}
+        {{$type -}}
+        {{end}} \
+        {{.TYPES_DST}}
+
+
+  generate:
+    cmds:
+      - echo "Run go generate..."
       - export PATH=$PATH:{{.WORKDIR}}{{.DEV_TOOLS_PATH}} && go generate ./...
+      - task: gen:types
 
   tidy:
     - echo "- Tidy"
