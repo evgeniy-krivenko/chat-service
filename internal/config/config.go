@@ -28,5 +28,5 @@ type DebugServerConfig struct {
 }
 
 type Sentry struct {
-	Dns string `toml:"dns" validate:"url"`
+	DNS string `toml:"DNS" validate:"url"`
 }

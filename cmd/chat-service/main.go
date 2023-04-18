@@ -38,7 +38,7 @@ func run() (errReturned error) {
 	logOpts := logger.NewOptions(
 		cfg.Log.Level,
 		logger.WithProductionMode(cfg.Global.IsProduction()),
-		logger.WithDns(cfg.Sentry.Dns),
+		logger.WithDns(cfg.Sentry.DNS),
 		logger.WithEnv(cfg.Global.Env),
 	)
 

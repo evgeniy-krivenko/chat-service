@@ -3,13 +3,14 @@ package logger
 import (
 	"errors"
 	"fmt"
-	"github.com/evgeniy-krivenko/chat-service/internal/buildinfo"
 	stdlog "log"
 	"os"
 	"syscall"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/evgeniy-krivenko/chat-service/internal/buildinfo"
 )
 
 var atom zap.AtomicLevel

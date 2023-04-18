@@ -3,6 +3,7 @@ package logger
 import (
 	"crypto/x509"
 	"fmt"
+
 	"github.com/TheZeroSlave/zapsentry"
 	"github.com/getsentry/sentry-go"
 	"go.uber.org/zap/zapcore"
