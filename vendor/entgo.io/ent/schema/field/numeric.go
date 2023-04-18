@@ -267,15 +267,7 @@ func (b *intBuilder) SchemaType(types map[string]string) *intBuilder {
 //		return add(t1, t2)
 //	}
 func (b *intBuilder) GoType(typ any) *intBuilder {
-	b.desc.goType(typ)
-	return b
-}
-
-// ValueScanner provides an external value scanner for the given GoType.
-// Using this option allow users to use field types that do not implement
-// the sql.Scanner and driver.Valuer interfaces.
-func (b *intBuilder) ValueScanner(vs any) *intBuilder {
-	b.desc.ValueScanner = vs
+	b.desc.goType(typ, intType)
 	return b
 }
 
@@ -294,7 +286,6 @@ func (b *intBuilder) Descriptor() *Descriptor {
 	if b.desc.Default != nil || b.desc.UpdateDefault != nil {
 		b.desc.checkDefaultFunc(intType)
 	}
-	b.desc.checkGoType(intType)
 	return b.desc
 }
 
@@ -444,15 +435,7 @@ func (b *uintBuilder) SchemaType(types map[string]string) *uintBuilder {
 //		return add(t1, t2)
 //	}
 func (b *uintBuilder) GoType(typ any) *uintBuilder {
-	b.desc.goType(typ)
-	return b
-}
-
-// ValueScanner provides an external value scanner for the given GoType.
-// Using this option allow users to use field types that do not implement
-// the sql.Scanner and driver.Valuer interfaces.
-func (b *uintBuilder) ValueScanner(vs any) *uintBuilder {
-	b.desc.ValueScanner = vs
+	b.desc.goType(typ, uintType)
 	return b
 }
 
@@ -471,7 +454,6 @@ func (b *uintBuilder) Descriptor() *Descriptor {
 	if b.desc.Default != nil || b.desc.UpdateDefault != nil {
 		b.desc.checkDefaultFunc(uintType)
 	}
-	b.desc.checkGoType(uintType)
 	return b.desc
 }
 
@@ -631,15 +613,7 @@ func (b *int8Builder) SchemaType(types map[string]string) *int8Builder {
 //		return add(t1, t2)
 //	}
 func (b *int8Builder) GoType(typ any) *int8Builder {
-	b.desc.goType(typ)
-	return b
-}
-
-// ValueScanner provides an external value scanner for the given GoType.
-// Using this option allow users to use field types that do not implement
-// the sql.Scanner and driver.Valuer interfaces.
-func (b *int8Builder) ValueScanner(vs any) *int8Builder {
-	b.desc.ValueScanner = vs
+	b.desc.goType(typ, int8Type)
 	return b
 }
 
@@ -658,7 +632,6 @@ func (b *int8Builder) Descriptor() *Descriptor {
 	if b.desc.Default != nil || b.desc.UpdateDefault != nil {
 		b.desc.checkDefaultFunc(int8Type)
 	}
-	b.desc.checkGoType(int8Type)
 	return b.desc
 }
 
@@ -818,15 +791,7 @@ func (b *int16Builder) SchemaType(types map[string]string) *int16Builder {
 //		return add(t1, t2)
 //	}
 func (b *int16Builder) GoType(typ any) *int16Builder {
-	b.desc.goType(typ)
-	return b
-}
-
-// ValueScanner provides an external value scanner for the given GoType.
-// Using this option allow users to use field types that do not implement
-// the sql.Scanner and driver.Valuer interfaces.
-func (b *int16Builder) ValueScanner(vs any) *int16Builder {
-	b.desc.ValueScanner = vs
+	b.desc.goType(typ, int16Type)
 	return b
 }
 
@@ -845,7 +810,6 @@ func (b *int16Builder) Descriptor() *Descriptor {
 	if b.desc.Default != nil || b.desc.UpdateDefault != nil {
 		b.desc.checkDefaultFunc(int16Type)
 	}
-	b.desc.checkGoType(int16Type)
 	return b.desc
 }
 
@@ -1005,15 +969,7 @@ func (b *int32Builder) SchemaType(types map[string]string) *int32Builder {
 //		return add(t1, t2)
 //	}
 func (b *int32Builder) GoType(typ any) *int32Builder {
-	b.desc.goType(typ)
-	return b
-}
-
-// ValueScanner provides an external value scanner for the given GoType.
-// Using this option allow users to use field types that do not implement
-// the sql.Scanner and driver.Valuer interfaces.
-func (b *int32Builder) ValueScanner(vs any) *int32Builder {
-	b.desc.ValueScanner = vs
+	b.desc.goType(typ, int32Type)
 	return b
 }
 
@@ -1032,7 +988,6 @@ func (b *int32Builder) Descriptor() *Descriptor {
 	if b.desc.Default != nil || b.desc.UpdateDefault != nil {
 		b.desc.checkDefaultFunc(int32Type)
 	}
-	b.desc.checkGoType(int32Type)
 	return b.desc
 }
 
@@ -1192,15 +1147,7 @@ func (b *int64Builder) SchemaType(types map[string]string) *int64Builder {
 //		return add(t1, t2)
 //	}
 func (b *int64Builder) GoType(typ any) *int64Builder {
-	b.desc.goType(typ)
-	return b
-}
-
-// ValueScanner provides an external value scanner for the given GoType.
-// Using this option allow users to use field types that do not implement
-// the sql.Scanner and driver.Valuer interfaces.
-func (b *int64Builder) ValueScanner(vs any) *int64Builder {
-	b.desc.ValueScanner = vs
+	b.desc.goType(typ, int64Type)
 	return b
 }
 
@@ -1219,7 +1166,6 @@ func (b *int64Builder) Descriptor() *Descriptor {
 	if b.desc.Default != nil || b.desc.UpdateDefault != nil {
 		b.desc.checkDefaultFunc(int64Type)
 	}
-	b.desc.checkGoType(int64Type)
 	return b.desc
 }
 
@@ -1369,15 +1315,7 @@ func (b *uint8Builder) SchemaType(types map[string]string) *uint8Builder {
 //		return add(t1, t2)
 //	}
 func (b *uint8Builder) GoType(typ any) *uint8Builder {
-	b.desc.goType(typ)
-	return b
-}
-
-// ValueScanner provides an external value scanner for the given GoType.
-// Using this option allow users to use field types that do not implement
-// the sql.Scanner and driver.Valuer interfaces.
-func (b *uint8Builder) ValueScanner(vs any) *uint8Builder {
-	b.desc.ValueScanner = vs
+	b.desc.goType(typ, uint8Type)
 	return b
 }
 
@@ -1396,7 +1334,6 @@ func (b *uint8Builder) Descriptor() *Descriptor {
 	if b.desc.Default != nil || b.desc.UpdateDefault != nil {
 		b.desc.checkDefaultFunc(uint8Type)
 	}
-	b.desc.checkGoType(uint8Type)
 	return b.desc
 }
 
@@ -1546,15 +1483,7 @@ func (b *uint16Builder) SchemaType(types map[string]string) *uint16Builder {
 //		return add(t1, t2)
 //	}
 func (b *uint16Builder) GoType(typ any) *uint16Builder {
-	b.desc.goType(typ)
-	return b
-}
-
-// ValueScanner provides an external value scanner for the given GoType.
-// Using this option allow users to use field types that do not implement
-// the sql.Scanner and driver.Valuer interfaces.
-func (b *uint16Builder) ValueScanner(vs any) *uint16Builder {
-	b.desc.ValueScanner = vs
+	b.desc.goType(typ, uint16Type)
 	return b
 }
 
@@ -1573,7 +1502,6 @@ func (b *uint16Builder) Descriptor() *Descriptor {
 	if b.desc.Default != nil || b.desc.UpdateDefault != nil {
 		b.desc.checkDefaultFunc(uint16Type)
 	}
-	b.desc.checkGoType(uint16Type)
 	return b.desc
 }
 
@@ -1723,15 +1651,7 @@ func (b *uint32Builder) SchemaType(types map[string]string) *uint32Builder {
 //		return add(t1, t2)
 //	}
 func (b *uint32Builder) GoType(typ any) *uint32Builder {
-	b.desc.goType(typ)
-	return b
-}
-
-// ValueScanner provides an external value scanner for the given GoType.
-// Using this option allow users to use field types that do not implement
-// the sql.Scanner and driver.Valuer interfaces.
-func (b *uint32Builder) ValueScanner(vs any) *uint32Builder {
-	b.desc.ValueScanner = vs
+	b.desc.goType(typ, uint32Type)
 	return b
 }
 
@@ -1750,7 +1670,6 @@ func (b *uint32Builder) Descriptor() *Descriptor {
 	if b.desc.Default != nil || b.desc.UpdateDefault != nil {
 		b.desc.checkDefaultFunc(uint32Type)
 	}
-	b.desc.checkGoType(uint32Type)
 	return b.desc
 }
 
@@ -1900,15 +1819,7 @@ func (b *uint64Builder) SchemaType(types map[string]string) *uint64Builder {
 //		return add(t1, t2)
 //	}
 func (b *uint64Builder) GoType(typ any) *uint64Builder {
-	b.desc.goType(typ)
-	return b
-}
-
-// ValueScanner provides an external value scanner for the given GoType.
-// Using this option allow users to use field types that do not implement
-// the sql.Scanner and driver.Valuer interfaces.
-func (b *uint64Builder) ValueScanner(vs any) *uint64Builder {
-	b.desc.ValueScanner = vs
+	b.desc.goType(typ, uint64Type)
 	return b
 }
 
@@ -1927,7 +1838,6 @@ func (b *uint64Builder) Descriptor() *Descriptor {
 	if b.desc.Default != nil || b.desc.UpdateDefault != nil {
 		b.desc.checkDefaultFunc(uint64Type)
 	}
-	b.desc.checkGoType(uint64Type)
 	return b.desc
 }
 
@@ -2078,15 +1988,7 @@ func (b *float64Builder) SchemaType(types map[string]string) *float64Builder {
 //		return add(t1, t2)
 //	}
 func (b *float64Builder) GoType(typ any) *float64Builder {
-	b.desc.goType(typ)
-	return b
-}
-
-// ValueScanner provides an external value scanner for the given GoType.
-// Using this option allow users to use field types that do not implement
-// the sql.Scanner and driver.Valuer interfaces.
-func (b *float64Builder) ValueScanner(vs any) *float64Builder {
-	b.desc.ValueScanner = vs
+	b.desc.goType(typ, float64Type)
 	return b
 }
 
@@ -2102,7 +2004,6 @@ func (b *float64Builder) Annotations(annotations ...schema.Annotation) *float64B
 
 // Descriptor implements the ent.Field interface by returning its descriptor.
 func (b *float64Builder) Descriptor() *Descriptor {
-	b.desc.checkGoType(float64Type)
 	return b.desc
 }
 
@@ -2240,15 +2141,7 @@ func (b *float32Builder) SchemaType(types map[string]string) *float32Builder {
 //		return add(t1, t2)
 //	}
 func (b *float32Builder) GoType(typ any) *float32Builder {
-	b.desc.goType(typ)
-	return b
-}
-
-// ValueScanner provides an external value scanner for the given GoType.
-// Using this option allow users to use field types that do not implement
-// the sql.Scanner and driver.Valuer interfaces.
-func (b *float32Builder) ValueScanner(vs any) *float32Builder {
-	b.desc.ValueScanner = vs
+	b.desc.goType(typ, float32Type)
 	return b
 }
 
@@ -2264,7 +2157,6 @@ func (b *float32Builder) Annotations(annotations ...schema.Annotation) *float32B
 
 // Descriptor implements the ent.Field interface by returning its descriptor.
 func (b *float32Builder) Descriptor() *Descriptor {
-	b.desc.checkGoType(float32Type)
 	return b.desc
 }
 
