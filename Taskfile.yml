@@ -79,7 +79,6 @@ tasks:
       - .{{.DEV_TOOLS_PATH}}/ent new --target {{.SCHEMA_PATH}} {{.CLI_ARGS}}
       - task: tidy
 
-
   generate:
     cmds:
       - echo "Run go generate..."
@@ -121,6 +120,18 @@ tasks:
     cmds:
       - echo "- Tests"
       - go test -v -race ./... {{.CLI_ARGS}}
+
+  tests:integration:
+    env:
+      TEST_LOG_LEVEL: info
+      TEST_KEYCLOAK_REALM: Bank
+      TEST_KEYCLOAK_CLIENT_ID: integration-testing
+      TEST_KEYCLOAK_CLIENT_SECRET: 9RoNZ7i2xSAUeKPcht4aPFslZycfvK9I
+      TEST_KEYCLOAK_TEST_USER: integration-testing
+      TEST_KEYCLOAK_TEST_PASSWORD: 123456
+    cmds:
+      - echo "- Integration tests"
+      - go test -tags integration -count 1 -race ./...
 
   build:
     cmds:
@@ -172,3 +183,7 @@ tasks:
     cmds:
       - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} rm -fsv {{.SERVICE}}"
       - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} up -d {{.SERVICE}}"
+
+  kc:export:
+    cmds:
+      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} exec keycloak /opt/keycloak/bin/kc.sh export --file /tmp/keycloak-export/bank-realm.json --realm Bank"
