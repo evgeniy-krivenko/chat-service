@@ -99,6 +99,7 @@ func (r {{$typeName}}) Matches(x any) bool {
 func (r {{$typeName}}) IsZero() bool {
 	return r.UUID == uuid.Nil
 }
+
 {{end -}}
 
 type Types interface {
