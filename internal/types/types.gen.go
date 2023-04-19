@@ -3,123 +3,201 @@
 package types
 
 import (
+	"database/sql/driver"
 	"fmt"
 
 	"github.com/google/uuid"
 )
 
 
-type ChatID struct {
-	uuid.UUID
-}
+type ChatID uuid.UUID
 
-var ChatIDNil = ChatID{uuid.Nil}
+var ChatIDNil = ChatID(uuid.Nil)
 
 func NewChatID() ChatID {
-	return ChatID{
-		UUID: uuid.New(),
-	}
+	return ChatID(uuid.New())
+}
+
+func (r ChatID) String() string {
+	return uuid.UUID(r).String()
+}
+
+func (r ChatID) Value() (driver.Value, error) {
+	return r.String(), nil
+}
+
+func (r *ChatID) Scan(src any) error {
+	return (*uuid.UUID)(r).Scan(src)
+}
+
+func (r ChatID) MarshalText() ([]byte, error) {
+	return uuid.UUID(r).MarshalText()
+}
+
+func (r *ChatID) UnmarshalText(data []byte) error {
+	return (*uuid.UUID)(r).UnmarshalText(data)
 }
 
 func (r ChatID) Validate() error {
-	if r.UUID == uuid.Nil {
-		return fmt.Errorf("validate error")
+	if r.IsZero() {
+		return fmt.Errorf("zero ChatID")
 	}
 	return nil
 }
 
 func (r ChatID) Matches(x any) bool {
-	_, ok := x.(ChatID)
-	return ok
+	v, ok := x.(ChatID)
+	if !ok {
+		return false
+	}
+	return r.String() == v.String() 
 }
 
 func (r ChatID) IsZero() bool {
-	return r.UUID == uuid.Nil
+	return r == ChatIDNil 
 }
 
-type MessageID struct {
-	uuid.UUID
-}
+type MessageID uuid.UUID
 
-var MessageIDNil = MessageID{uuid.Nil}
+var MessageIDNil = MessageID(uuid.Nil)
 
 func NewMessageID() MessageID {
-	return MessageID{
-		UUID: uuid.New(),
-	}
+	return MessageID(uuid.New())
+}
+
+func (r MessageID) String() string {
+	return uuid.UUID(r).String()
+}
+
+func (r MessageID) Value() (driver.Value, error) {
+	return r.String(), nil
+}
+
+func (r *MessageID) Scan(src any) error {
+	return (*uuid.UUID)(r).Scan(src)
+}
+
+func (r MessageID) MarshalText() ([]byte, error) {
+	return uuid.UUID(r).MarshalText()
+}
+
+func (r *MessageID) UnmarshalText(data []byte) error {
+	return (*uuid.UUID)(r).UnmarshalText(data)
 }
 
 func (r MessageID) Validate() error {
-	if r.UUID == uuid.Nil {
-		return fmt.Errorf("validate error")
+	if r.IsZero() {
+		return fmt.Errorf("zero MessageID")
 	}
 	return nil
 }
 
 func (r MessageID) Matches(x any) bool {
-	_, ok := x.(MessageID)
-	return ok
+	v, ok := x.(MessageID)
+	if !ok {
+		return false
+	}
+	return r.String() == v.String() 
 }
 
 func (r MessageID) IsZero() bool {
-	return r.UUID == uuid.Nil
+	return r == MessageIDNil 
 }
 
-type ProblemID struct {
-	uuid.UUID
-}
+type ProblemID uuid.UUID
 
-var ProblemIDNil = ProblemID{uuid.Nil}
+var ProblemIDNil = ProblemID(uuid.Nil)
 
 func NewProblemID() ProblemID {
-	return ProblemID{
-		UUID: uuid.New(),
-	}
+	return ProblemID(uuid.New())
+}
+
+func (r ProblemID) String() string {
+	return uuid.UUID(r).String()
+}
+
+func (r ProblemID) Value() (driver.Value, error) {
+	return r.String(), nil
+}
+
+func (r *ProblemID) Scan(src any) error {
+	return (*uuid.UUID)(r).Scan(src)
+}
+
+func (r ProblemID) MarshalText() ([]byte, error) {
+	return uuid.UUID(r).MarshalText()
+}
+
+func (r *ProblemID) UnmarshalText(data []byte) error {
+	return (*uuid.UUID)(r).UnmarshalText(data)
 }
 
 func (r ProblemID) Validate() error {
-	if r.UUID == uuid.Nil {
-		return fmt.Errorf("validate error")
+	if r.IsZero() {
+		return fmt.Errorf("zero ProblemID")
 	}
 	return nil
 }
 
 func (r ProblemID) Matches(x any) bool {
-	_, ok := x.(ProblemID)
-	return ok
+	v, ok := x.(ProblemID)
+	if !ok {
+		return false
+	}
+	return r.String() == v.String() 
 }
 
 func (r ProblemID) IsZero() bool {
-	return r.UUID == uuid.Nil
+	return r == ProblemIDNil 
 }
 
-type UserID struct {
-	uuid.UUID
-}
+type UserID uuid.UUID
 
-var UserIDNil = UserID{uuid.Nil}
+var UserIDNil = UserID(uuid.Nil)
 
 func NewUserID() UserID {
-	return UserID{
-		UUID: uuid.New(),
-	}
+	return UserID(uuid.New())
+}
+
+func (r UserID) String() string {
+	return uuid.UUID(r).String()
+}
+
+func (r UserID) Value() (driver.Value, error) {
+	return r.String(), nil
+}
+
+func (r *UserID) Scan(src any) error {
+	return (*uuid.UUID)(r).Scan(src)
+}
+
+func (r UserID) MarshalText() ([]byte, error) {
+	return uuid.UUID(r).MarshalText()
+}
+
+func (r *UserID) UnmarshalText(data []byte) error {
+	return (*uuid.UUID)(r).UnmarshalText(data)
 }
 
 func (r UserID) Validate() error {
-	if r.UUID == uuid.Nil {
-		return fmt.Errorf("validate error")
+	if r.IsZero() {
+		return fmt.Errorf("zero UserID")
 	}
 	return nil
 }
 
 func (r UserID) Matches(x any) bool {
-	_, ok := x.(UserID)
-	return ok
+	v, ok := x.(UserID)
+	if !ok {
+		return false
+	}
+	return r.String() == v.String() 
 }
 
 func (r UserID) IsZero() bool {
-	return r.UUID == uuid.Nil
+	return r == UserIDNil 
 }
+
 type Types interface {
 	ChatID | MessageID | ProblemID | UserID
 }
@@ -132,13 +210,13 @@ func Parse[T Types](s string) (T, error) {
 	}
 	switch any(t).(type) {
 	case ChatID:
-		return T(ChatID{u}), nil
+		return T(ChatID(u)), nil
 	case MessageID:
-		return T(MessageID{u}), nil
+		return T(MessageID(u)), nil
 	case ProblemID:
-		return T(ProblemID{u}), nil
+		return T(ProblemID(u)), nil
 	case UserID:
-		return T(UserID{u}), nil
+		return T(UserID(u)), nil
 	default:
 		return t, fmt.Errorf("wrong type")
 	}
@@ -150,13 +228,13 @@ func MustParse[T Types](s string) T {
 	var t T
 	switch any(t).(type) {
 	case ChatID:
-		return T(ChatID{u})
+		return T(ChatID(u))
 	case MessageID:
-		return T(MessageID{u})
+		return T(MessageID(u))
 	case ProblemID:
-		return T(ProblemID{u})
+		return T(ProblemID(u))
 	case UserID:
-		return T(UserID{u})
+		return T(UserID(u))
 	default:
 		panic("wrong type")
 	}

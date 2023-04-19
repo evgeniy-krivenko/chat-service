@@ -72,36 +72,53 @@ import (
 )
 
 {{range $typeName := .TypeNames }}
-type {{$typeName}} struct {
-	uuid.UUID
-}
+type {{$typeName}} uuid.UUID
 
-var {{$typeName}}Nil = {{$typeName}}{uuid.Nil}
+var {{$typeName}}Nil = {{$typeName}}(uuid.Nil)
 
 func New{{$typeName}}() {{$typeName}} {
-	return {{$typeName}}{
-		UUID: uuid.New(),
-	}
+	return {{$typeName}}(uuid.New())
+}
+
+func (r {{$typeName}}) String() string {
+	return uuid.UUID(r).String()
+}
+
+func (r {{$typeName}}) Value() (driver.Value, error) {
+	return r.String(), nil
+}
+
+func (r *{{$typeName}}) Scan(src any) error {
+	return (*uuid.UUID)(r).Scan(src)
+}
+
+func (r {{$typeName}}) MarshalText() ([]byte, error) {
+	return uuid.UUID(r).MarshalText()
+}
+
+func (r *{{$typeName}}) UnmarshalText(data []byte) error {
+	return (*uuid.UUID)(r).UnmarshalText(data)
 }
 
 func (r {{$typeName}}) Validate() error {
-	if r.UUID == uuid.Nil {
-		return fmt.Errorf("validate error")
+	if r.IsZero() {
+		return fmt.Errorf("zero {{$typeName}}")
 	}
 	return nil
 }
 
 func (r {{$typeName}}) Matches(x any) bool {
-	_, ok := x.({{$typeName}})
-	return ok
+	v, ok := x.({{$typeName}})
+	if !ok {
+		return false
+	}
+	return r.String() == v.String() 
 }
 
 func (r {{$typeName}}) IsZero() bool {
-	return r.UUID == uuid.Nil
+	return r == {{$typeName}}Nil 
 }
-
-{{end -}}
-
+{{end}}
 type Types interface {
 	{{range $idx, $name := .TypeNames -}}
 	{{$name}}{{if lt $idx $.LastIndex}} | {{end}} 
@@ -117,7 +134,7 @@ func Parse[T Types](s string) (T, error) {
 	switch any(t).(type) {
 	{{range $name := .TypeNames -}}
 	case {{$name}}:
-		return T({{$name}}{u}), nil
+		return T({{$name}}(u)), nil
 	{{end -}}
 	default:
 		return t, fmt.Errorf("wrong type")
@@ -131,7 +148,7 @@ func MustParse[T Types](s string) T {
 	switch any(t).(type) {
 	{{range $name := .TypeNames -}}
 	case {{$name}}:
-		return T({{$name}}{u})
+		return T({{$name}}(u))
 	{{end -}}
 	default:
 		panic("wrong type")

@@ -19,8 +19,8 @@ var atom zap.AtomicLevel
 type Options struct {
 	level          string `option:"mandatory" validate:"required,oneof=debug info warn error"`
 	productionMode bool
-	dns            string `validate:"url"`
-	env            string `validate:"oneof=dev stage prod"`
+	dns            string `validate:"omitempty,url"`
+	env            string `validate:"omitempty,oneof=dev stage prod"`
 }
 
 func MustInit(opts Options) {

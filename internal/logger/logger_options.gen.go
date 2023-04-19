@@ -60,14 +60,14 @@ func _validate_Options_level(o *Options) error {
 }
 
 func _validate_Options_dns(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.dns, "url"); err != nil {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.dns, "omitempty,url"); err != nil {
 		return fmt461e464ebed9.Errorf("field `dns` did not pass the test: %w", err)
 	}
 	return nil
 }
 
 func _validate_Options_env(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.env, "oneof=dev stage prod"); err != nil {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.env, "omitempty,oneof=dev stage prod"); err != nil {
 		return fmt461e464ebed9.Errorf("field `env` did not pass the test: %w", err)
 	}
 	return nil
