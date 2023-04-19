@@ -6,7 +6,7 @@ silent: true
 vars:
   GO_MODULE: github.com/evgeniy-krivenko/chat-service
   GO_FILES:
-    sh: find . -type f -name '*.go' -not -path "./vendor/*" -not -path "*.gen.go" | tr "\n" " "
+    sh: find . -type f -name '*.go' -not -path "./vendor/*" -not -path "./internal/store/*" -not -path "*.gen.go" | tr "\n" " "
 
   GOLANGCI_LINT_VERSION: v1.52.2
   GOLANGCI_LINT_CACHE:
@@ -16,6 +16,7 @@ vars:
     github.com/daixiang0/gci@v0.8.0
     mvdan.cc/gofumpt@v0.4.0
     github.com/kazhuravlev/options-gen/cmd/options-gen@v0.28.4
+    entgo.io/ent/cmd/ent@v0.11.10
 
   WORKDIR:
     sh: echo "$(pwd)"
@@ -45,6 +46,8 @@ vars:
   TYPES_PKG: types
   TYPES_DST: ./internal/types/types.gen.go
 
+  SCHEMA_PATH: ./internal/store/schema
+
 tasks:
   default:
     # Последовательно выполняем таски tidy, fmt, lint, tests и build
@@ -66,12 +69,23 @@ tasks:
         {{end}} \
         {{.TYPES_DST}}
 
+  ent:gen:
+    cmds:
+      - .{{.DEV_TOOLS_PATH}}/ent generate {{.SCHEMA_PATH}}
+      - task: tidy
+
+  ent:new:
+    cmds:
+      - .{{.DEV_TOOLS_PATH}}/ent new --target {{.SCHEMA_PATH}} {{.CLI_ARGS}}
+      - task: tidy
+
 
   generate:
     cmds:
       - echo "Run go generate..."
       - export PATH=$PATH:{{.WORKDIR}}{{.DEV_TOOLS_PATH}} && go generate ./...
       - task: gen:types
+      - task: ent:gen
 
   tidy:
     - echo "- Tidy"
@@ -106,7 +120,7 @@ tasks:
   tests:
     cmds:
       - echo "- Tests"
-      - go test -race ./...
+      - go test -v -race ./... {{.CLI_ARGS}}
 
   build:
     cmds:
