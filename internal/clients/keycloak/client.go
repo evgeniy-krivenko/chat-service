@@ -4,7 +4,10 @@ import (
 	"fmt"
 
 	"github.com/go-resty/resty/v2"
+	"go.uber.org/zap"
 )
+
+const nameKeycloakClient = "keycloak-client"
 
 //go:generate options-gen -out-filename=client_options.gen.go -from-struct=Options
 type Options struct {
@@ -13,6 +16,8 @@ type Options struct {
 	keycloakClientID     string `option:"mandatory" validate:"required"`
 	keycloakClientSecret string `option:"mandatory" validate:"required,alphanum"`
 	debugMode            bool
+	userAgent            string
+	productionMode       bool
 }
 
 // Client is a tiny client to the KeyCloak realm operations. UMA configuration:
@@ -29,9 +34,16 @@ func New(opts Options) (*Client, error) {
 		return nil, fmt.Errorf("validate options: %v", err)
 	}
 
+	lg := zap.L().Named(nameKeycloakClient)
+
+	if opts.productionMode && opts.debugMode {
+		lg.Warn("enabled keycloak debug mode with production mode")
+	}
+
 	cli := resty.New()
 	cli.SetDebug(opts.debugMode)
 	cli.SetBaseURL(opts.basePath)
+	cli.SetHeader("User-Agent", opts.userAgent)
 
 	return &Client{
 		realm:        opts.keycloakRealm,

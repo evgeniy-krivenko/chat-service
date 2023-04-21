@@ -198,8 +198,55 @@ func (r UserID) IsZero() bool {
 	return r == UserIDNil 
 }
 
+type RequestID uuid.UUID
+
+var RequestIDNil = RequestID(uuid.Nil)
+
+func NewRequestID() RequestID {
+	return RequestID(uuid.New())
+}
+
+func (r RequestID) String() string {
+	return uuid.UUID(r).String()
+}
+
+func (r RequestID) Value() (driver.Value, error) {
+	return r.String(), nil
+}
+
+func (r *RequestID) Scan(src any) error {
+	return (*uuid.UUID)(r).Scan(src)
+}
+
+func (r RequestID) MarshalText() ([]byte, error) {
+	return uuid.UUID(r).MarshalText()
+}
+
+func (r *RequestID) UnmarshalText(data []byte) error {
+	return (*uuid.UUID)(r).UnmarshalText(data)
+}
+
+func (r RequestID) Validate() error {
+	if r.IsZero() {
+		return fmt.Errorf("zero RequestID")
+	}
+	return nil
+}
+
+func (r RequestID) Matches(x any) bool {
+	v, ok := x.(RequestID)
+	if !ok {
+		return false
+	}
+	return r.String() == v.String() 
+}
+
+func (r RequestID) IsZero() bool {
+	return r == RequestIDNil 
+}
+
 type Types interface {
-	ChatID | MessageID | ProblemID | UserID
+	ChatID | MessageID | ProblemID | UserID | RequestID
 }
 
 func Parse[T Types](s string) (T, error) {
@@ -217,6 +264,8 @@ func Parse[T Types](s string) (T, error) {
 		return T(ProblemID(u)), nil
 	case UserID:
 		return T(UserID(u)), nil
+	case RequestID:
+		return T(RequestID(u)), nil
 	default:
 		return t, fmt.Errorf("wrong type")
 	}
@@ -235,6 +284,8 @@ func MustParse[T Types](s string) T {
 		return T(ProblemID(u))
 	case UserID:
 		return T(UserID(u))
+	case RequestID:
+		return T(RequestID(u))
 	default:
 		panic("wrong type")
 	}

@@ -17,6 +17,8 @@ vars:
     mvdan.cc/gofumpt@v0.4.0
     github.com/kazhuravlev/options-gen/cmd/options-gen@v0.28.4
     entgo.io/ent/cmd/ent@v0.11.10
+    github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4
+    github.com/golang/mock/mockgen@v1.6.0
 
   WORKDIR:
     sh: echo "$(pwd)"
@@ -26,6 +28,7 @@ vars:
   DOCKER_COMPOSE_PATHS: |
     ./deploy/local/docker-compose.yml
     ./deploy/local/docker-compose.sentry.yml
+    ./deploy/local/docker-compose.swagger-ui.yml
 
   # if it will be decided generate key with every deps running
   SENTRY_SECRET_KEY_DEPS: |
@@ -43,10 +46,21 @@ vars:
     MessageID
     ProblemID
     UserID
+    RequestID
+
   TYPES_PKG: types
   TYPES_DST: ./internal/types/types.gen.go
 
   SCHEMA_PATH: ./internal/store/schema
+
+  CLIENT_V1_SRC: ./api/client.v1.swagger.yml
+  CLIENT_V1_DST: ./internal/server-client/v1/server.gen.go
+  CLIENT_V1_PKG: clientv1
+
+  # swagger urls in docker container
+  SWAGGER_DOCS_URLS: |
+    { url: 'doc/client.v1.swagger.yml', name: 'ClientV1' }
+    
 
 tasks:
   default:
@@ -58,6 +72,10 @@ tasks:
       - task: tests
       - task: build
 
+  gen:api:
+    cmds:
+      - .{{.DEV_TOOLS_PATH}}/oapi-codegen -old-config-style -package {{.CLIENT_V1_PKG}} -generate types,server,spec {{.CLIENT_V1_SRC}} > {{.CLIENT_V1_DST}}
+
   gen:types:
     cmds:
       - echo "Generate types..."
@@ -68,6 +86,7 @@ tasks:
         {{$type -}}
         {{end}} \
         {{.TYPES_DST}}
+      - task: tidy
 
   ent:gen:
     cmds:
@@ -83,8 +102,7 @@ tasks:
     cmds:
       - echo "Run go generate..."
       - export PATH=$PATH:{{.WORKDIR}}{{.DEV_TOOLS_PATH}} && go generate ./...
-      - task: gen:types
-      - task: ent:gen
+      - task: tidy
 
   tidy:
     - echo "- Tidy"
@@ -148,6 +166,12 @@ tasks:
         {{end -}}
         
   deps:
+    env:
+      SWAGGER_URLS: |
+        "[{{range $index, $url := .SWAGGER_DOCS_URLS | trim | splitLines -}}
+        {{if $index}},{{- end -}}
+        {{$url}}
+        {{- end}}]"
     cmds:
       - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} up -d"
 
@@ -171,6 +195,7 @@ tasks:
 
   deps:stop:
     cmds:
+      - task: kc:export
       - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} stop"
 
   deps:reset-psql:

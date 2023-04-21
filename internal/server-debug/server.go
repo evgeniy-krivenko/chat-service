@@ -8,6 +8,7 @@ import (
 	"net/http/pprof"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/evgeniy-krivenko/chat-service/internal/buildinfo"
 	"github.com/evgeniy-krivenko/chat-service/internal/logger"
+	"github.com/evgeniy-krivenko/chat-service/internal/middlewares"
 )
 
 const (
@@ -25,12 +27,14 @@ const (
 
 //go:generate options-gen -out-filename=server_options.gen.go -from-struct=Options
 type Options struct {
-	addr string `option:"mandatory" validate:"required,hostname_port"`
+	addr      string      `option:"mandatory" validate:"required,hostname_port"`
+	v1Swagger *openapi3.T `option:"mandatory" validate:"required"`
 }
 
 type Server struct {
-	lg  *zap.Logger
-	srv *http.Server
+	lg      *zap.Logger
+	srv     *http.Server
+	swagger *openapi3.T
 }
 
 func New(opts Options) (*Server, error) {
@@ -50,17 +54,25 @@ func New(opts Options) (*Server, error) {
 			Handler:           e,
 			ReadHeaderTimeout: readHeaderTimeout,
 		},
+		swagger: opts.v1Swagger,
 	}
 	index := newIndexPage()
+
+	e.Use(
+		middlewares.NewLogger(lg),
+		middlewares.NewRecovery(lg),
+	)
 
 	e.GET("/version", s.Version)
 	e.PUT("/log/level", s.SetLogLevel)
 	e.GET("/debug/error", s.Error)
+	e.GET("/schema/client", s.Schema)
 
 	index.addPage("/version", "Get build information")
 	index.addPage("/debug/pprof/", "Go to std profiler")
 	index.addPage("/debug/pprof/profile?seconds=30", "Take half-min profile")
 	index.addPage("/debug/error", "Debug Sentry error event")
+	index.addPage("/schema/client", "Get client OpenAPI specification")
 
 	e.GET("/", index.handler)
 
@@ -120,4 +132,8 @@ func (s *Server) SetLogLevel(eCtx echo.Context) error {
 func (s *Server) Error(eCtx echo.Context) error {
 	zap.L().Error("look at my in Sentry")
 	return eCtx.String(http.StatusOK, "event was sent")
+}
+
+func (s *Server) Schema(eCtx echo.Context) error {
+	return eCtx.JSON(http.StatusOK, &s.swagger)
 }

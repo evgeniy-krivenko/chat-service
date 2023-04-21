@@ -38,6 +38,18 @@ func WithDebugMode(opt bool) OptOptionsSetter {
 	}
 }
 
+func WithUserAgent(opt string) OptOptionsSetter {
+	return func(o *Options) {
+		o.userAgent = opt
+	}
+}
+
+func WithProductionMode(opt bool) OptOptionsSetter {
+	return func(o *Options) {
+		o.productionMode = opt
+	}
+}
+
 func (o *Options) Validate() error {
 	errs := new(errors461e464ebed9.ValidationErrors)
 	errs.Add(errors461e464ebed9.NewValidationError("basePath", _validate_Options_basePath(o)))
