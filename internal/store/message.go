@@ -18,7 +18,7 @@ import (
 type Message struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID types.ChatID `json:"id,omitempty"`
+	ID types.MessageID `json:"id,omitempty"`
 	// AuthorID holds the value of the "author_id" field.
 	AuthorID types.UserID `json:"author_id,omitempty"`
 	// ChatID holds the value of the "chat_id" field.
@@ -39,6 +39,8 @@ type Message struct {
 	IsService bool `json:"is_service,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
+	// InitialRequestID holds the value of the "initial_request_id" field.
+	InitialRequestID types.RequestID `json:"initial_request_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MessageQuery when eager-loading is set.
 	Edges MessageEdges `json:"edges"`
@@ -92,10 +94,14 @@ func (*Message) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case message.FieldCheckedAt, message.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
-		case message.FieldID, message.FieldChatID:
+		case message.FieldChatID:
 			values[i] = new(types.ChatID)
+		case message.FieldID:
+			values[i] = new(types.MessageID)
 		case message.FieldProblemID:
 			values[i] = new(types.ProblemID)
+		case message.FieldInitialRequestID:
+			values[i] = new(types.RequestID)
 		case message.FieldAuthorID:
 			values[i] = new(types.UserID)
 		default:
@@ -114,7 +120,7 @@ func (m *Message) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case message.FieldID:
-			if value, ok := values[i].(*types.ChatID); !ok {
+			if value, ok := values[i].(*types.MessageID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				m.ID = *value
@@ -178,6 +184,12 @@ func (m *Message) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				m.CreatedAt = value.Time
+			}
+		case message.FieldInitialRequestID:
+			if value, ok := values[i].(*types.RequestID); !ok {
+				return fmt.Errorf("unexpected type %T for field initial_request_id", values[i])
+			} else if value != nil {
+				m.InitialRequestID = *value
 			}
 		}
 	}
@@ -246,6 +258,9 @@ func (m *Message) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(m.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("initial_request_id=")
+	builder.WriteString(fmt.Sprintf("%v", m.InitialRequestID))
 	builder.WriteByte(')')
 	return builder.String()
 }

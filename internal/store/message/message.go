@@ -33,6 +33,8 @@ const (
 	FieldIsService = "is_service"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
+	// FieldInitialRequestID holds the string denoting the initial_request_id field in the database.
+	FieldInitialRequestID = "initial_request_id"
 	// EdgeChat holds the string denoting the chat edge name in mutations.
 	EdgeChat = "chat"
 	// EdgeProblem holds the string denoting the problem edge name in mutations.
@@ -68,6 +70,7 @@ var Columns = []string{
 	FieldIsBlocked,
 	FieldIsService,
 	FieldCreatedAt,
+	FieldInitialRequestID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -86,5 +89,5 @@ var (
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultID holds the default value on creation for the "id" field.
-	DefaultID func() types.ChatID
+	DefaultID func() types.MessageID
 )

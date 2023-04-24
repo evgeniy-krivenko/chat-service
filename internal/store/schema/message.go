@@ -20,15 +20,17 @@ type Message struct {
 // Fields of the Message.
 func (Message) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", types.ChatID{}).
-			Default(types.NewChatID).
+		field.UUID("id", types.MessageID{}).
+			Default(types.NewMessageID).
 			Unique(),
 		field.UUID("author_id", types.UserID{}).
 			Optional(),
 		field.UUID("chat_id", types.ChatID{}),
 		field.UUID("problem_id", types.ProblemID{}),
-		field.Bool("is_visible_for_client"),
-		field.Bool("is_visible_for_manager"),
+		field.Bool("is_visible_for_client").
+			Optional(),
+		field.Bool("is_visible_for_manager").
+			Optional(),
 		field.String("body").
 			Validate(func(s string) error {
 				if utf8.RuneCountInString(s) > 2000 {
@@ -39,11 +41,15 @@ func (Message) Fields() []ent.Field {
 			NotEmpty(),
 		field.Time("checked_at").
 			Optional(),
-		field.Bool("is_blocked"),
-		field.Bool("is_service"),
+		field.Bool("is_blocked").
+			Optional(),
+		field.Bool("is_service").
+			Optional(),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
+		field.UUID("initial_request_id", types.RequestID{}).
+			Optional(),
 	}
 }
 

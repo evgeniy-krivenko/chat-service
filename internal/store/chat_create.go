@@ -58,14 +58,14 @@ func (cc *ChatCreate) SetNillableID(ti *types.ChatID) *ChatCreate {
 }
 
 // AddMessageIDs adds the "messages" edge to the Message entity by IDs.
-func (cc *ChatCreate) AddMessageIDs(ids ...types.ChatID) *ChatCreate {
+func (cc *ChatCreate) AddMessageIDs(ids ...types.MessageID) *ChatCreate {
 	cc.mutation.AddMessageIDs(ids...)
 	return cc
 }
 
 // AddMessages adds the "messages" edges to the Message entity.
 func (cc *ChatCreate) AddMessages(m ...*Message) *ChatCreate {
-	ids := make([]types.ChatID, len(m))
+	ids := make([]types.MessageID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}

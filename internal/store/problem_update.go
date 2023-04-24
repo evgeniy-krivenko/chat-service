@@ -43,6 +43,20 @@ func (pu *ProblemUpdate) SetManagerID(ti types.UserID) *ProblemUpdate {
 	return pu
 }
 
+// SetNillableManagerID sets the "manager_id" field if the given value is not nil.
+func (pu *ProblemUpdate) SetNillableManagerID(ti *types.UserID) *ProblemUpdate {
+	if ti != nil {
+		pu.SetManagerID(*ti)
+	}
+	return pu
+}
+
+// ClearManagerID clears the value of the "manager_id" field.
+func (pu *ProblemUpdate) ClearManagerID() *ProblemUpdate {
+	pu.mutation.ClearManagerID()
+	return pu
+}
+
 // SetResolvedAt sets the "resolved_at" field.
 func (pu *ProblemUpdate) SetResolvedAt(t time.Time) *ProblemUpdate {
 	pu.mutation.SetResolvedAt(t)
@@ -78,14 +92,14 @@ func (pu *ProblemUpdate) SetNillableCreatedAt(t *time.Time) *ProblemUpdate {
 }
 
 // AddMessageIDs adds the "messages" edge to the Message entity by IDs.
-func (pu *ProblemUpdate) AddMessageIDs(ids ...types.ChatID) *ProblemUpdate {
+func (pu *ProblemUpdate) AddMessageIDs(ids ...types.MessageID) *ProblemUpdate {
 	pu.mutation.AddMessageIDs(ids...)
 	return pu
 }
 
 // AddMessages adds the "messages" edges to the Message entity.
 func (pu *ProblemUpdate) AddMessages(m ...*Message) *ProblemUpdate {
-	ids := make([]types.ChatID, len(m))
+	ids := make([]types.MessageID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
@@ -109,14 +123,14 @@ func (pu *ProblemUpdate) ClearMessages() *ProblemUpdate {
 }
 
 // RemoveMessageIDs removes the "messages" edge to Message entities by IDs.
-func (pu *ProblemUpdate) RemoveMessageIDs(ids ...types.ChatID) *ProblemUpdate {
+func (pu *ProblemUpdate) RemoveMessageIDs(ids ...types.MessageID) *ProblemUpdate {
 	pu.mutation.RemoveMessageIDs(ids...)
 	return pu
 }
 
 // RemoveMessages removes "messages" edges to Message entities.
 func (pu *ProblemUpdate) RemoveMessages(m ...*Message) *ProblemUpdate {
-	ids := make([]types.ChatID, len(m))
+	ids := make([]types.MessageID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
@@ -188,6 +202,9 @@ func (pu *ProblemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := pu.mutation.ManagerID(); ok {
 		_spec.SetField(problem.FieldManagerID, field.TypeUUID, value)
+	}
+	if pu.mutation.ManagerIDCleared() {
+		_spec.ClearField(problem.FieldManagerID, field.TypeUUID)
 	}
 	if value, ok := pu.mutation.ResolvedAt(); ok {
 		_spec.SetField(problem.FieldResolvedAt, field.TypeTime, value)
@@ -304,6 +321,20 @@ func (puo *ProblemUpdateOne) SetManagerID(ti types.UserID) *ProblemUpdateOne {
 	return puo
 }
 
+// SetNillableManagerID sets the "manager_id" field if the given value is not nil.
+func (puo *ProblemUpdateOne) SetNillableManagerID(ti *types.UserID) *ProblemUpdateOne {
+	if ti != nil {
+		puo.SetManagerID(*ti)
+	}
+	return puo
+}
+
+// ClearManagerID clears the value of the "manager_id" field.
+func (puo *ProblemUpdateOne) ClearManagerID() *ProblemUpdateOne {
+	puo.mutation.ClearManagerID()
+	return puo
+}
+
 // SetResolvedAt sets the "resolved_at" field.
 func (puo *ProblemUpdateOne) SetResolvedAt(t time.Time) *ProblemUpdateOne {
 	puo.mutation.SetResolvedAt(t)
@@ -339,14 +370,14 @@ func (puo *ProblemUpdateOne) SetNillableCreatedAt(t *time.Time) *ProblemUpdateOn
 }
 
 // AddMessageIDs adds the "messages" edge to the Message entity by IDs.
-func (puo *ProblemUpdateOne) AddMessageIDs(ids ...types.ChatID) *ProblemUpdateOne {
+func (puo *ProblemUpdateOne) AddMessageIDs(ids ...types.MessageID) *ProblemUpdateOne {
 	puo.mutation.AddMessageIDs(ids...)
 	return puo
 }
 
 // AddMessages adds the "messages" edges to the Message entity.
 func (puo *ProblemUpdateOne) AddMessages(m ...*Message) *ProblemUpdateOne {
-	ids := make([]types.ChatID, len(m))
+	ids := make([]types.MessageID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
@@ -370,14 +401,14 @@ func (puo *ProblemUpdateOne) ClearMessages() *ProblemUpdateOne {
 }
 
 // RemoveMessageIDs removes the "messages" edge to Message entities by IDs.
-func (puo *ProblemUpdateOne) RemoveMessageIDs(ids ...types.ChatID) *ProblemUpdateOne {
+func (puo *ProblemUpdateOne) RemoveMessageIDs(ids ...types.MessageID) *ProblemUpdateOne {
 	puo.mutation.RemoveMessageIDs(ids...)
 	return puo
 }
 
 // RemoveMessages removes "messages" edges to Message entities.
 func (puo *ProblemUpdateOne) RemoveMessages(m ...*Message) *ProblemUpdateOne {
-	ids := make([]types.ChatID, len(m))
+	ids := make([]types.MessageID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
@@ -479,6 +510,9 @@ func (puo *ProblemUpdateOne) sqlSave(ctx context.Context) (_node *Problem, err e
 	}
 	if value, ok := puo.mutation.ManagerID(); ok {
 		_spec.SetField(problem.FieldManagerID, field.TypeUUID, value)
+	}
+	if puo.mutation.ManagerIDCleared() {
+		_spec.ClearField(problem.FieldManagerID, field.TypeUUID)
 	}
 	if value, ok := puo.mutation.ResolvedAt(); ok {
 		_spec.SetField(problem.FieldResolvedAt, field.TypeTime, value)

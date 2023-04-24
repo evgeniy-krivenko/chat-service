@@ -53,7 +53,7 @@ func init() {
 	// messageDescID is the schema descriptor for id field.
 	messageDescID := messageFields[0].Descriptor()
 	// message.DefaultID holds the default value on creation for the id field.
-	message.DefaultID = messageDescID.Default.(func() types.ChatID)
+	message.DefaultID = messageDescID.Default.(func() types.MessageID)
 	problemFields := schema.Problem{}.Fields()
 	_ = problemFields
 	// problemDescCreatedAt is the schema descriptor for created_at field.

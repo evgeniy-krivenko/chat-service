@@ -55,9 +55,25 @@ func (mc *MessageCreate) SetIsVisibleForClient(b bool) *MessageCreate {
 	return mc
 }
 
+// SetNillableIsVisibleForClient sets the "is_visible_for_client" field if the given value is not nil.
+func (mc *MessageCreate) SetNillableIsVisibleForClient(b *bool) *MessageCreate {
+	if b != nil {
+		mc.SetIsVisibleForClient(*b)
+	}
+	return mc
+}
+
 // SetIsVisibleForManager sets the "is_visible_for_manager" field.
 func (mc *MessageCreate) SetIsVisibleForManager(b bool) *MessageCreate {
 	mc.mutation.SetIsVisibleForManager(b)
+	return mc
+}
+
+// SetNillableIsVisibleForManager sets the "is_visible_for_manager" field if the given value is not nil.
+func (mc *MessageCreate) SetNillableIsVisibleForManager(b *bool) *MessageCreate {
+	if b != nil {
+		mc.SetIsVisibleForManager(*b)
+	}
 	return mc
 }
 
@@ -87,9 +103,25 @@ func (mc *MessageCreate) SetIsBlocked(b bool) *MessageCreate {
 	return mc
 }
 
+// SetNillableIsBlocked sets the "is_blocked" field if the given value is not nil.
+func (mc *MessageCreate) SetNillableIsBlocked(b *bool) *MessageCreate {
+	if b != nil {
+		mc.SetIsBlocked(*b)
+	}
+	return mc
+}
+
 // SetIsService sets the "is_service" field.
 func (mc *MessageCreate) SetIsService(b bool) *MessageCreate {
 	mc.mutation.SetIsService(b)
+	return mc
+}
+
+// SetNillableIsService sets the "is_service" field if the given value is not nil.
+func (mc *MessageCreate) SetNillableIsService(b *bool) *MessageCreate {
+	if b != nil {
+		mc.SetIsService(*b)
+	}
 	return mc
 }
 
@@ -107,14 +139,28 @@ func (mc *MessageCreate) SetNillableCreatedAt(t *time.Time) *MessageCreate {
 	return mc
 }
 
+// SetInitialRequestID sets the "initial_request_id" field.
+func (mc *MessageCreate) SetInitialRequestID(ti types.RequestID) *MessageCreate {
+	mc.mutation.SetInitialRequestID(ti)
+	return mc
+}
+
+// SetNillableInitialRequestID sets the "initial_request_id" field if the given value is not nil.
+func (mc *MessageCreate) SetNillableInitialRequestID(ti *types.RequestID) *MessageCreate {
+	if ti != nil {
+		mc.SetInitialRequestID(*ti)
+	}
+	return mc
+}
+
 // SetID sets the "id" field.
-func (mc *MessageCreate) SetID(ti types.ChatID) *MessageCreate {
+func (mc *MessageCreate) SetID(ti types.MessageID) *MessageCreate {
 	mc.mutation.SetID(ti)
 	return mc
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (mc *MessageCreate) SetNillableID(ti *types.ChatID) *MessageCreate {
+func (mc *MessageCreate) SetNillableID(ti *types.MessageID) *MessageCreate {
 	if ti != nil {
 		mc.SetID(*ti)
 	}
@@ -199,12 +245,6 @@ func (mc *MessageCreate) check() error {
 			return &ValidationError{Name: "problem_id", err: fmt.Errorf(`store: validator failed for field "Message.problem_id": %w`, err)}
 		}
 	}
-	if _, ok := mc.mutation.IsVisibleForClient(); !ok {
-		return &ValidationError{Name: "is_visible_for_client", err: errors.New(`store: missing required field "Message.is_visible_for_client"`)}
-	}
-	if _, ok := mc.mutation.IsVisibleForManager(); !ok {
-		return &ValidationError{Name: "is_visible_for_manager", err: errors.New(`store: missing required field "Message.is_visible_for_manager"`)}
-	}
 	if _, ok := mc.mutation.Body(); !ok {
 		return &ValidationError{Name: "body", err: errors.New(`store: missing required field "Message.body"`)}
 	}
@@ -213,14 +253,13 @@ func (mc *MessageCreate) check() error {
 			return &ValidationError{Name: "body", err: fmt.Errorf(`store: validator failed for field "Message.body": %w`, err)}
 		}
 	}
-	if _, ok := mc.mutation.IsBlocked(); !ok {
-		return &ValidationError{Name: "is_blocked", err: errors.New(`store: missing required field "Message.is_blocked"`)}
-	}
-	if _, ok := mc.mutation.IsService(); !ok {
-		return &ValidationError{Name: "is_service", err: errors.New(`store: missing required field "Message.is_service"`)}
-	}
 	if _, ok := mc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`store: missing required field "Message.created_at"`)}
+	}
+	if v, ok := mc.mutation.InitialRequestID(); ok {
+		if err := v.Validate(); err != nil {
+			return &ValidationError{Name: "initial_request_id", err: fmt.Errorf(`store: validator failed for field "Message.initial_request_id": %w`, err)}
+		}
 	}
 	if v, ok := mc.mutation.ID(); ok {
 		if err := v.Validate(); err != nil {
@@ -248,7 +287,7 @@ func (mc *MessageCreate) sqlSave(ctx context.Context) (*Message, error) {
 		return nil, err
 	}
 	if _spec.ID.Value != nil {
-		if id, ok := _spec.ID.Value.(*types.ChatID); ok {
+		if id, ok := _spec.ID.Value.(*types.MessageID); ok {
 			_node.ID = *id
 		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
 			return nil, err
@@ -299,6 +338,10 @@ func (mc *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 	if value, ok := mc.mutation.CreatedAt(); ok {
 		_spec.SetField(message.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
+	}
+	if value, ok := mc.mutation.InitialRequestID(); ok {
+		_spec.SetField(message.FieldInitialRequestID, field.TypeUUID, value)
+		_node.InitialRequestID = value
 	}
 	if nodes := mc.mutation.ChatIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -24,13 +24,14 @@ var (
 	MessagesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "author_id", Type: field.TypeUUID, Nullable: true},
-		{Name: "is_visible_for_client", Type: field.TypeBool},
-		{Name: "is_visible_for_manager", Type: field.TypeBool},
+		{Name: "is_visible_for_client", Type: field.TypeBool, Nullable: true},
+		{Name: "is_visible_for_manager", Type: field.TypeBool, Nullable: true},
 		{Name: "body", Type: field.TypeString},
 		{Name: "checked_at", Type: field.TypeTime, Nullable: true},
-		{Name: "is_blocked", Type: field.TypeBool},
-		{Name: "is_service", Type: field.TypeBool},
+		{Name: "is_blocked", Type: field.TypeBool, Nullable: true},
+		{Name: "is_service", Type: field.TypeBool, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
+		{Name: "initial_request_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "chat_id", Type: field.TypeUUID},
 		{Name: "problem_id", Type: field.TypeUUID},
 	}
@@ -42,13 +43,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "messages_chats_messages",
-				Columns:    []*schema.Column{MessagesColumns[9]},
+				Columns:    []*schema.Column{MessagesColumns[10]},
 				RefColumns: []*schema.Column{ChatsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "messages_problems_messages",
-				Columns:    []*schema.Column{MessagesColumns[10]},
+				Columns:    []*schema.Column{MessagesColumns[11]},
 				RefColumns: []*schema.Column{ProblemsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -57,7 +58,7 @@ var (
 	// ProblemsColumns holds the columns for the "problems" table.
 	ProblemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
-		{Name: "manager_id", Type: field.TypeUUID},
+		{Name: "manager_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "resolved_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "chat_id", Type: field.TypeUUID},

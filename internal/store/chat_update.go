@@ -52,14 +52,14 @@ func (cu *ChatUpdate) SetNillableCreatedAt(t *time.Time) *ChatUpdate {
 }
 
 // AddMessageIDs adds the "messages" edge to the Message entity by IDs.
-func (cu *ChatUpdate) AddMessageIDs(ids ...types.ChatID) *ChatUpdate {
+func (cu *ChatUpdate) AddMessageIDs(ids ...types.MessageID) *ChatUpdate {
 	cu.mutation.AddMessageIDs(ids...)
 	return cu
 }
 
 // AddMessages adds the "messages" edges to the Message entity.
 func (cu *ChatUpdate) AddMessages(m ...*Message) *ChatUpdate {
-	ids := make([]types.ChatID, len(m))
+	ids := make([]types.MessageID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
@@ -93,14 +93,14 @@ func (cu *ChatUpdate) ClearMessages() *ChatUpdate {
 }
 
 // RemoveMessageIDs removes the "messages" edge to Message entities by IDs.
-func (cu *ChatUpdate) RemoveMessageIDs(ids ...types.ChatID) *ChatUpdate {
+func (cu *ChatUpdate) RemoveMessageIDs(ids ...types.MessageID) *ChatUpdate {
 	cu.mutation.RemoveMessageIDs(ids...)
 	return cu
 }
 
 // RemoveMessages removes "messages" edges to Message entities.
 func (cu *ChatUpdate) RemoveMessages(m ...*Message) *ChatUpdate {
-	ids := make([]types.ChatID, len(m))
+	ids := make([]types.MessageID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
@@ -301,14 +301,14 @@ func (cuo *ChatUpdateOne) SetNillableCreatedAt(t *time.Time) *ChatUpdateOne {
 }
 
 // AddMessageIDs adds the "messages" edge to the Message entity by IDs.
-func (cuo *ChatUpdateOne) AddMessageIDs(ids ...types.ChatID) *ChatUpdateOne {
+func (cuo *ChatUpdateOne) AddMessageIDs(ids ...types.MessageID) *ChatUpdateOne {
 	cuo.mutation.AddMessageIDs(ids...)
 	return cuo
 }
 
 // AddMessages adds the "messages" edges to the Message entity.
 func (cuo *ChatUpdateOne) AddMessages(m ...*Message) *ChatUpdateOne {
-	ids := make([]types.ChatID, len(m))
+	ids := make([]types.MessageID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
@@ -342,14 +342,14 @@ func (cuo *ChatUpdateOne) ClearMessages() *ChatUpdateOne {
 }
 
 // RemoveMessageIDs removes the "messages" edge to Message entities by IDs.
-func (cuo *ChatUpdateOne) RemoveMessageIDs(ids ...types.ChatID) *ChatUpdateOne {
+func (cuo *ChatUpdateOne) RemoveMessageIDs(ids ...types.MessageID) *ChatUpdateOne {
 	cuo.mutation.RemoveMessageIDs(ids...)
 	return cuo
 }
 
 // RemoveMessages removes "messages" edges to Message entities.
 func (cuo *ChatUpdateOne) RemoveMessages(m ...*Message) *ChatUpdateOne {
-	ids := make([]types.ChatID, len(m))
+	ids := make([]types.MessageID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}

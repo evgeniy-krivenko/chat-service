@@ -130,8 +130,8 @@ func (mq *MessageQuery) FirstX(ctx context.Context) *Message {
 
 // FirstID returns the first Message ID from the query.
 // Returns a *NotFoundError when no Message ID was found.
-func (mq *MessageQuery) FirstID(ctx context.Context) (id types.ChatID, err error) {
-	var ids []types.ChatID
+func (mq *MessageQuery) FirstID(ctx context.Context) (id types.MessageID, err error) {
+	var ids []types.MessageID
 	if ids, err = mq.Limit(1).IDs(setContextOp(ctx, mq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -143,7 +143,7 @@ func (mq *MessageQuery) FirstID(ctx context.Context) (id types.ChatID, err error
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (mq *MessageQuery) FirstIDX(ctx context.Context) types.ChatID {
+func (mq *MessageQuery) FirstIDX(ctx context.Context) types.MessageID {
 	id, err := mq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -181,8 +181,8 @@ func (mq *MessageQuery) OnlyX(ctx context.Context) *Message {
 // OnlyID is like Only, but returns the only Message ID in the query.
 // Returns a *NotSingularError when more than one Message ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (mq *MessageQuery) OnlyID(ctx context.Context) (id types.ChatID, err error) {
-	var ids []types.ChatID
+func (mq *MessageQuery) OnlyID(ctx context.Context) (id types.MessageID, err error) {
+	var ids []types.MessageID
 	if ids, err = mq.Limit(2).IDs(setContextOp(ctx, mq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -198,7 +198,7 @@ func (mq *MessageQuery) OnlyID(ctx context.Context) (id types.ChatID, err error)
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (mq *MessageQuery) OnlyIDX(ctx context.Context) types.ChatID {
+func (mq *MessageQuery) OnlyIDX(ctx context.Context) types.MessageID {
 	id, err := mq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -226,7 +226,7 @@ func (mq *MessageQuery) AllX(ctx context.Context) []*Message {
 }
 
 // IDs executes the query and returns a list of Message IDs.
-func (mq *MessageQuery) IDs(ctx context.Context) (ids []types.ChatID, err error) {
+func (mq *MessageQuery) IDs(ctx context.Context) (ids []types.MessageID, err error) {
 	if mq.ctx.Unique == nil && mq.path != nil {
 		mq.Unique(true)
 	}
@@ -238,7 +238,7 @@ func (mq *MessageQuery) IDs(ctx context.Context) (ids []types.ChatID, err error)
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (mq *MessageQuery) IDsX(ctx context.Context) []types.ChatID {
+func (mq *MessageQuery) IDsX(ctx context.Context) []types.MessageID {
 	ids, err := mq.IDs(ctx)
 	if err != nil {
 		panic(err)

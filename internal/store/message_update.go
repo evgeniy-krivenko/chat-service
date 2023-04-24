@@ -69,9 +69,37 @@ func (mu *MessageUpdate) SetIsVisibleForClient(b bool) *MessageUpdate {
 	return mu
 }
 
+// SetNillableIsVisibleForClient sets the "is_visible_for_client" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableIsVisibleForClient(b *bool) *MessageUpdate {
+	if b != nil {
+		mu.SetIsVisibleForClient(*b)
+	}
+	return mu
+}
+
+// ClearIsVisibleForClient clears the value of the "is_visible_for_client" field.
+func (mu *MessageUpdate) ClearIsVisibleForClient() *MessageUpdate {
+	mu.mutation.ClearIsVisibleForClient()
+	return mu
+}
+
 // SetIsVisibleForManager sets the "is_visible_for_manager" field.
 func (mu *MessageUpdate) SetIsVisibleForManager(b bool) *MessageUpdate {
 	mu.mutation.SetIsVisibleForManager(b)
+	return mu
+}
+
+// SetNillableIsVisibleForManager sets the "is_visible_for_manager" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableIsVisibleForManager(b *bool) *MessageUpdate {
+	if b != nil {
+		mu.SetIsVisibleForManager(*b)
+	}
+	return mu
+}
+
+// ClearIsVisibleForManager clears the value of the "is_visible_for_manager" field.
+func (mu *MessageUpdate) ClearIsVisibleForManager() *MessageUpdate {
+	mu.mutation.ClearIsVisibleForManager()
 	return mu
 }
 
@@ -107,9 +135,57 @@ func (mu *MessageUpdate) SetIsBlocked(b bool) *MessageUpdate {
 	return mu
 }
 
+// SetNillableIsBlocked sets the "is_blocked" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableIsBlocked(b *bool) *MessageUpdate {
+	if b != nil {
+		mu.SetIsBlocked(*b)
+	}
+	return mu
+}
+
+// ClearIsBlocked clears the value of the "is_blocked" field.
+func (mu *MessageUpdate) ClearIsBlocked() *MessageUpdate {
+	mu.mutation.ClearIsBlocked()
+	return mu
+}
+
 // SetIsService sets the "is_service" field.
 func (mu *MessageUpdate) SetIsService(b bool) *MessageUpdate {
 	mu.mutation.SetIsService(b)
+	return mu
+}
+
+// SetNillableIsService sets the "is_service" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableIsService(b *bool) *MessageUpdate {
+	if b != nil {
+		mu.SetIsService(*b)
+	}
+	return mu
+}
+
+// ClearIsService clears the value of the "is_service" field.
+func (mu *MessageUpdate) ClearIsService() *MessageUpdate {
+	mu.mutation.ClearIsService()
+	return mu
+}
+
+// SetInitialRequestID sets the "initial_request_id" field.
+func (mu *MessageUpdate) SetInitialRequestID(ti types.RequestID) *MessageUpdate {
+	mu.mutation.SetInitialRequestID(ti)
+	return mu
+}
+
+// SetNillableInitialRequestID sets the "initial_request_id" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableInitialRequestID(ti *types.RequestID) *MessageUpdate {
+	if ti != nil {
+		mu.SetInitialRequestID(*ti)
+	}
+	return mu
+}
+
+// ClearInitialRequestID clears the value of the "initial_request_id" field.
+func (mu *MessageUpdate) ClearInitialRequestID() *MessageUpdate {
+	mu.mutation.ClearInitialRequestID()
 	return mu
 }
 
@@ -189,6 +265,11 @@ func (mu *MessageUpdate) check() error {
 			return &ValidationError{Name: "body", err: fmt.Errorf(`store: validator failed for field "Message.body": %w`, err)}
 		}
 	}
+	if v, ok := mu.mutation.InitialRequestID(); ok {
+		if err := v.Validate(); err != nil {
+			return &ValidationError{Name: "initial_request_id", err: fmt.Errorf(`store: validator failed for field "Message.initial_request_id": %w`, err)}
+		}
+	}
 	if _, ok := mu.mutation.ChatID(); mu.mutation.ChatCleared() && !ok {
 		return errors.New(`store: clearing a required unique edge "Message.chat"`)
 	}
@@ -219,8 +300,14 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := mu.mutation.IsVisibleForClient(); ok {
 		_spec.SetField(message.FieldIsVisibleForClient, field.TypeBool, value)
 	}
+	if mu.mutation.IsVisibleForClientCleared() {
+		_spec.ClearField(message.FieldIsVisibleForClient, field.TypeBool)
+	}
 	if value, ok := mu.mutation.IsVisibleForManager(); ok {
 		_spec.SetField(message.FieldIsVisibleForManager, field.TypeBool, value)
+	}
+	if mu.mutation.IsVisibleForManagerCleared() {
+		_spec.ClearField(message.FieldIsVisibleForManager, field.TypeBool)
 	}
 	if value, ok := mu.mutation.Body(); ok {
 		_spec.SetField(message.FieldBody, field.TypeString, value)
@@ -234,8 +321,20 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := mu.mutation.IsBlocked(); ok {
 		_spec.SetField(message.FieldIsBlocked, field.TypeBool, value)
 	}
+	if mu.mutation.IsBlockedCleared() {
+		_spec.ClearField(message.FieldIsBlocked, field.TypeBool)
+	}
 	if value, ok := mu.mutation.IsService(); ok {
 		_spec.SetField(message.FieldIsService, field.TypeBool, value)
+	}
+	if mu.mutation.IsServiceCleared() {
+		_spec.ClearField(message.FieldIsService, field.TypeBool)
+	}
+	if value, ok := mu.mutation.InitialRequestID(); ok {
+		_spec.SetField(message.FieldInitialRequestID, field.TypeUUID, value)
+	}
+	if mu.mutation.InitialRequestIDCleared() {
+		_spec.ClearField(message.FieldInitialRequestID, field.TypeUUID)
 	}
 	if mu.mutation.ChatCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -353,9 +452,37 @@ func (muo *MessageUpdateOne) SetIsVisibleForClient(b bool) *MessageUpdateOne {
 	return muo
 }
 
+// SetNillableIsVisibleForClient sets the "is_visible_for_client" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableIsVisibleForClient(b *bool) *MessageUpdateOne {
+	if b != nil {
+		muo.SetIsVisibleForClient(*b)
+	}
+	return muo
+}
+
+// ClearIsVisibleForClient clears the value of the "is_visible_for_client" field.
+func (muo *MessageUpdateOne) ClearIsVisibleForClient() *MessageUpdateOne {
+	muo.mutation.ClearIsVisibleForClient()
+	return muo
+}
+
 // SetIsVisibleForManager sets the "is_visible_for_manager" field.
 func (muo *MessageUpdateOne) SetIsVisibleForManager(b bool) *MessageUpdateOne {
 	muo.mutation.SetIsVisibleForManager(b)
+	return muo
+}
+
+// SetNillableIsVisibleForManager sets the "is_visible_for_manager" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableIsVisibleForManager(b *bool) *MessageUpdateOne {
+	if b != nil {
+		muo.SetIsVisibleForManager(*b)
+	}
+	return muo
+}
+
+// ClearIsVisibleForManager clears the value of the "is_visible_for_manager" field.
+func (muo *MessageUpdateOne) ClearIsVisibleForManager() *MessageUpdateOne {
+	muo.mutation.ClearIsVisibleForManager()
 	return muo
 }
 
@@ -391,9 +518,57 @@ func (muo *MessageUpdateOne) SetIsBlocked(b bool) *MessageUpdateOne {
 	return muo
 }
 
+// SetNillableIsBlocked sets the "is_blocked" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableIsBlocked(b *bool) *MessageUpdateOne {
+	if b != nil {
+		muo.SetIsBlocked(*b)
+	}
+	return muo
+}
+
+// ClearIsBlocked clears the value of the "is_blocked" field.
+func (muo *MessageUpdateOne) ClearIsBlocked() *MessageUpdateOne {
+	muo.mutation.ClearIsBlocked()
+	return muo
+}
+
 // SetIsService sets the "is_service" field.
 func (muo *MessageUpdateOne) SetIsService(b bool) *MessageUpdateOne {
 	muo.mutation.SetIsService(b)
+	return muo
+}
+
+// SetNillableIsService sets the "is_service" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableIsService(b *bool) *MessageUpdateOne {
+	if b != nil {
+		muo.SetIsService(*b)
+	}
+	return muo
+}
+
+// ClearIsService clears the value of the "is_service" field.
+func (muo *MessageUpdateOne) ClearIsService() *MessageUpdateOne {
+	muo.mutation.ClearIsService()
+	return muo
+}
+
+// SetInitialRequestID sets the "initial_request_id" field.
+func (muo *MessageUpdateOne) SetInitialRequestID(ti types.RequestID) *MessageUpdateOne {
+	muo.mutation.SetInitialRequestID(ti)
+	return muo
+}
+
+// SetNillableInitialRequestID sets the "initial_request_id" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableInitialRequestID(ti *types.RequestID) *MessageUpdateOne {
+	if ti != nil {
+		muo.SetInitialRequestID(*ti)
+	}
+	return muo
+}
+
+// ClearInitialRequestID clears the value of the "initial_request_id" field.
+func (muo *MessageUpdateOne) ClearInitialRequestID() *MessageUpdateOne {
+	muo.mutation.ClearInitialRequestID()
 	return muo
 }
 
@@ -486,6 +661,11 @@ func (muo *MessageUpdateOne) check() error {
 			return &ValidationError{Name: "body", err: fmt.Errorf(`store: validator failed for field "Message.body": %w`, err)}
 		}
 	}
+	if v, ok := muo.mutation.InitialRequestID(); ok {
+		if err := v.Validate(); err != nil {
+			return &ValidationError{Name: "initial_request_id", err: fmt.Errorf(`store: validator failed for field "Message.initial_request_id": %w`, err)}
+		}
+	}
 	if _, ok := muo.mutation.ChatID(); muo.mutation.ChatCleared() && !ok {
 		return errors.New(`store: clearing a required unique edge "Message.chat"`)
 	}
@@ -533,8 +713,14 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 	if value, ok := muo.mutation.IsVisibleForClient(); ok {
 		_spec.SetField(message.FieldIsVisibleForClient, field.TypeBool, value)
 	}
+	if muo.mutation.IsVisibleForClientCleared() {
+		_spec.ClearField(message.FieldIsVisibleForClient, field.TypeBool)
+	}
 	if value, ok := muo.mutation.IsVisibleForManager(); ok {
 		_spec.SetField(message.FieldIsVisibleForManager, field.TypeBool, value)
+	}
+	if muo.mutation.IsVisibleForManagerCleared() {
+		_spec.ClearField(message.FieldIsVisibleForManager, field.TypeBool)
 	}
 	if value, ok := muo.mutation.Body(); ok {
 		_spec.SetField(message.FieldBody, field.TypeString, value)
@@ -548,8 +734,20 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 	if value, ok := muo.mutation.IsBlocked(); ok {
 		_spec.SetField(message.FieldIsBlocked, field.TypeBool, value)
 	}
+	if muo.mutation.IsBlockedCleared() {
+		_spec.ClearField(message.FieldIsBlocked, field.TypeBool)
+	}
 	if value, ok := muo.mutation.IsService(); ok {
 		_spec.SetField(message.FieldIsService, field.TypeBool, value)
+	}
+	if muo.mutation.IsServiceCleared() {
+		_spec.ClearField(message.FieldIsService, field.TypeBool)
+	}
+	if value, ok := muo.mutation.InitialRequestID(); ok {
+		_spec.SetField(message.FieldInitialRequestID, field.TypeUUID, value)
+	}
+	if muo.mutation.InitialRequestIDCleared() {
+		_spec.ClearField(message.FieldInitialRequestID, field.TypeUUID)
 	}
 	if muo.mutation.ChatCleared() {
 		edge := &sqlgraph.EdgeSpec{

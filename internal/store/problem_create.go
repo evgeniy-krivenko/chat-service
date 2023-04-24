@@ -35,6 +35,14 @@ func (pc *ProblemCreate) SetManagerID(ti types.UserID) *ProblemCreate {
 	return pc
 }
 
+// SetNillableManagerID sets the "manager_id" field if the given value is not nil.
+func (pc *ProblemCreate) SetNillableManagerID(ti *types.UserID) *ProblemCreate {
+	if ti != nil {
+		pc.SetManagerID(*ti)
+	}
+	return pc
+}
+
 // SetResolvedAt sets the "resolved_at" field.
 func (pc *ProblemCreate) SetResolvedAt(t time.Time) *ProblemCreate {
 	pc.mutation.SetResolvedAt(t)
@@ -78,14 +86,14 @@ func (pc *ProblemCreate) SetNillableID(ti *types.ProblemID) *ProblemCreate {
 }
 
 // AddMessageIDs adds the "messages" edge to the Message entity by IDs.
-func (pc *ProblemCreate) AddMessageIDs(ids ...types.ChatID) *ProblemCreate {
+func (pc *ProblemCreate) AddMessageIDs(ids ...types.MessageID) *ProblemCreate {
 	pc.mutation.AddMessageIDs(ids...)
 	return pc
 }
 
 // AddMessages adds the "messages" edges to the Message entity.
 func (pc *ProblemCreate) AddMessages(m ...*Message) *ProblemCreate {
-	ids := make([]types.ChatID, len(m))
+	ids := make([]types.MessageID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
@@ -151,9 +159,6 @@ func (pc *ProblemCreate) check() error {
 		if err := v.Validate(); err != nil {
 			return &ValidationError{Name: "chat_id", err: fmt.Errorf(`store: validator failed for field "Problem.chat_id": %w`, err)}
 		}
-	}
-	if _, ok := pc.mutation.ManagerID(); !ok {
-		return &ValidationError{Name: "manager_id", err: errors.New(`store: missing required field "Problem.manager_id"`)}
 	}
 	if v, ok := pc.mutation.ManagerID(); ok {
 		if err := v.Validate(); err != nil {
