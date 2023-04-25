@@ -22,4 +22,3 @@ func New(opts Options) (*Repo, error) {
 
 	return &Repo{Options: opts}, nil
 }
-

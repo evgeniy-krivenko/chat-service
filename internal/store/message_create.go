@@ -49,6 +49,14 @@ func (mc *MessageCreate) SetProblemID(ti types.ProblemID) *MessageCreate {
 	return mc
 }
 
+// SetNillableProblemID sets the "problem_id" field if the given value is not nil.
+func (mc *MessageCreate) SetNillableProblemID(ti *types.ProblemID) *MessageCreate {
+	if ti != nil {
+		mc.SetProblemID(*ti)
+	}
+	return mc
+}
+
 // SetIsVisibleForClient sets the "is_visible_for_client" field.
 func (mc *MessageCreate) SetIsVisibleForClient(b bool) *MessageCreate {
 	mc.mutation.SetIsVisibleForClient(b)
@@ -237,9 +245,6 @@ func (mc *MessageCreate) check() error {
 			return &ValidationError{Name: "chat_id", err: fmt.Errorf(`store: validator failed for field "Message.chat_id": %w`, err)}
 		}
 	}
-	if _, ok := mc.mutation.ProblemID(); !ok {
-		return &ValidationError{Name: "problem_id", err: errors.New(`store: missing required field "Message.problem_id"`)}
-	}
 	if v, ok := mc.mutation.ProblemID(); ok {
 		if err := v.Validate(); err != nil {
 			return &ValidationError{Name: "problem_id", err: fmt.Errorf(`store: validator failed for field "Message.problem_id": %w`, err)}
@@ -268,9 +273,6 @@ func (mc *MessageCreate) check() error {
 	}
 	if _, ok := mc.mutation.ChatID(); !ok {
 		return &ValidationError{Name: "chat", err: errors.New(`store: missing required edge "Message.chat"`)}
-	}
-	if _, ok := mc.mutation.ProblemID(); !ok {
-		return &ValidationError{Name: "problem", err: errors.New(`store: missing required edge "Message.problem"`)}
 	}
 	return nil
 }

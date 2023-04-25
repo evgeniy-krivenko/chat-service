@@ -33,7 +33,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "initial_request_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "chat_id", Type: field.TypeUUID},
-		{Name: "problem_id", Type: field.TypeUUID},
+		{Name: "problem_id", Type: field.TypeUUID, Nullable: true},
 	}
 	// MessagesTable holds the schema information for the "messages" table.
 	MessagesTable = &schema.Table{
@@ -51,7 +51,14 @@ var (
 				Symbol:     "messages_problems_messages",
 				Columns:    []*schema.Column{MessagesColumns[11]},
 				RefColumns: []*schema.Column{ProblemsColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "message_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[8]},
 			},
 		},
 	}

@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
@@ -26,7 +27,8 @@ func (Message) Fields() []ent.Field {
 		field.UUID("author_id", types.UserID{}).
 			Optional(),
 		field.UUID("chat_id", types.ChatID{}),
-		field.UUID("problem_id", types.ProblemID{}),
+		field.UUID("problem_id", types.ProblemID{}).
+			Optional(),
 		field.Bool("is_visible_for_client").
 			Optional(),
 		field.Bool("is_visible_for_manager").
@@ -64,7 +66,13 @@ func (Message) Edges() []ent.Edge {
 		edge.From("problem", Problem.Type).
 			Ref("messages").
 			Unique().
-			Field("problem_id").
-			Required(),
+			Field("problem_id"),
+	}
+}
+
+// Indexes of the Message.
+func (Message) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("created_at"),
 	}
 }

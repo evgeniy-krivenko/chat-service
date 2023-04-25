@@ -63,6 +63,20 @@ func (mu *MessageUpdate) SetProblemID(ti types.ProblemID) *MessageUpdate {
 	return mu
 }
 
+// SetNillableProblemID sets the "problem_id" field if the given value is not nil.
+func (mu *MessageUpdate) SetNillableProblemID(ti *types.ProblemID) *MessageUpdate {
+	if ti != nil {
+		mu.SetProblemID(*ti)
+	}
+	return mu
+}
+
+// ClearProblemID clears the value of the "problem_id" field.
+func (mu *MessageUpdate) ClearProblemID() *MessageUpdate {
+	mu.mutation.ClearProblemID()
+	return mu
+}
+
 // SetIsVisibleForClient sets the "is_visible_for_client" field.
 func (mu *MessageUpdate) SetIsVisibleForClient(b bool) *MessageUpdate {
 	mu.mutation.SetIsVisibleForClient(b)
@@ -273,9 +287,6 @@ func (mu *MessageUpdate) check() error {
 	if _, ok := mu.mutation.ChatID(); mu.mutation.ChatCleared() && !ok {
 		return errors.New(`store: clearing a required unique edge "Message.chat"`)
 	}
-	if _, ok := mu.mutation.ProblemID(); mu.mutation.ProblemCleared() && !ok {
-		return errors.New(`store: clearing a required unique edge "Message.problem"`)
-	}
 	return nil
 }
 
@@ -443,6 +454,20 @@ func (muo *MessageUpdateOne) SetChatID(ti types.ChatID) *MessageUpdateOne {
 // SetProblemID sets the "problem_id" field.
 func (muo *MessageUpdateOne) SetProblemID(ti types.ProblemID) *MessageUpdateOne {
 	muo.mutation.SetProblemID(ti)
+	return muo
+}
+
+// SetNillableProblemID sets the "problem_id" field if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableProblemID(ti *types.ProblemID) *MessageUpdateOne {
+	if ti != nil {
+		muo.SetProblemID(*ti)
+	}
+	return muo
+}
+
+// ClearProblemID clears the value of the "problem_id" field.
+func (muo *MessageUpdateOne) ClearProblemID() *MessageUpdateOne {
+	muo.mutation.ClearProblemID()
 	return muo
 }
 
@@ -668,9 +693,6 @@ func (muo *MessageUpdateOne) check() error {
 	}
 	if _, ok := muo.mutation.ChatID(); muo.mutation.ChatCleared() && !ok {
 		return errors.New(`store: clearing a required unique edge "Message.chat"`)
-	}
-	if _, ok := muo.mutation.ProblemID(); muo.mutation.ProblemCleared() && !ok {
-		return errors.New(`store: clearing a required unique edge "Message.problem"`)
 	}
 	return nil
 }

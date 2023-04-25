@@ -201,6 +201,16 @@ func ProblemIDNotIn(vs ...types.ProblemID) predicate.Message {
 	return predicate.Message(sql.FieldNotIn(FieldProblemID, vs...))
 }
 
+// ProblemIDIsNil applies the IsNil predicate on the "problem_id" field.
+func ProblemIDIsNil() predicate.Message {
+	return predicate.Message(sql.FieldIsNull(FieldProblemID))
+}
+
+// ProblemIDNotNil applies the NotNil predicate on the "problem_id" field.
+func ProblemIDNotNil() predicate.Message {
+	return predicate.Message(sql.FieldNotNull(FieldProblemID))
+}
+
 // IsVisibleForClientEQ applies the EQ predicate on the "is_visible_for_client" field.
 func IsVisibleForClientEQ(v bool) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldIsVisibleForClient, v))

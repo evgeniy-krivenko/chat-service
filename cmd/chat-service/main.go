@@ -15,8 +15,11 @@ import (
 	keycloakclient "github.com/evgeniy-krivenko/chat-service/internal/clients/keycloak"
 	"github.com/evgeniy-krivenko/chat-service/internal/config"
 	"github.com/evgeniy-krivenko/chat-service/internal/logger"
+	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
 	serverdebug "github.com/evgeniy-krivenko/chat-service/internal/server-debug"
+	"github.com/evgeniy-krivenko/chat-service/internal/store"
+	"github.com/evgeniy-krivenko/chat-service/internal/store/migrate"
 )
 
 var configPath = flag.String("config", "configs/config.toml", "Path to config file")
@@ -66,6 +69,33 @@ func run() (errReturned error) {
 
 	clientUserAgent := fmt.Sprintf("chat-service/%s", buildinfo.BuildInfo.Main.Version)
 
+	storeClient, err := store.NewPSQLClient(store.NewPSQLOptions(
+		cfg.DB.Address,
+		cfg.DB.User,
+		cfg.DB.Password,
+		cfg.DB.Database,
+		store.WithDebug(cfg.DB.DebugMode),
+	))
+	if err != nil {
+		return fmt.Errorf("init psql client: %v", err)
+	}
+	defer storeClient.Close()
+
+	if err := storeClient.Schema.Create(
+		ctx,
+		migrate.WithDropIndex(true),
+		migrate.WithDropColumn(true),
+	); err != nil {
+		return fmt.Errorf("create migration: %v", err)
+	}
+
+	database := store.NewDatabase(storeClient)
+
+	repo, err := messagesrepo.New(messagesrepo.NewOptions(database))
+	if err != nil {
+		return fmt.Errorf("init message repo: %v", err)
+	}
+
 	keycloakClient, err := keycloakclient.New(keycloakclient.NewOptions(
 		cfg.Clients.Keycloak.BasePath,
 		cfg.Clients.Keycloak.Realm,
@@ -86,6 +116,8 @@ func run() (errReturned error) {
 		keycloakClient,
 		cfg.Servers.Client.RequiredAccess.Resource,
 		cfg.Servers.Client.RequiredAccess.Role,
+		repo,
+		cfg.Global.IsProduction(),
 	)
 	if err != nil {
 		return fmt.Errorf("init server client: %v", err)

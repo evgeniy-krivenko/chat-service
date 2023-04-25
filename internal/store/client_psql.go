@@ -3,15 +3,14 @@ package store
 import (
 	"context"
 	"database/sql"
-	"entgo.io/ent"
 	"fmt"
-	"go.uber.org/zap"
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
-
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v4/stdlib" //nolint:blank-imports
+	"go.uber.org/zap"
 )
 
 //go:generate options-gen -out-filename=client_psql_options.gen.go -from-struct=PSQLOptions

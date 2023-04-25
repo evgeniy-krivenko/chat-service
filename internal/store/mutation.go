@@ -839,9 +839,22 @@ func (m *MessageMutation) OldProblemID(ctx context.Context) (v types.ProblemID, 
 	return oldValue.ProblemID, nil
 }
 
+// ClearProblemID clears the value of the "problem_id" field.
+func (m *MessageMutation) ClearProblemID() {
+	m.problem = nil
+	m.clearedFields[message.FieldProblemID] = struct{}{}
+}
+
+// ProblemIDCleared returns if the "problem_id" field was cleared in this mutation.
+func (m *MessageMutation) ProblemIDCleared() bool {
+	_, ok := m.clearedFields[message.FieldProblemID]
+	return ok
+}
+
 // ResetProblemID resets all changes to the "problem_id" field.
 func (m *MessageMutation) ResetProblemID() {
 	m.problem = nil
+	delete(m.clearedFields, message.FieldProblemID)
 }
 
 // SetIsVisibleForClient sets the "is_visible_for_client" field.
@@ -1243,7 +1256,7 @@ func (m *MessageMutation) ClearProblem() {
 
 // ProblemCleared reports if the "problem" edge to the Problem entity was cleared.
 func (m *MessageMutation) ProblemCleared() bool {
-	return m.clearedproblem
+	return m.ProblemIDCleared() || m.clearedproblem
 }
 
 // ProblemIDs returns the "problem" edge IDs in the mutation.
@@ -1510,6 +1523,9 @@ func (m *MessageMutation) ClearedFields() []string {
 	if m.FieldCleared(message.FieldAuthorID) {
 		fields = append(fields, message.FieldAuthorID)
 	}
+	if m.FieldCleared(message.FieldProblemID) {
+		fields = append(fields, message.FieldProblemID)
+	}
 	if m.FieldCleared(message.FieldIsVisibleForClient) {
 		fields = append(fields, message.FieldIsVisibleForClient)
 	}
@@ -1544,6 +1560,9 @@ func (m *MessageMutation) ClearField(name string) error {
 	switch name {
 	case message.FieldAuthorID:
 		m.ClearAuthorID()
+		return nil
+	case message.FieldProblemID:
+		m.ClearProblemID()
 		return nil
 	case message.FieldIsVisibleForClient:
 		m.ClearIsVisibleForClient()
