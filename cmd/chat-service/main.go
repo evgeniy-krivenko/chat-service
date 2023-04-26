@@ -11,8 +11,11 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/evgeniy-krivenko/chat-service/internal/buildinfo"
+	keycloakclient "github.com/evgeniy-krivenko/chat-service/internal/clients/keycloak"
 	"github.com/evgeniy-krivenko/chat-service/internal/config"
 	"github.com/evgeniy-krivenko/chat-service/internal/logger"
+	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
 	serverdebug "github.com/evgeniy-krivenko/chat-service/internal/server-debug"
 )
 
@@ -37,7 +40,9 @@ func run() (errReturned error) {
 
 	logOpts := logger.NewOptions(
 		cfg.Log.Level,
-		logger.WithProductionMode(cfg.Global.Env == "prod"),
+		logger.WithProductionMode(cfg.Global.IsProduction()),
+		logger.WithDns(cfg.Sentry.DNS),
+		logger.WithEnv(cfg.Global.Env),
 	)
 
 	err = logger.Init(logOpts)
@@ -46,9 +51,44 @@ func run() (errReturned error) {
 	}
 	defer logger.Sync()
 
-	srvDebug, err := serverdebug.New(serverdebug.NewOptions(cfg.Servers.Debug.Addr))
+	swaggerClientV1, err := clientv1.GetSwagger()
+	if err != nil {
+		return fmt.Errorf("get client swagger: %v", err)
+	}
+
+	srvDebug, err := serverdebug.New(serverdebug.NewOptions(
+		cfg.Servers.Debug.Addr,
+		swaggerClientV1,
+	))
 	if err != nil {
 		return fmt.Errorf("init debug server: %v", err)
+	}
+
+	clientUserAgent := fmt.Sprintf("chat-service/%s", buildinfo.BuildInfo.Main.Version)
+
+	keycloakClient, err := keycloakclient.New(keycloakclient.NewOptions(
+		cfg.Clients.Keycloak.BasePath,
+		cfg.Clients.Keycloak.Realm,
+		cfg.Clients.Keycloak.ClientID,
+		cfg.Clients.Keycloak.ClientSecret,
+		keycloakclient.WithDebugMode(cfg.Clients.Keycloak.DebugMode),
+		keycloakclient.WithUserAgent(clientUserAgent),
+		keycloakclient.WithProductionMode(cfg.Global.IsProduction()),
+	))
+	if err != nil {
+		return fmt.Errorf("init keycloak client: %v", err)
+	}
+
+	srvClient, err := initServerClient(
+		cfg.Servers.Client.Add,
+		cfg.Servers.Client.AllowOrigins,
+		swaggerClientV1,
+		keycloakClient,
+		cfg.Servers.Client.RequiredAccess.Resource,
+		cfg.Servers.Client.RequiredAccess.Role,
+	)
+	if err != nil {
+		return fmt.Errorf("init server client: %v", err)
 	}
 
 	eg, ctx := errgroup.WithContext(ctx)
@@ -56,6 +96,7 @@ func run() (errReturned error) {
 	// Run servers.
 	eg.Go(func() error { return srvDebug.Run(ctx) })
 
+	eg.Go(func() error { return srvClient.Run(ctx) })
 	// Run services.
 	// Ждут своего часа.
 	// ...

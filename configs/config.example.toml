@@ -7,3 +7,22 @@ level = "info"
 [servers]
 [servers.debug]
 addr = ":8079"
+
+[servers.client]
+addr = ":8080"
+allow_origins = ["http://localhost:3011", "http://localhost:3000"]
+
+[servers.client.required_access]
+resource = "some-resource"
+role = "some-role"
+
+[sentry]
+DNS = "https://example.com"
+
+[clients]
+[clients.keycloak]
+base_path = "http://localhost:3010"
+realm = "realm"
+client_id = "client_id"
+client_secret = "secret"
+debug_mode = false
