@@ -46,7 +46,7 @@ func run() (errReturned error) {
 	logOpts := logger.NewOptions(
 		cfg.Log.Level,
 		logger.WithProductionMode(cfg.Global.IsProduction()),
-		logger.WithDns(cfg.Sentry.DNS),
+		logger.WithDsnSentry(cfg.Sentry.DSN),
 		logger.WithEnv(cfg.Global.Env),
 	)
 
@@ -142,8 +142,8 @@ func run() (errReturned error) {
 
 	// Run servers.
 	eg.Go(func() error { return srvDebug.Run(ctx) })
-
 	eg.Go(func() error { return srvClient.Run(ctx) })
+
 	// Run services.
 	// Ждут своего часа.
 	// ...

@@ -17,7 +17,7 @@ resource = "some-resource"
 role = "some-role"
 
 [sentry]
-DNS = "https://example.com"
+dsn = "https://example.com"
 
 [clients]
 [clients.keycloak]

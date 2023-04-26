@@ -1,9 +1,7 @@
 package schema
 
 import (
-	"fmt"
 	"time"
-	"unicode/utf8"
 
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
@@ -34,12 +32,7 @@ func (Message) Fields() []ent.Field {
 		field.Bool("is_visible_for_manager").
 			Optional(),
 		field.String("body").
-			Validate(func(s string) error {
-				if utf8.RuneCountInString(s) > 2000 {
-					return fmt.Errorf("value is more than the max length")
-				}
-				return nil
-			}).
+			MaxLen(2000).
 			NotEmpty(),
 		field.Time("checked_at").
 			Optional(),

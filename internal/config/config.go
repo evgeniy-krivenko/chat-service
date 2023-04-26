@@ -42,7 +42,7 @@ type RequiredAccess struct {
 }
 
 type SentryConfig struct {
-	DNS string `toml:"DNS" validate:"url"`
+	DSN string `toml:"dsn" validate:"url"`
 }
 
 type ClientsConfig struct {
@@ -52,7 +52,7 @@ type ClientsConfig struct {
 type KeycloakConfig struct {
 	BasePath     string `toml:"base_path" validate:"url"`
 	Realm        string `toml:"realm" validate:"required"`
-	ClientID     string `toml:"client_id" validate:"required"` //nolint:tagliatelle
+	ClientID     string `toml:"client_id" validate:"required"`
 	ClientSecret string `toml:"client_secret" validate:"required"`
 	DebugMode    bool   `toml:"debug_mode" validate:"boolean"`
 }
