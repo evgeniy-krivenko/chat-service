@@ -51,7 +51,8 @@ func (Message) Fields() []ent.Field {
 			Default(time.Now).
 			Immutable(),
 		field.UUID("initial_request_id", types.RequestID{}).
-			Optional(),
+			Optional().
+			Unique(),
 	}
 }
 

@@ -8,6 +8,25 @@ servers:
     description: Development server
 
 paths:
+  /sendMessage:
+    post:
+      description: Send new message to the chat.
+      parameters:
+        - $ref: "#/components/parameters/XRequestIDHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        '200':
+          description: Message created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendMessageResponse"
+
   /getHistory:
     post:
       description: Get chat history.
@@ -65,39 +84,31 @@ components:
     ErrorCode:
       type: integer
       description: contains HTTP error codes and specific business logic error codes (the last must be >= 1000).
+      enum:
+        - 1000
+        - 1001
+      x-enum-varnames:
+        - ErrorCodeCreateChatError
+        - ErrorCodeCreateProblemError
       minimum: 400
 
-    # /getHistory
-
-    GetHistoryRequest:
+    SendMessageRequest:
+      required: [ messageBody ]
       properties:
-        pageSize:
-          type: integer
-          minimum: 10
-          maximum: 100
-        cursor:
+        messageBody:
           type: string
+          minLength: 1
+          maxLength: 2000
 
-    GetHistoryResponse:
-      required: [ data, next ]
+    SendMessageResponse:
       properties:
         data:
-          $ref: "#/components/schemas/MessagesPage"
+          $ref: "#/components/schemas/MessageHeader"
         error:
           $ref: "#/components/schemas/Error"
 
-    MessagesPage:
-      required: [ messages, next ]
-      properties:
-        messages:
-          type: array
-          items:
-            $ref: "#/components/schemas/Message"
-        next:
-          type: string
-
-    Message:
-      required: [ id, body, createdAt, isReceived, isBlocked, isService ]
+    MessageHeader:
+      required: [ id, createdAt ]
       properties:
         id:
           type: string
@@ -111,14 +122,47 @@ components:
           x-go-type: types.UserID
           x-go-type-import:
             path: "github.com/evgeniy-krivenko/chat-service/internal/types"
-        body:
-          type: string
         createdAt:
           type: string
           format: date-time
-        isReceived:
-          type: boolean
-        isBlocked:
-          type: boolean
-        isService:
-          type: boolean
+
+    # /getHistory
+
+    GetHistoryRequest:
+      properties:
+        pageSize:
+          type: integer
+          minimum: 10
+          maximum: 100
+        cursor:
+          type: string
+
+    GetHistoryResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/MessagesPage"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    MessagesPage:
+      required: [ messages, next ]
+      properties:
+        messages:
+          type: array
+          items: { $ref: "#/components/schemas/Message" }
+        next:
+          type: string
+
+    Message:
+      allOf:
+        - $ref: "#/components/schemas/MessageHeader"
+        - required: [ body, isReceived, isBlocked, isService ]
+          properties:
+            body:
+              type: string
+            isReceived:
+              type: boolean
+            isBlocked:
+              type: boolean
+            isService:
+              type: boolean

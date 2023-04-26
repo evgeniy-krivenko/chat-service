@@ -101,7 +101,7 @@ tasks:
 
   ent:gen:
     cmds:
-      - .{{.DEV_TOOLS_PATH}}/ent generate {{.SCHEMA_PATH}} --template ./internal/store/templates
+      - .{{.DEV_TOOLS_PATH}}/ent generate {{.SCHEMA_PATH}} --feature sql/upsert --template ./internal/store/templates
       - task: tidy
 
   ent:new:

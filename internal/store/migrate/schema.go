@@ -31,7 +31,7 @@ var (
 		{Name: "is_blocked", Type: field.TypeBool, Nullable: true},
 		{Name: "is_service", Type: field.TypeBool, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "initial_request_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "initial_request_id", Type: field.TypeUUID, Unique: true, Nullable: true},
 		{Name: "chat_id", Type: field.TypeUUID},
 		{Name: "problem_id", Type: field.TypeUUID, Nullable: true},
 	}
@@ -81,6 +81,13 @@ var (
 				Columns:    []*schema.Column{ProblemsColumns[4]},
 				RefColumns: []*schema.Column{ChatsColumns[0]},
 				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "problem_chat_id_resolved_at",
+				Unique:  true,
+				Columns: []*schema.Column{ProblemsColumns[4], ProblemsColumns[2]},
 			},
 		},
 	}

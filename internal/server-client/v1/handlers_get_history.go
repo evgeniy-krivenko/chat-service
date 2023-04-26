@@ -23,7 +23,7 @@ func (h Handlers) PostGetHistory(
 	var req GetHistoryRequest
 	err := eCtx.Bind(&req)
 	if err != nil {
-		return errs.NewServerError(http.StatusBadRequest, "error while binding request", err)
+		return errs.NewServerError(http.StatusBadRequest, "bind request", err)
 	}
 
 	useCaseResponse, err := h.getHistory.Handle(ctx, gethistory.Request{
@@ -43,7 +43,7 @@ func (h Handlers) PostGetHistory(
 		return errs.NewServerError(http.StatusInternalServerError, "unknown error while get history", err)
 	}
 
-	page := MessagesPage{
+	page := &MessagesPage{
 		Messages: utils.Apply(useCaseResponse.Messages, adaptGetHistoryMsg),
 		Next:     useCaseResponse.NextCursor,
 	}
