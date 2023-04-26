@@ -17,8 +17,9 @@ vars:
     mvdan.cc/gofumpt@v0.4.0
     github.com/kazhuravlev/options-gen/cmd/options-gen@v0.28.4
     entgo.io/ent/cmd/ent@v0.11.10
-    github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4
+    github.com/deepmap/oapi-codegen/cmd/oapi-codegen@master
     github.com/golang/mock/mockgen@v1.6.0
+    github.com/onsi/ginkgo/v2/ginkgo@v2.9.2
 
   WORKDIR:
     sh: echo "$(pwd)"
@@ -53,9 +54,15 @@ vars:
 
   SCHEMA_PATH: ./internal/store/schema
 
+  # const for server code gen
   CLIENT_V1_SRC: ./api/client.v1.swagger.yml
   CLIENT_V1_DST: ./internal/server-client/v1/server.gen.go
   CLIENT_V1_PKG: clientv1
+
+  # const for e2e-client code gen
+  CLIENT_V1_E2E_DST: ./tests/e2e/api/client/v1/client.gen.go
+  CLIENT_V1_E2E_PKG: apiclientv1
+
 
   # swagger urls in docker container
   SWAGGER_DOCS_URLS: |
@@ -75,6 +82,10 @@ tasks:
   gen:api:
     cmds:
       - .{{.DEV_TOOLS_PATH}}/oapi-codegen -old-config-style -package {{.CLIENT_V1_PKG}} -generate types,server,spec {{.CLIENT_V1_SRC}} > {{.CLIENT_V1_DST}}
+
+  gen:e2e:
+    cmds:
+      - .{{.DEV_TOOLS_PATH}}/oapi-codegen --old-config-style -package {{.CLIENT_V1_E2E_PKG}} -generate types,client {{.CLIENT_V1_SRC}} > {{.CLIENT_V1_E2E_DST}}
 
   gen:types:
     cmds:
@@ -137,22 +148,22 @@ tasks:
   tests:
     cmds:
       - echo "- Tests"
-      - go test -v -race ./... {{.CLI_ARGS}}
+      - go test -race ./... {{.CLI_ARGS}}
 
   tests:integration:
-    env:
-      TEST_LOG_LEVEL: info
-      TEST_KEYCLOAK_REALM: Bank
-      TEST_KEYCLOAK_CLIENT_ID: integration-testing
-      TEST_KEYCLOAK_CLIENT_SECRET: 9RoNZ7i2xSAUeKPcht4aPFslZycfvK9I
-      TEST_KEYCLOAK_TEST_USER: integration-testing
-      TEST_KEYCLOAK_TEST_PASSWORD: 123456
-      TEST_PSQL_USER: chat-service
-      TEST_PSQL_PASSWORD: chat-service
-      TEST_PSQL_DEBUG: true
+    dotenv:
+      - .env
     cmds:
       - echo "- Integration tests"
       - go test -tags integration -count 1 -race ./...
+
+  tests:e2e:
+    dotenv:
+      - .env
+    cmds:
+      - echo "- End-to-end tests..."
+       # NOTE: It's important to run tests serial (without `-p` flag) – for correct `clientsPool` sharing.
+      - .{{.DEV_TOOLS_PATH}}/ginkgo --fail-fast --timeout=1m --tags e2e {{.CLI_ARGS}} ./tests/e2e
 
   build:
     cmds:
