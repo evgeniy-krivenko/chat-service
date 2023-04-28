@@ -43,6 +43,8 @@ vars:
     ProblemID
     UserID
     RequestID
+    JobID
+    FailedJobID
 
   TYPES_PKG: types
   TYPES_SRC: ./internal/types
@@ -100,7 +102,7 @@ tasks:
   ent:gen:
     cmds:
       - echo "Generate ent..."
-      - .{{.DEV_TOOLS_PATH}}/ent generate {{.SCHEMA_PATH}} --feature sql/upsert --template ./internal/store/templates
+      - .{{.DEV_TOOLS_PATH}}/ent generate {{.SCHEMA_PATH}} --feature sql/upsert,sql/lock --template ./internal/store/templates
       - task: tidy
     sources:
       - ./internal/store/schema/*.go
@@ -189,12 +191,6 @@ tasks:
         {{end -}}
         
   deps:
-    env:
-      SWAGGER_URLS: |
-        "[{{range $index, $url := .SWAGGER_DOCS_URLS | trim | splitLines -}}
-        {{if $index}},{{- end -}}
-        {{$url}}
-        {{- end}}]"
     cmds:
       - "{{.DOCKER_COMPOSE_CMD}} up -d"
 
