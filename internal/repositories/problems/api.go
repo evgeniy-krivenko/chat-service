@@ -31,17 +31,4 @@ func (r *Repo) CreateIfNotExists(ctx context.Context, chatID types.ChatID) (type
 	}
 
 	return existedProblemID, nil
-	// id, err := r.db.Problem(ctx).
-	//	Create().
-	//	SetChatID(chatID).
-	//	OnConflict(
-	//		sql.ConflictColumns(storeproblem.FieldChatID, storeproblem.FieldResolvedAt),
-	//	).
-	//	Update(func(upsert *store.ProblemUpsert) {
-	//		upsert.SetExcluded("id")
-	//		//upsert.SetIgnore("id")
-	//	}).
-	//	ID(ctx)
-
-	// return id, err
 }
