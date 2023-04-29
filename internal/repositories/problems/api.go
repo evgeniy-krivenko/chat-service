@@ -32,3 +32,12 @@ func (r *Repo) CreateIfNotExists(ctx context.Context, chatID types.ChatID) (type
 
 	return existedProblemID, nil
 }
+
+func (r *Repo) GetManagerOpenProblemsCount(ctx context.Context, managerID types.UserID) (int, error) {
+	return r.db.Problem(ctx).Query().
+		Where(
+			storeproblem.ManagerID(managerID),
+			storeproblem.ResolvedAtIsNil(),
+		).
+		Count(ctx)
+}
