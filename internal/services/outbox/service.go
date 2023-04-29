@@ -83,6 +83,7 @@ func (s *Service) Run(ctx context.Context) error {
 			}
 		}()
 	}
+	s.lg.Info("service run", zap.Int("workers", s.workers), zap.Duration("idle time", s.idleTime))
 	wg.Wait()
 	return nil
 }

@@ -13,6 +13,7 @@ import (
 	serverclient "github.com/evgeniy-krivenko/chat-service/internal/server-client"
 	"github.com/evgeniy-krivenko/chat-service/internal/server-client/errhandler"
 	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	gethistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-history"
 	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/send-message"
@@ -30,6 +31,7 @@ func initServerClient(
 	msgRepo *messagesrepo.Repo,
 	chatRepo *chatsrepo.Repo,
 	problemRepo *problemsrepo.Repo,
+	outboxSrv *outbox.Service,
 	db *store.Database,
 	isProduction bool,
 ) (*serverclient.Server, error) {
@@ -39,7 +41,8 @@ func initServerClient(
 	if err != nil {
 		return nil, fmt.Errorf("create get history usecase: %v", err)
 	}
-	sendMsgUseCase, err := sendmessage.New(sendmessage.NewOptions(chatRepo, msgRepo, problemRepo, db))
+
+	sendMsgUseCase, err := sendmessage.New(sendmessage.NewOptions(chatRepo, msgRepo, outboxSrv, problemRepo, db))
 	if err != nil {
 		return nil, fmt.Errorf("create send message usecase: %v", err)
 	}

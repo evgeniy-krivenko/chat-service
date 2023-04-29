@@ -16,10 +16,14 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/config"
 	"github.com/evgeniy-krivenko/chat-service/internal/logger"
 	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
+	jobsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/jobs"
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
 	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
 	serverdebug "github.com/evgeniy-krivenko/chat-service/internal/server-debug"
+	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
+	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/migrate"
 )
@@ -108,6 +112,46 @@ func run() (errReturned error) {
 		return fmt.Errorf("init problems repo: %v", err)
 	}
 
+	jobsRepo, err := jobsrepo.New(jobsrepo.NewOptions(database))
+	if err != nil {
+		return fmt.Errorf("init jobs repo: %v", err)
+	}
+
+	msgProducer, err := msgproducer.New(msgproducer.NewOptions(
+		msgproducer.NewKafkaWriter(
+			cfg.Services.MsgProducer.Brokers,
+			cfg.Services.MsgProducer.Topic,
+			cfg.Services.MsgProducer.BatchSize,
+		),
+		msgproducer.WithEncryptKey(cfg.Services.MsgProducer.EncryptKey),
+	))
+	if err != nil {
+		return fmt.Errorf("init msg producer: %v", err)
+	}
+
+	outboxService, err := outbox.New(outbox.NewOptions(
+		cfg.Services.Outbox.Workers,
+		cfg.Services.Outbox.IDLE,
+		cfg.Services.Outbox.ReserveFor,
+		jobsRepo,
+		database,
+	))
+	if err != nil {
+		return fmt.Errorf("init outbox service: %v", err)
+	}
+
+	sendClientMessageJob, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(
+		msgProducer,
+		msgRepo,
+	))
+	if err != nil {
+		return fmt.Errorf("create send client message job: %v", err)
+	}
+
+	if err := outboxService.RegisterJob(sendClientMessageJob); err != nil {
+		return fmt.Errorf("register send client message job: %v", err)
+	}
+
 	keycloakClient, err := keycloakclient.New(keycloakclient.NewOptions(
 		cfg.Clients.Keycloak.BasePath,
 		cfg.Clients.Keycloak.Realm,
@@ -131,6 +175,7 @@ func run() (errReturned error) {
 		msgRepo,
 		chatsRepo,
 		problemsRepo,
+		outboxService,
 		database,
 		cfg.Global.IsProduction(),
 	)
@@ -143,6 +188,7 @@ func run() (errReturned error) {
 	// Run servers.
 	eg.Go(func() error { return srvDebug.Run(ctx) })
 	eg.Go(func() error { return srvClient.Run(ctx) })
+	eg.Go(func() error { return outboxService.Run(ctx) })
 
 	// Run services.
 	// Ждут своего часа.

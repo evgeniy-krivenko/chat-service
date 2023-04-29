@@ -1,12 +1,15 @@
 package config
 
+import "time"
+
 type Config struct {
-	Global  GlobalConfig  `toml:"global"`
-	Log     LogConfig     `toml:"log"`
-	Servers ServersConfig `toml:"servers"`
-	Sentry  SentryConfig  `toml:"sentry"`
-	Clients ClientsConfig `toml:"clients"`
-	DB      DBConfig      `toml:"db"`
+	Global   GlobalConfig   `toml:"global"`
+	Log      LogConfig      `toml:"log"`
+	Servers  ServersConfig  `toml:"servers"`
+	Sentry   SentryConfig   `toml:"sentry"`
+	Clients  ClientsConfig  `toml:"clients"`
+	DB       DBConfig       `toml:"db"`
+	Services ServicesConfig `toml:"services"`
 }
 
 type GlobalConfig struct {
@@ -63,4 +66,22 @@ type DBConfig struct {
 	User      string `toml:"user" validate:"required"`
 	Password  string `toml:"password" validate:"required"`
 	DebugMode bool   `toml:"debug_mode"`
+}
+
+type ServicesConfig struct {
+	Outbox      OutboxConfig      `toml:"outbox"`
+	MsgProducer MsgProducerConfig `toml:"msg_producer"`
+}
+
+type OutboxConfig struct {
+	Workers    int           `toml:"workers" validate:"required,min=1"`
+	IDLE       time.Duration `toml:"idle_time" validate:"required,min=500ms,max=10s"`
+	ReserveFor time.Duration `toml:"reserve_for" validate:"required"`
+}
+
+type MsgProducerConfig struct {
+	Brokers    []string `toml:"brokers" validate:"required,gt=0,dive,required,hostname_port"`
+	Topic      string   `toml:"topic" validate:"required"`
+	BatchSize  int      `toml:"batch_size" validate:"required,min=1"`
+	EncryptKey string   `toml:"encrypt_key" validate:"omitempty,hexadecimal"`
 }

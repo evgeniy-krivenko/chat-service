@@ -34,3 +34,14 @@ password = "chat-service"
 database = "chat-service"
 debug_mode = true
 
+[services]
+[services.msg_producer]
+brokers = ["localhost:9092"]
+topic = "chat.messages"
+batch_size = 1
+encrypt_key = "68566D597133743677397A2443264629" # Leave it blank to disable encryption. hexdemical string
+
+[services.outbox]
+workers = 2
+idle_time = "1s"
+reserve_for = "5m"

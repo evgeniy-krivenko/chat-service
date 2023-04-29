@@ -3,8 +3,10 @@ package sendmessage
 import (
 	"context"
 	"errors"
+	"time"
 
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
+	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -18,6 +20,10 @@ var (
 
 type chatsRepository interface {
 	CreateIfNotExists(ctx context.Context, userID types.UserID) (types.ChatID, error)
+}
+
+type outboxService interface {
+	Put(ctx context.Context, name, payload string, availableAt time.Time) (types.JobID, error)
 }
 
 type messagesRepository interface {
@@ -42,10 +48,11 @@ type transactor interface {
 
 //go:generate options-gen -out-filename=usecase_options.gen.go -from-struct=Options
 type Options struct {
-	chatRepo    chatsRepository    `option:"mandatory" validation:"required"`
-	msgRepo     messagesRepository `option:"mandatory" validation:"required"`
-	problemRepo problemsRepository `option:"mandatory" validation:"required"`
-	txtor       transactor         `option:"mandatory" validation:"required"`
+	chatRepo    chatsRepository    `option:"mandatory" validate:"required"`
+	msgRepo     messagesRepository `option:"mandatory" validate:"required"`
+	outboxSrv   outboxService      `option:"mandatory" validate:"required"`
+	problemRepo problemsRepository `option:"mandatory" validate:"required"`
+	txtor       transactor         `option:"mandatory" validate:"required"`
 }
 
 type UseCase struct {
@@ -82,12 +89,13 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 			}
 
 			msg = newMsg
-			return nil
-		}
 
+			return u.putToOutbox(ctx, newMsg.ID)
+		}
 		if err != nil {
 			return err
 		}
+
 		msg = m
 		return nil
 	})
@@ -100,4 +108,18 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 		AuthorID:  msg.AuthorID,
 		CreatedAt: msg.CreatedAt,
 	}, nil
+}
+
+func (u UseCase) putToOutbox(ctx context.Context, msgID types.MessageID) error {
+	outboxPayload, err := sendclientmessagejob.MarshalPayload(msgID)
+	if err != nil {
+		return err
+	}
+
+	_, err = u.outboxSrv.Put(ctx, sendclientmessagejob.Name, outboxPayload, time.Now())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
