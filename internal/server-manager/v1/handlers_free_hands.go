@@ -1,30 +1,31 @@
 package managerv1
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/evgeniy-krivenko/chat-service/internal/errors"
+	errs "github.com/evgeniy-krivenko/chat-service/internal/errors"
 	"github.com/evgeniy-krivenko/chat-service/internal/middlewares"
-	canreceiveproblems "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/can-receive-problems"
+	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
 )
 
-func (h Handlers) PostGetFreeHandsBtnAvailability(eCtx echo.Context, params PostGetFreeHandsBtnAvailabilityParams) error {
+func (h Handlers) PostFreeHands(eCtx echo.Context, params PostFreeHandsParams) error {
 	ctx := eCtx.Request().Context()
 	managerID := middlewares.MustUserID(eCtx)
 
-	useCaseResponse, err := h.canReceiveProblemUseCase.Handle(ctx, canreceiveproblems.Request{
+	err := h.freeHandsUseCase.Handle(ctx, freehands.Request{
 		ID:        params.XRequestID,
 		ManagerID: managerID,
 	})
+	if errors.Is(err, freehands.ErrManagerOverloaded) {
+		return errs.NewServerError(ErrorCodeManagerOverloaded, "manager overloaded", err)
+	}
+
 	if err != nil {
-		return errors.NewServerError[int](http.StatusInternalServerError, "internal error", err)
+		return errs.NewServerError(http.StatusInternalServerError, "internal error", err)
 	}
 
-	response := GetFreeHandsBtnAvailability{
-		Available: useCaseResponse.Result,
-	}
-
-	return eCtx.JSON(http.StatusOK, &GetFreeHandsBtnAvailabilityResponse{Data: &response})
+	return eCtx.JSON(http.StatusOK, &FreeHandsResponse{})
 }

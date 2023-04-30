@@ -9,12 +9,12 @@ import (
 	keycloakclient "github.com/evgeniy-krivenko/chat-service/internal/clients/keycloak"
 	"github.com/evgeniy-krivenko/chat-service/internal/server"
 	managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1"
-
 	// managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1".
 	"github.com/evgeniy-krivenko/chat-service/internal/server/errhandler"
 	managerload "github.com/evgeniy-krivenko/chat-service/internal/services/manager-load"
 	inmemmanagerpool "github.com/evgeniy-krivenko/chat-service/internal/services/manager-pool/in-mem"
 	canreceiveproblems "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/can-receive-problems"
+	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
 )
 
 const nameServerManager = "server-manager"
@@ -35,10 +35,15 @@ func initServerManager(
 
 	canReceiveProblemUseCase, err := canreceiveproblems.New(canreceiveproblems.NewOptions(mLoadSrv, mPool))
 	if err != nil {
-		return nil, fmt.Errorf("create can receive problem use case")
+		return nil, fmt.Errorf("create can receive problem use case: %v", err)
 	}
 
-	v1Handlers, err := managerv1.NewHandlers(managerv1.NewOptions(canReceiveProblemUseCase))
+	freeHandsUseCase, err := freehands.New(freehands.NewOptions(mLoadSrv, mPool))
+	if err != nil {
+		return nil, fmt.Errorf("create free hands use case: %v", err)
+	}
+
+	v1Handlers, err := managerv1.NewHandlers(managerv1.NewOptions(canReceiveProblemUseCase, freeHandsUseCase))
 	if err != nil {
 		return nil, fmt.Errorf("create v1 manager handlers: %v", err)
 	}

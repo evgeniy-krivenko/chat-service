@@ -42,6 +42,8 @@ func NewLogger(lg *zap.Logger) echo.MiddlewareFunc {
 			}
 
 			switch {
+			case status >= 1000:
+				lg.Error("business error", fields...)
 			case status >= http.StatusInternalServerError:
 				lg.Error("server error", fields...)
 			case status >= http.StatusBadRequest:

@@ -78,6 +78,11 @@ class App {
                 if (result.available) {
                     this.readyToProblemsBtn.removeClass('disabled');
                 }
+
+                if (result.inPool) {
+                    this.readyToProblemsBtn.addClass('disabled waiting');
+                    this.readyToProblemsBtn.text('Waiting for problems...');
+                }
             })
             .catch((err) => {
                 alert('Get "ready to problems" button availability: ' + err);

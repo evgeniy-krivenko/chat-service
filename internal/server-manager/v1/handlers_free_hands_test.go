@@ -6,46 +6,63 @@ import (
 
 	managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
-	canreceiveproblems "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/can-receive-problems"
+	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
 )
 
-func (s *HandlersSuite) TestGetFreeHandsBtnAvailability_Usecase_Error() {
+func (s *HandlersSuite) TestFreeHands_UseCase_Business_Error() {
 	// Arrange.
 	reqID := types.NewRequestID()
-	resp, eCtx := s.newEchoCtx(reqID, "/v1/getFreeHandsBtnAvailability", "")
-	s.canReceiveProblemsUseCase.EXPECT().Handle(eCtx.Request().Context(), canreceiveproblems.Request{
+	resp, eCtx := s.newEchoCtx(reqID, "/v1/freeHands", "")
+
+	s.freeHandsUseCase.EXPECT().Handle(eCtx.Request().Context(), freehands.Request{
 		ID:        reqID,
 		ManagerID: s.managerID,
-	}).Return(canreceiveproblems.Response{}, errors.New("something went wrong"))
+	}).Return(freehands.ErrManagerOverloaded)
 
 	// Action.
-	err := s.handlers.PostGetFreeHandsBtnAvailability(eCtx, managerv1.PostGetFreeHandsBtnAvailabilityParams{XRequestID: reqID})
+	err := s.handlers.PostFreeHands(eCtx, managerv1.PostFreeHandsParams{XRequestID: reqID})
 
 	// Assert.
 	s.Require().Error(err)
 	s.Empty(resp.Body)
 }
 
-func (s *HandlersSuite) TestGetFreeHandsBtnAvailability_Usecase_Success() {
+func (s *HandlersSuite) TestFreeHands_UseCase_Error() {
 	// Arrange.
 	reqID := types.NewRequestID()
-	resp, eCtx := s.newEchoCtx(reqID, "/v1/getFreeHandsBtnAvailability", "")
-	s.canReceiveProblemsUseCase.EXPECT().Handle(eCtx.Request().Context(), canreceiveproblems.Request{
+	resp, eCtx := s.newEchoCtx(reqID, "/v1/freeHands", "")
+
+	s.freeHandsUseCase.EXPECT().Handle(eCtx.Request().Context(), freehands.Request{
 		ID:        reqID,
 		ManagerID: s.managerID,
-	}).Return(canreceiveproblems.Response{Result: true}, nil)
+	}).Return(errors.New("unexpected"))
 
 	// Action.
-	err := s.handlers.PostGetFreeHandsBtnAvailability(eCtx, managerv1.PostGetFreeHandsBtnAvailabilityParams{XRequestID: reqID})
+	err := s.handlers.PostFreeHands(eCtx, managerv1.PostFreeHandsParams{XRequestID: reqID})
+
+	// Assert.
+	s.Require().Error(err)
+	s.Empty(resp.Body)
+}
+
+func (s *HandlersSuite) TestFreeHands_UseCase_Success() {
+	// Arrange.
+	reqID := types.NewRequestID()
+	resp, eCtx := s.newEchoCtx(reqID, "/v1/freeHands", "")
+
+	s.freeHandsUseCase.EXPECT().Handle(eCtx.Request().Context(), freehands.Request{
+		ID:        reqID,
+		ManagerID: s.managerID,
+	}).Return(nil)
+
+	// Action.
+	err := s.handlers.PostFreeHands(eCtx, managerv1.PostFreeHandsParams{XRequestID: reqID})
 
 	// Assert.
 	s.Require().NoError(err)
 	s.Equal(http.StatusOK, resp.Code)
 	s.JSONEq(`
 {
-   "data":
-   {
-       "available": true
-   }
+   "data": null
 }`, resp.Body.String())
 }

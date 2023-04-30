@@ -1,4 +1,4 @@
-package canreceiveproblems
+package freehands
 
 import (
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
@@ -12,9 +12,4 @@ type Request struct {
 
 func (r Request) Validate() error {
 	return validator.Validator.Struct(r)
-}
-
-type Response struct {
-	Available bool
-	InPool    bool
 }
