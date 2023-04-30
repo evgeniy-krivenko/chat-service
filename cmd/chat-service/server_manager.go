@@ -9,7 +9,6 @@ import (
 	keycloakclient "github.com/evgeniy-krivenko/chat-service/internal/clients/keycloak"
 	"github.com/evgeniy-krivenko/chat-service/internal/server"
 	managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1"
-	// managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1".
 	"github.com/evgeniy-krivenko/chat-service/internal/server/errhandler"
 	managerload "github.com/evgeniy-krivenko/chat-service/internal/services/manager-load"
 	inmemmanagerpool "github.com/evgeniy-krivenko/chat-service/internal/services/manager-pool/in-mem"
