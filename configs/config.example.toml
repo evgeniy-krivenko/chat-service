@@ -16,6 +16,14 @@ allow_origins = ["http://localhost:3011", "http://localhost:3000"]
 resource = "some-resource"
 role = "some-role"
 
+[servers.manager]
+addr = ":8081"
+allow_origins = ["http://localhost:3011", "http://localhost:3001"]
+
+[servers.manager.required_access]
+resource = "some-resourse"
+role = "some-role"
+
 [sentry]
 dsn = "https://example.com"
 
@@ -45,3 +53,6 @@ encrypt_key = "68566D597133743677397A2443264629" # Leave it blank to disable enc
 workers = 2
 idle_time = "1s"
 reserve_for = "5m"
+
+[services.manager_load]
+max_problems_at_same_time = 5

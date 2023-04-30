@@ -25,8 +25,9 @@ type LogConfig struct {
 }
 
 type ServersConfig struct {
-	Debug  DebugServerConfig  `toml:"debug"`
-	Client ClientServerConfig `toml:"client"`
+	Debug   DebugServerConfig   `toml:"debug"`
+	Client  ClientServerConfig  `toml:"client"`
+	Manager ManagerServerConfig `toml:"manager"`
 }
 
 type DebugServerConfig struct {
@@ -34,7 +35,13 @@ type DebugServerConfig struct {
 }
 
 type ClientServerConfig struct {
-	Add            string         `toml:"addr" validate:"hostname_port"`
+	Addr           string         `toml:"addr" validate:"hostname_port"`
+	AllowOrigins   []string       `toml:"allow_origins" validate:"dive,url,min=1"`
+	RequiredAccess RequiredAccess `toml:"required_access" validate:"required,dive"`
+}
+
+type ManagerServerConfig struct {
+	Addr           string         `toml:"addr" validate:"hostname_port"`
 	AllowOrigins   []string       `toml:"allow_origins" validate:"dive,url,min=1"`
 	RequiredAccess RequiredAccess `toml:"required_access" validate:"required,dive"`
 }
@@ -71,6 +78,7 @@ type DBConfig struct {
 type ServicesConfig struct {
 	Outbox      OutboxConfig      `toml:"outbox"`
 	MsgProducer MsgProducerConfig `toml:"msg_producer"`
+	ManagerLoad ManagerLoadConfig `toml:"manager_load"`
 }
 
 type OutboxConfig struct {
@@ -84,4 +92,8 @@ type MsgProducerConfig struct {
 	Topic      string   `toml:"topic" validate:"required"`
 	BatchSize  int      `toml:"batch_size" validate:"required,min=1"`
 	EncryptKey string   `toml:"encrypt_key" validate:"omitempty,hexadecimal"`
+}
+
+type ManagerLoadConfig struct {
+	MaxProblemsAtSameTime int `toml:"max_problems_at_same_time" validate:"required,gt=0"`
 }

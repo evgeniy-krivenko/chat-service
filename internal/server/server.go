@@ -1,4 +1,4 @@
-package serverclient
+package server
 
 import (
 	"context"
@@ -16,7 +16,6 @@ import (
 
 	keycloakclient "github.com/evgeniy-krivenko/chat-service/internal/clients/keycloak"
 	"github.com/evgeniy-krivenko/chat-service/internal/middlewares"
-	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
 )
 
 const (
@@ -24,21 +23,33 @@ const (
 	shutdownTimeout   = 3 * time.Second
 )
 
+type EchoRouter interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+}
+
 type KeycloakClient interface {
 	IntrospectToken(ctx context.Context, token string) (*keycloakclient.IntrospectTokenResult, error)
 }
 
 //go:generate options-gen -out-filename=server_options.gen.go -from-struct=Options
 type Options struct {
-	logger           *zap.Logger              `option:"mandatory" validate:"required"`
-	addr             string                   `option:"mandatory" validate:"required,hostname_port"`
-	allowOrigins     []string                 `option:"mandatory" validate:"min=1"`
-	v1Swagger        *openapi3.T              `option:"mandatory" validate:"required"`
-	v1Handlers       clientv1.ServerInterface `option:"mandatory" validate:"required"`
-	keycloakClient   KeycloakClient           `option:"mandatory" validate:"required"`
-	resource         string                   `option:"mandatory" validate:"required"`
-	role             string                   `option:"mandatory" validate:"required"`
-	httpErrorHandler echo.HTTPErrorHandler    `option:"mandatory" validate:"required"`
+	logger           *zap.Logger             `option:"mandatory" validate:"required"`
+	addr             string                  `option:"mandatory" validate:"required,hostname_port"`
+	allowOrigins     []string                `option:"mandatory" validate:"min=1"`
+	v1Swagger        *openapi3.T             `option:"mandatory" validate:"required"`
+	keycloakClient   KeycloakClient          `option:"mandatory" validate:"required"`
+	resource         string                  `option:"mandatory" validate:"required"`
+	role             string                  `option:"mandatory" validate:"required"`
+	httpErrorHandler echo.HTTPErrorHandler   `option:"mandatory" validate:"required"`
+	registerHandlers func(router EchoRouter) `option:"mandatory" validate:"required"`
 }
 
 type Server struct {
@@ -72,7 +83,8 @@ func New(opts Options) (*Server, error) {
 			AuthenticationFunc:  openapi3filter.NoopAuthenticationFunc,
 		},
 	}))
-	clientv1.RegisterHandlers(v1, opts.v1Handlers)
+
+	opts.registerHandlers(v1)
 
 	return &Server{
 		lg: opts.logger,

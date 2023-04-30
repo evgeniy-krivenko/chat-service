@@ -21,6 +21,8 @@ import (
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
 	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
 	serverdebug "github.com/evgeniy-krivenko/chat-service/internal/server-debug"
+	managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1"
+	managerload "github.com/evgeniy-krivenko/chat-service/internal/services/manager-load"
 	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
 	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
@@ -65,9 +67,15 @@ func run() (errReturned error) {
 		return fmt.Errorf("get client swagger: %v", err)
 	}
 
+	swaggerManagerV1, err := managerv1.GetSwagger()
+	if err != nil {
+		return fmt.Errorf("get manager swagger: %v", err)
+	}
+
 	srvDebug, err := serverdebug.New(serverdebug.NewOptions(
 		cfg.Servers.Debug.Addr,
 		swaggerClientV1,
+		swaggerManagerV1,
 	))
 	if err != nil {
 		return fmt.Errorf("init debug server: %v", err)
@@ -140,6 +148,14 @@ func run() (errReturned error) {
 		return fmt.Errorf("init outbox service: %v", err)
 	}
 
+	managerLoadService, err := managerload.New(managerload.NewOptions(
+		cfg.Services.ManagerLoad.MaxProblemsAtSameTime,
+		problemsRepo,
+	))
+	if err != nil {
+		return fmt.Errorf("init manager load service: %v", err)
+	}
+
 	sendClientMessageJob, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(
 		msgProducer,
 		msgRepo,
@@ -166,7 +182,7 @@ func run() (errReturned error) {
 	}
 
 	srvClient, err := initServerClient(
-		cfg.Servers.Client.Add,
+		cfg.Servers.Client.Addr,
 		cfg.Servers.Client.AllowOrigins,
 		swaggerClientV1,
 		keycloakClient,
@@ -183,11 +199,26 @@ func run() (errReturned error) {
 		return fmt.Errorf("init server client: %v", err)
 	}
 
+	srvManager, err := initServerManager(
+		cfg.Servers.Manager.Addr,
+		cfg.Servers.Manager.AllowOrigins,
+		swaggerManagerV1,
+		keycloakClient,
+		managerLoadService,
+		cfg.Servers.Manager.RequiredAccess.Resource,
+		cfg.Servers.Manager.RequiredAccess.Role,
+		cfg.Global.IsProduction(),
+	)
+	if err != nil {
+		return fmt.Errorf("init server manager: %v", err)
+	}
+
 	eg, ctx := errgroup.WithContext(ctx)
 
 	// Run servers.
 	eg.Go(func() error { return srvDebug.Run(ctx) })
 	eg.Go(func() error { return srvClient.Run(ctx) })
+	eg.Go(func() error { return srvManager.Run(ctx) })
 	eg.Go(func() error { return outboxService.Run(ctx) })
 
 	// Run services.
