@@ -12,47 +12,47 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id types.ChatID) predicate.Message {
+func ID(id types.MessageID) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id types.ChatID) predicate.Message {
+func IDEQ(id types.MessageID) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id types.ChatID) predicate.Message {
+func IDNEQ(id types.MessageID) predicate.Message {
 	return predicate.Message(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...types.ChatID) predicate.Message {
+func IDIn(ids ...types.MessageID) predicate.Message {
 	return predicate.Message(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...types.ChatID) predicate.Message {
+func IDNotIn(ids ...types.MessageID) predicate.Message {
 	return predicate.Message(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id types.ChatID) predicate.Message {
+func IDGT(id types.MessageID) predicate.Message {
 	return predicate.Message(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id types.ChatID) predicate.Message {
+func IDGTE(id types.MessageID) predicate.Message {
 	return predicate.Message(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id types.ChatID) predicate.Message {
+func IDLT(id types.MessageID) predicate.Message {
 	return predicate.Message(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id types.ChatID) predicate.Message {
+func IDLTE(id types.MessageID) predicate.Message {
 	return predicate.Message(sql.FieldLTE(FieldID, id))
 }
 
@@ -104,6 +104,11 @@ func IsService(v bool) predicate.Message {
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// InitialRequestID applies equality check predicate on the "initial_request_id" field. It's identical to InitialRequestIDEQ.
+func InitialRequestID(v types.RequestID) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldInitialRequestID, v))
 }
 
 // AuthorIDEQ applies the EQ predicate on the "author_id" field.
@@ -196,6 +201,16 @@ func ProblemIDNotIn(vs ...types.ProblemID) predicate.Message {
 	return predicate.Message(sql.FieldNotIn(FieldProblemID, vs...))
 }
 
+// ProblemIDIsNil applies the IsNil predicate on the "problem_id" field.
+func ProblemIDIsNil() predicate.Message {
+	return predicate.Message(sql.FieldIsNull(FieldProblemID))
+}
+
+// ProblemIDNotNil applies the NotNil predicate on the "problem_id" field.
+func ProblemIDNotNil() predicate.Message {
+	return predicate.Message(sql.FieldNotNull(FieldProblemID))
+}
+
 // IsVisibleForClientEQ applies the EQ predicate on the "is_visible_for_client" field.
 func IsVisibleForClientEQ(v bool) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldIsVisibleForClient, v))
@@ -206,6 +221,16 @@ func IsVisibleForClientNEQ(v bool) predicate.Message {
 	return predicate.Message(sql.FieldNEQ(FieldIsVisibleForClient, v))
 }
 
+// IsVisibleForClientIsNil applies the IsNil predicate on the "is_visible_for_client" field.
+func IsVisibleForClientIsNil() predicate.Message {
+	return predicate.Message(sql.FieldIsNull(FieldIsVisibleForClient))
+}
+
+// IsVisibleForClientNotNil applies the NotNil predicate on the "is_visible_for_client" field.
+func IsVisibleForClientNotNil() predicate.Message {
+	return predicate.Message(sql.FieldNotNull(FieldIsVisibleForClient))
+}
+
 // IsVisibleForManagerEQ applies the EQ predicate on the "is_visible_for_manager" field.
 func IsVisibleForManagerEQ(v bool) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldIsVisibleForManager, v))
@@ -214,6 +239,16 @@ func IsVisibleForManagerEQ(v bool) predicate.Message {
 // IsVisibleForManagerNEQ applies the NEQ predicate on the "is_visible_for_manager" field.
 func IsVisibleForManagerNEQ(v bool) predicate.Message {
 	return predicate.Message(sql.FieldNEQ(FieldIsVisibleForManager, v))
+}
+
+// IsVisibleForManagerIsNil applies the IsNil predicate on the "is_visible_for_manager" field.
+func IsVisibleForManagerIsNil() predicate.Message {
+	return predicate.Message(sql.FieldIsNull(FieldIsVisibleForManager))
+}
+
+// IsVisibleForManagerNotNil applies the NotNil predicate on the "is_visible_for_manager" field.
+func IsVisibleForManagerNotNil() predicate.Message {
+	return predicate.Message(sql.FieldNotNull(FieldIsVisibleForManager))
 }
 
 // BodyEQ applies the EQ predicate on the "body" field.
@@ -341,6 +376,16 @@ func IsBlockedNEQ(v bool) predicate.Message {
 	return predicate.Message(sql.FieldNEQ(FieldIsBlocked, v))
 }
 
+// IsBlockedIsNil applies the IsNil predicate on the "is_blocked" field.
+func IsBlockedIsNil() predicate.Message {
+	return predicate.Message(sql.FieldIsNull(FieldIsBlocked))
+}
+
+// IsBlockedNotNil applies the NotNil predicate on the "is_blocked" field.
+func IsBlockedNotNil() predicate.Message {
+	return predicate.Message(sql.FieldNotNull(FieldIsBlocked))
+}
+
 // IsServiceEQ applies the EQ predicate on the "is_service" field.
 func IsServiceEQ(v bool) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldIsService, v))
@@ -349,6 +394,16 @@ func IsServiceEQ(v bool) predicate.Message {
 // IsServiceNEQ applies the NEQ predicate on the "is_service" field.
 func IsServiceNEQ(v bool) predicate.Message {
 	return predicate.Message(sql.FieldNEQ(FieldIsService, v))
+}
+
+// IsServiceIsNil applies the IsNil predicate on the "is_service" field.
+func IsServiceIsNil() predicate.Message {
+	return predicate.Message(sql.FieldIsNull(FieldIsService))
+}
+
+// IsServiceNotNil applies the NotNil predicate on the "is_service" field.
+func IsServiceNotNil() predicate.Message {
+	return predicate.Message(sql.FieldNotNull(FieldIsService))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -389,6 +444,56 @@ func CreatedAtLT(v time.Time) predicate.Message {
 // CreatedAtLTE applies the LTE predicate on the "created_at" field.
 func CreatedAtLTE(v time.Time) predicate.Message {
 	return predicate.Message(sql.FieldLTE(FieldCreatedAt, v))
+}
+
+// InitialRequestIDEQ applies the EQ predicate on the "initial_request_id" field.
+func InitialRequestIDEQ(v types.RequestID) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldInitialRequestID, v))
+}
+
+// InitialRequestIDNEQ applies the NEQ predicate on the "initial_request_id" field.
+func InitialRequestIDNEQ(v types.RequestID) predicate.Message {
+	return predicate.Message(sql.FieldNEQ(FieldInitialRequestID, v))
+}
+
+// InitialRequestIDIn applies the In predicate on the "initial_request_id" field.
+func InitialRequestIDIn(vs ...types.RequestID) predicate.Message {
+	return predicate.Message(sql.FieldIn(FieldInitialRequestID, vs...))
+}
+
+// InitialRequestIDNotIn applies the NotIn predicate on the "initial_request_id" field.
+func InitialRequestIDNotIn(vs ...types.RequestID) predicate.Message {
+	return predicate.Message(sql.FieldNotIn(FieldInitialRequestID, vs...))
+}
+
+// InitialRequestIDGT applies the GT predicate on the "initial_request_id" field.
+func InitialRequestIDGT(v types.RequestID) predicate.Message {
+	return predicate.Message(sql.FieldGT(FieldInitialRequestID, v))
+}
+
+// InitialRequestIDGTE applies the GTE predicate on the "initial_request_id" field.
+func InitialRequestIDGTE(v types.RequestID) predicate.Message {
+	return predicate.Message(sql.FieldGTE(FieldInitialRequestID, v))
+}
+
+// InitialRequestIDLT applies the LT predicate on the "initial_request_id" field.
+func InitialRequestIDLT(v types.RequestID) predicate.Message {
+	return predicate.Message(sql.FieldLT(FieldInitialRequestID, v))
+}
+
+// InitialRequestIDLTE applies the LTE predicate on the "initial_request_id" field.
+func InitialRequestIDLTE(v types.RequestID) predicate.Message {
+	return predicate.Message(sql.FieldLTE(FieldInitialRequestID, v))
+}
+
+// InitialRequestIDIsNil applies the IsNil predicate on the "initial_request_id" field.
+func InitialRequestIDIsNil() predicate.Message {
+	return predicate.Message(sql.FieldIsNull(FieldInitialRequestID))
+}
+
+// InitialRequestIDNotNil applies the NotNil predicate on the "initial_request_id" field.
+func InitialRequestIDNotNil() predicate.Message {
+	return predicate.Message(sql.FieldNotNull(FieldInitialRequestID))
 }
 
 // HasChat applies the HasEdge predicate on the "chat" edge.

@@ -4,7 +4,7 @@ package types
 
 import (
 	"database/sql/driver"
-	"fmt"
+	"errors"
 
 	"github.com/google/uuid"
 )
@@ -40,7 +40,7 @@ func (r *ChatID) UnmarshalText(data []byte) error {
 
 func (r ChatID) Validate() error {
 	if r.IsZero() {
-		return fmt.Errorf("zero ChatID")
+		return errors.New("zero ChatID")
 	}
 	return nil
 }
@@ -87,7 +87,7 @@ func (r *MessageID) UnmarshalText(data []byte) error {
 
 func (r MessageID) Validate() error {
 	if r.IsZero() {
-		return fmt.Errorf("zero MessageID")
+		return errors.New("zero MessageID")
 	}
 	return nil
 }
@@ -134,7 +134,7 @@ func (r *ProblemID) UnmarshalText(data []byte) error {
 
 func (r ProblemID) Validate() error {
 	if r.IsZero() {
-		return fmt.Errorf("zero ProblemID")
+		return errors.New("zero ProblemID")
 	}
 	return nil
 }
@@ -181,7 +181,7 @@ func (r *UserID) UnmarshalText(data []byte) error {
 
 func (r UserID) Validate() error {
 	if r.IsZero() {
-		return fmt.Errorf("zero UserID")
+		return errors.New("zero UserID")
 	}
 	return nil
 }
@@ -228,7 +228,7 @@ func (r *RequestID) UnmarshalText(data []byte) error {
 
 func (r RequestID) Validate() error {
 	if r.IsZero() {
-		return fmt.Errorf("zero RequestID")
+		return errors.New("zero RequestID")
 	}
 	return nil
 }
@@ -250,44 +250,11 @@ type Types interface {
 }
 
 func Parse[T Types](s string) (T, error) {
-	var t T
 	u, err := uuid.Parse(s)
-	if err != nil {
-		return t, err
-	}
-	switch any(t).(type) {
-	case ChatID:
-		return T(ChatID(u)), nil
-	case MessageID:
-		return T(MessageID(u)), nil
-	case ProblemID:
-		return T(ProblemID(u)), nil
-	case UserID:
-		return T(UserID(u)), nil
-	case RequestID:
-		return T(RequestID(u)), nil
-	default:
-		return t, fmt.Errorf("wrong type")
-	}
+	return T(u), err
 }
 
 func MustParse[T Types](s string) T {
-	u := uuid.MustParse(s)
-
-	var t T
-	switch any(t).(type) {
-	case ChatID:
-		return T(ChatID(u))
-	case MessageID:
-		return T(MessageID(u))
-	case ProblemID:
-		return T(ProblemID(u))
-	case UserID:
-		return T(UserID(u))
-	case RequestID:
-		return T(RequestID(u))
-	default:
-		panic("wrong type")
-	}
+	return T(uuid.MustParse(s))	
 }
 

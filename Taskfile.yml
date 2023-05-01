@@ -17,8 +17,9 @@ vars:
     mvdan.cc/gofumpt@v0.4.0
     github.com/kazhuravlev/options-gen/cmd/options-gen@v0.28.4
     entgo.io/ent/cmd/ent@v0.11.10
-    github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4
+    github.com/deepmap/oapi-codegen/cmd/oapi-codegen@master
     github.com/golang/mock/mockgen@v1.6.0
+    github.com/onsi/ginkgo/v2/ginkgo@v2.9.2
 
   WORKDIR:
     sh: echo "$(pwd)"
@@ -30,16 +31,11 @@ vars:
     ./deploy/local/docker-compose.sentry.yml
     ./deploy/local/docker-compose.swagger-ui.yml
 
+  DOCKER_COMPOSE_CMD: docker compose -f {{ .DOCKER_COMPOSE_PATHS | trim | splitLines | join " -f " }}
+
   # if it will be decided generate key with every deps running
   SENTRY_SECRET_KEY_DEPS: |
     {{if eq $.COMPOSE_PROFILES "sentry"}} `docker run --platform linux/amd64 --rm sentry config generate-secret-key` {{end}}
-
-  DOCKER_FILES: |
-    {{range $file := .DOCKER_COMPOSE_PATHS | trim | splitLines -}}
-      \-f {{$file}} \
-    {{end -}}
-
-  DOCKER_COMPOSE_CMD: docker compose
 
   TYPES: |
     ChatID
@@ -49,18 +45,19 @@ vars:
     RequestID
 
   TYPES_PKG: types
+  TYPES_SRC: ./internal/types
   TYPES_DST: ./internal/types/types.gen.go
 
   SCHEMA_PATH: ./internal/store/schema
 
+  # const for server code gen
   CLIENT_V1_SRC: ./api/client.v1.swagger.yml
   CLIENT_V1_DST: ./internal/server-client/v1/server.gen.go
   CLIENT_V1_PKG: clientv1
 
-  # swagger urls in docker container
-  SWAGGER_DOCS_URLS: |
-    { url: 'doc/client.v1.swagger.yml', name: 'ClientV1' }
-    
+  # const for e2e-client code gen
+  CLIENT_V1_E2E_DST: ./tests/e2e/api/client/v1/client.gen.go
+  CLIENT_V1_E2E_PKG: apiclientv1
 
 tasks:
   default:
@@ -74,24 +71,42 @@ tasks:
 
   gen:api:
     cmds:
+      - echo "Generate api spec..."
       - .{{.DEV_TOOLS_PATH}}/oapi-codegen -old-config-style -package {{.CLIENT_V1_PKG}} -generate types,server,spec {{.CLIENT_V1_SRC}} > {{.CLIENT_V1_DST}}
+    sources:
+      - "{{.CLIENT_V1_SRC}}"
+    generates:
+      - "{{.CLIENT_V1_DST}}"
+
+  gen:e2e:
+    cmds:
+      - echo "Generate e2e..."
+      - .{{.DEV_TOOLS_PATH}}/oapi-codegen --old-config-style -package {{.CLIENT_V1_E2E_PKG}} -generate types,client {{.CLIENT_V1_SRC}} > {{.CLIENT_V1_E2E_DST}}
+    sources:
+      - "{{.CLIENT_V1_SRC}}"
+    generates:
+      - "{{.CLIENT_V1_E2E_DST}}"
 
   gen:types:
     cmds:
       - echo "Generate types..."
-      - |
-        go run ./cmd/gen-types {{.TYPES_PKG}} \
-        {{range $index, $type := .TYPES | trim | splitLines -}}
-        {{if $index}},{{- end -}}
-        {{$type -}}
-        {{end}} \
-        {{.TYPES_DST}}
+      - go run ./cmd/gen-types {{.TYPES_PKG}} {{ .TYPES | trim | splitLines | join "," }} {{.TYPES_DST}}
       - task: tidy
+    sources:
+      - "{{.TYPES_SRC}}/*.go"
+    generates:
+      - "{{.TYPES_DST}}"
 
   ent:gen:
     cmds:
-      - .{{.DEV_TOOLS_PATH}}/ent generate {{.SCHEMA_PATH}}
+      - echo "Generate ent..."
+      - .{{.DEV_TOOLS_PATH}}/ent generate {{.SCHEMA_PATH}} --feature sql/upsert --template ./internal/store/templates
       - task: tidy
+    sources:
+      - ./internal/store/schema/*.go
+      - ./internal/store/templates
+    generates:
+      - ./internal/store/*.go
 
   ent:new:
     cmds:
@@ -102,12 +117,17 @@ tasks:
     cmds:
       - echo "Run go generate..."
       - export PATH=$PATH:{{.WORKDIR}}{{.DEV_TOOLS_PATH}} && go generate ./...
+      - task: gen:api
+      - task: gen:e2e
+      - task: ent:gen
       - task: tidy
 
   tidy:
-    - echo "- Tidy"
-    - go mod tidy
-    - task: vendor
+    run: once
+    cmds:
+      - echo "- Tidy"
+      - go mod tidy
+      - task: vendor
 
   vendor:
     - echo "- Vendor"
@@ -137,19 +157,22 @@ tasks:
   tests:
     cmds:
       - echo "- Tests"
-      - go test -v -race ./... {{.CLI_ARGS}}
+      - go test -race ./... {{.CLI_ARGS}}
 
   tests:integration:
-    env:
-      TEST_LOG_LEVEL: info
-      TEST_KEYCLOAK_REALM: Bank
-      TEST_KEYCLOAK_CLIENT_ID: integration-testing
-      TEST_KEYCLOAK_CLIENT_SECRET: 9RoNZ7i2xSAUeKPcht4aPFslZycfvK9I
-      TEST_KEYCLOAK_TEST_USER: integration-testing
-      TEST_KEYCLOAK_TEST_PASSWORD: 123456
+    dotenv:
+      - .env
     cmds:
       - echo "- Integration tests"
       - go test -tags integration -count 1 -race ./...
+
+  tests:e2e:
+    dotenv:
+      - .env
+    cmds:
+      - echo "- End-to-end tests..."
+       # NOTE: It's important to run tests serial (without `-p` flag) – for correct `clientsPool` sharing.
+      - .{{.DEV_TOOLS_PATH}}/ginkgo --fail-fast --timeout=1m --tags e2e {{.CLI_ARGS}} ./tests/e2e
 
   build:
     cmds:
@@ -173,30 +196,27 @@ tasks:
         {{$url}}
         {{- end}}]"
     cmds:
-      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} up -d"
+      - "{{.DOCKER_COMPOSE_CMD}} up -d"
 
   deps:cmd:
-    env:
-      # for seeing containers status without throwing env
-      COMPOSE_PROFILES: sentry
     cmds:
-      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} {{.CLI_ARGS}}"
+      - "{{.DOCKER_COMPOSE_CMD}} {{.CLI_ARGS}}"
 
   deps:status:
     env:
       # for seeing containers status without throwing env
       COMPOSE_PROFILES: sentry
     cmds:
-      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} ps"
+      - "{{.DOCKER_COMPOSE_CMD}} ps"
 
   deps:logs:
     cmds:
-      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} logs {{.CLI_ARGS}}"
+      - "{{.DOCKER_COMPOSE_CMD}} logs {{.CLI_ARGS}}"
 
   deps:stop:
     cmds:
       - task: kc:export
-      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} stop"
+      - "{{.DOCKER_COMPOSE_CMD}} stop"
 
   deps:reset-psql:
     cmds:
@@ -206,9 +226,10 @@ tasks:
 
   deps:reset:
     cmds:
-      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} rm -fsv {{.SERVICE}}"
-      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} up -d {{.SERVICE}}"
+      - "{{.DOCKER_COMPOSE_CMD}} rm -fsv {{.SERVICE}}"
+      - "{{.DOCKER_COMPOSE_CMD}} up -d {{.SERVICE}}"
 
   kc:export:
     cmds:
-      - "{{.DOCKER_COMPOSE_CMD}} {{.DOCKER_FILES}} exec keycloak /opt/keycloak/bin/kc.sh export --file /tmp/keycloak-export/bank-realm.json --realm Bank"
+      - echo "Dump Keycloak Bank realm..."
+      - "{{.DOCKER_COMPOSE_CMD}} exec keycloak /opt/keycloak/bin/kc.sh export --file /tmp/keycloak-export/bank-realm.json --realm Bank"

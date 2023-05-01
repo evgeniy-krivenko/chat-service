@@ -28,7 +28,7 @@ linters-settings:
         # Any struct tag type can be used.
         # Support string case: `camel`, `pascal`, `kebab`, `snake`, `goCamel`, `goPascal`, `goKebab`, `goSnake`, `upper`, `lower`, `header`
         json: camel
-        toml: goSnake
+        toml: snake
 
 linters:
   disable-all: true

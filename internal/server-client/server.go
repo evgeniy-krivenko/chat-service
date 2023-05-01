@@ -30,14 +30,15 @@ type KeycloakClient interface {
 
 //go:generate options-gen -out-filename=server_options.gen.go -from-struct=Options
 type Options struct {
-	logger         *zap.Logger              `option:"mandatory" validate:"required"`
-	addr           string                   `option:"mandatory" validate:"required,hostname_port"`
-	allowOrigins   []string                 `option:"mandatory" validate:"min=1"`
-	v1Swagger      *openapi3.T              `option:"mandatory" validate:"required"`
-	v1Handlers     clientv1.ServerInterface `option:"mandatory" validate:"required"`
-	keycloakClient KeycloakClient           `option:"mandatory" validate:"required"`
-	resource       string                   `option:"mandatory" validate:"required"`
-	role           string                   `option:"mandatory" validate:"required"`
+	logger           *zap.Logger              `option:"mandatory" validate:"required"`
+	addr             string                   `option:"mandatory" validate:"required,hostname_port"`
+	allowOrigins     []string                 `option:"mandatory" validate:"min=1"`
+	v1Swagger        *openapi3.T              `option:"mandatory" validate:"required"`
+	v1Handlers       clientv1.ServerInterface `option:"mandatory" validate:"required"`
+	keycloakClient   KeycloakClient           `option:"mandatory" validate:"required"`
+	resource         string                   `option:"mandatory" validate:"required"`
+	role             string                   `option:"mandatory" validate:"required"`
+	httpErrorHandler echo.HTTPErrorHandler    `option:"mandatory" validate:"required"`
 }
 
 type Server struct {
@@ -61,6 +62,8 @@ func New(opts Options) (*Server, error) {
 		middlewares.NewRecovery(opts.logger),
 		middleware.BodyLimit("12KB"),
 	)
+
+	e.HTTPErrorHandler = opts.httpErrorHandler
 
 	v1 := e.Group("v1", oapimdlwr.OapiRequestValidatorWithOptions(opts.v1Swagger, &oapimdlwr.Options{
 		Options: openapi3filter.Options{

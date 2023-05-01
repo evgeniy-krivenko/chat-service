@@ -15,8 +15,13 @@ import (
 	keycloakclient "github.com/evgeniy-krivenko/chat-service/internal/clients/keycloak"
 	"github.com/evgeniy-krivenko/chat-service/internal/config"
 	"github.com/evgeniy-krivenko/chat-service/internal/logger"
+	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
+	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
+	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
 	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
 	serverdebug "github.com/evgeniy-krivenko/chat-service/internal/server-debug"
+	"github.com/evgeniy-krivenko/chat-service/internal/store"
+	"github.com/evgeniy-krivenko/chat-service/internal/store/migrate"
 )
 
 var configPath = flag.String("config", "configs/config.toml", "Path to config file")
@@ -41,7 +46,7 @@ func run() (errReturned error) {
 	logOpts := logger.NewOptions(
 		cfg.Log.Level,
 		logger.WithProductionMode(cfg.Global.IsProduction()),
-		logger.WithDns(cfg.Sentry.DNS),
+		logger.WithDsnSentry(cfg.Sentry.DSN),
 		logger.WithEnv(cfg.Global.Env),
 	)
 
@@ -66,6 +71,43 @@ func run() (errReturned error) {
 
 	clientUserAgent := fmt.Sprintf("chat-service/%s", buildinfo.BuildInfo.Main.Version)
 
+	storeClient, err := store.NewPSQLClient(store.NewPSQLOptions(
+		cfg.DB.Address,
+		cfg.DB.User,
+		cfg.DB.Password,
+		cfg.DB.Database,
+		store.WithDebug(cfg.DB.DebugMode),
+	))
+	if err != nil {
+		return fmt.Errorf("init psql client: %v", err)
+	}
+	defer storeClient.Close()
+
+	if err := storeClient.Schema.Create(
+		ctx,
+		migrate.WithDropIndex(true),
+		migrate.WithDropColumn(true),
+	); err != nil {
+		return fmt.Errorf("create migration: %v", err)
+	}
+
+	database := store.NewDatabase(storeClient)
+
+	msgRepo, err := messagesrepo.New(messagesrepo.NewOptions(database))
+	if err != nil {
+		return fmt.Errorf("init messages repo: %v", err)
+	}
+
+	chatsRepo, err := chatsrepo.New(chatsrepo.NewOptions(database))
+	if err != nil {
+		return fmt.Errorf("init chats repo: %v", err)
+	}
+
+	problemsRepo, err := problemsrepo.New(problemsrepo.NewOptions(database))
+	if err != nil {
+		return fmt.Errorf("init problems repo: %v", err)
+	}
+
 	keycloakClient, err := keycloakclient.New(keycloakclient.NewOptions(
 		cfg.Clients.Keycloak.BasePath,
 		cfg.Clients.Keycloak.Realm,
@@ -86,6 +128,11 @@ func run() (errReturned error) {
 		keycloakClient,
 		cfg.Servers.Client.RequiredAccess.Resource,
 		cfg.Servers.Client.RequiredAccess.Role,
+		msgRepo,
+		chatsRepo,
+		problemsRepo,
+		database,
+		cfg.Global.IsProduction(),
 	)
 	if err != nil {
 		return fmt.Errorf("init server client: %v", err)
@@ -95,8 +142,8 @@ func run() (errReturned error) {
 
 	// Run servers.
 	eg.Go(func() error { return srvDebug.Run(ctx) })
-
 	eg.Go(func() error { return srvClient.Run(ctx) })
+
 	// Run services.
 	// Ждут своего часа.
 	// ...
