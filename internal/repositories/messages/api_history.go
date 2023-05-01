@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"entgo.io/ent/dialect/sql"
-
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	storechat "github.com/evgeniy-krivenko/chat-service/internal/store/chat"
 	storemessage "github.com/evgeniy-krivenko/chat-service/internal/store/message"
@@ -33,67 +31,52 @@ func (r *Repo) GetClientChatMessages(
 	cursor *Cursor,
 ) ([]Message, *Cursor, error) {
 	query := r.db.Message(ctx).Query().
-		Order(store.Desc(storemessage.FieldCreatedAt)).
-		Limit(pageSize + 1)
+		Unique(false).
+		Where(storemessage.IsVisibleForClient(true)).
+		Where(storemessage.HasChatWith(storechat.ClientID(clientID))).
+		Order(store.Desc(storemessage.FieldCreatedAt))
+
+	return r.getChatMessages(ctx, query, pageSize, cursor)
+}
+
+func (r *Repo) getChatMessages(
+	ctx context.Context,
+	query *store.MessageQuery,
+	pageSize int,
+	cursor *Cursor,
+) ([]Message, *Cursor, error) {
+	// for query all messages
+	lastCreatedAt := time.Now().AddDate(100, 0, 0)
 
 	if cursor != nil {
 		if !r.isValidCursor(cursor) {
 			return nil, nil, ErrInvalidCursor
 		}
-
-		query = query.
-			Where(func(s *sql.Selector) {
-				t := sql.Table(storechat.Table)
-				s.Join(t).On(s.C(storemessage.ChatColumn), t.C(storechat.FieldID))
-				s.Where(sql.And(
-					sql.IsTrue(storemessage.FieldIsVisibleForClient),
-					sql.EQ(t.C(storechat.FieldClientID), clientID),
-					sql.LT(s.C(storemessage.FieldCreatedAt), cursor.LastCreatedAt),
-				))
-			})
-
-		return r.clientMessagesWithCursor(ctx, query, cursor.PageSize)
-	}
-
-	if !r.isValidPageSize(pageSize) {
+		pageSize, lastCreatedAt = cursor.PageSize, cursor.LastCreatedAt
+	} else if !r.isValidPageSize(pageSize) {
 		return nil, nil, ErrInvalidPageSize
 	}
 
-	query = query.
-		Where(func(s *sql.Selector) {
-			t := sql.Table(storechat.Table)
-			s.Join(t).On(s.C(storemessage.ChatColumn), t.C(storechat.FieldID))
-			s.Where(sql.And(
-				sql.IsTrue(storemessage.FieldIsVisibleForClient),
-				sql.EQ(t.C(storechat.FieldClientID), clientID),
-			))
-		})
-
-	return r.clientMessagesWithCursor(ctx, query, pageSize)
-}
-
-func (r *Repo) clientMessagesWithCursor(
-	ctx context.Context,
-	query *store.MessageQuery,
-	pageSize int,
-) ([]Message, *Cursor, error) {
-	messages, err := query.All(ctx)
+	msgs, err := query.
+		Where(storemessage.CreatedAtLT(lastCreatedAt)).
+		Limit(pageSize + 1).
+		All(ctx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("query messages: %v", err)
+		return nil, nil, fmt.Errorf("select messages: %v", err)
 	}
 
-	var nextCursor *Cursor
-	if pageSize < len(messages) {
-		lastMsg := messages[len(messages)-2]
-		nextCursor = &Cursor{
-			PageSize:      pageSize,
-			LastCreatedAt: lastMsg.CreatedAt,
-		}
-		messages = messages[0 : len(messages)-1]
+	result := utils.Apply(msgs, adaptStoreMessage)
+
+	if len(result) <= pageSize {
+		return result, nil, nil
 	}
 
-	adaptedMessages := utils.Apply[*store.Message, Message](messages, adaptStoreMessage)
-	return adaptedMessages, nextCursor, nil
+	result = result[:len(result)-1]
+
+	return result, &Cursor{
+		LastCreatedAt: result[len(result)-1].CreatedAt,
+		PageSize:      pageSize,
+	}, nil
 }
 
 func (r *Repo) isValidPageSize(pageSize int) bool {

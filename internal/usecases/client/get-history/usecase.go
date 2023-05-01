@@ -66,7 +66,7 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 		return Response{}, err
 	}
 
-	response.Messages = utils.Apply[messagesrepo.Message, Message](messages, adaptMessage)
+	response.Messages = utils.Apply(messages, adaptMessage)
 
 	if newCursor != nil {
 		response.NextCursor, err = cursor.Encode(newCursor)

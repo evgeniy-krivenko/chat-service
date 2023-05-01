@@ -62,6 +62,7 @@ func run() (errReturned error) {
 	}
 	defer logger.Sync()
 
+	// Swaggers.
 	swaggerClientV1, err := clientv1.GetSwagger()
 	if err != nil {
 		return fmt.Errorf("get client swagger: %v", err)
@@ -72,6 +73,7 @@ func run() (errReturned error) {
 		return fmt.Errorf("get manager swagger: %v", err)
 	}
 
+	// Debug server.
 	srvDebug, err := serverdebug.New(serverdebug.NewOptions(
 		cfg.Servers.Debug.Addr,
 		swaggerClientV1,
@@ -83,6 +85,7 @@ func run() (errReturned error) {
 
 	clientUserAgent := fmt.Sprintf("chat-service/%s", buildinfo.BuildInfo.Main.Version)
 
+	// Database and migrations.
 	storeClient, err := store.NewPSQLClient(store.NewPSQLOptions(
 		cfg.DB.Address,
 		cfg.DB.User,
@@ -95,6 +98,7 @@ func run() (errReturned error) {
 	}
 	defer storeClient.Close()
 
+	// Migrations.
 	if err := storeClient.Schema.Create(
 		ctx,
 		migrate.WithDropIndex(true),
@@ -105,6 +109,7 @@ func run() (errReturned error) {
 
 	database := store.NewDatabase(storeClient)
 
+	// Repositories.
 	msgRepo, err := messagesrepo.New(messagesrepo.NewOptions(database))
 	if err != nil {
 		return fmt.Errorf("init messages repo: %v", err)
@@ -125,6 +130,7 @@ func run() (errReturned error) {
 		return fmt.Errorf("init jobs repo: %v", err)
 	}
 
+	// Services.
 	msgProducer, err := msgproducer.New(msgproducer.NewOptions(
 		msgproducer.NewKafkaWriter(
 			cfg.Services.MsgProducer.Brokers,
@@ -156,6 +162,7 @@ func run() (errReturned error) {
 		return fmt.Errorf("init manager load service: %v", err)
 	}
 
+	// Outbox Jobs.
 	sendClientMessageJob, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(
 		msgProducer,
 		msgRepo,
@@ -168,6 +175,7 @@ func run() (errReturned error) {
 		return fmt.Errorf("register send client message job: %v", err)
 	}
 
+	// Clients.
 	keycloakClient, err := keycloakclient.New(keycloakclient.NewOptions(
 		cfg.Clients.Keycloak.BasePath,
 		cfg.Clients.Keycloak.Realm,
@@ -181,6 +189,7 @@ func run() (errReturned error) {
 		return fmt.Errorf("init keycloak client: %v", err)
 	}
 
+	// Servers.
 	srvClient, err := initServerClient(
 		cfg.Servers.Client.Addr,
 		cfg.Servers.Client.AllowOrigins,

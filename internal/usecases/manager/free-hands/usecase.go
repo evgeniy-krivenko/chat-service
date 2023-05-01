@@ -44,7 +44,7 @@ func (u UseCase) Handle(ctx context.Context, req Request) error {
 
 	canTakeProblem, err := u.managerLoadSrv.CanManagerTakeProblem(ctx, req.ManagerID)
 	if err != nil {
-		return fmt.Errorf("free hands: %v", err)
+		return fmt.Errorf("free hands availability in manager load svr with id %v: %v", req.ManagerID, err)
 	}
 
 	if !canTakeProblem {
@@ -53,7 +53,7 @@ func (u UseCase) Handle(ctx context.Context, req Request) error {
 
 	err = u.managerPool.Put(ctx, req.ManagerID)
 	if err != nil {
-		return fmt.Errorf("free hands: %v", err)
+		return fmt.Errorf("put manager in pool with id %v: %v", req.ManagerID, err)
 	}
 
 	return nil

@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	errs "github.com/evgeniy-krivenko/chat-service/internal/errors"
+	internalerrors "github.com/evgeniy-krivenko/chat-service/internal/errors"
 	"github.com/evgeniy-krivenko/chat-service/internal/middlewares"
 	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
 )
@@ -20,11 +20,11 @@ func (h Handlers) PostFreeHands(eCtx echo.Context, params PostFreeHandsParams) e
 		ManagerID: managerID,
 	})
 	if errors.Is(err, freehands.ErrManagerOverloaded) {
-		return errs.NewServerError(ErrorCodeManagerOverloaded, "manager overloaded", err)
+		return internalerrors.NewServerError(ErrorCodeManagerOverloaded, "manager overloaded", err)
 	}
 
 	if err != nil {
-		return errs.NewServerError(http.StatusInternalServerError, "internal error", err)
+		return internalerrors.NewServerError(http.StatusInternalServerError, "internal error", err)
 	}
 
 	return eCtx.JSON(http.StatusOK, &FreeHandsResponse{})

@@ -106,7 +106,7 @@ func (s *Service) work(ctx context.Context) error {
 		return nil
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("find and reserve job: %v", err)
 	}
 
 	job, ok := s.job(jobInfo.Name)

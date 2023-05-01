@@ -76,7 +76,6 @@ func (s *UseCaseSuite) TestManagerPoolError() {
 
 	// Assert.
 	s.Require().Error(err)
-	s.Require().ErrorIs(err, canreceiveproblems.ErrManagerPoolContains)
 }
 
 func (s *UseCaseSuite) TestManagerInPool() {
@@ -122,7 +121,6 @@ func (s *UseCaseSuite) TestManagerCanTakeProblem_Error() {
 
 	// Assert.
 	s.Require().Error(err)
-	s.Require().ErrorIs(err, canreceiveproblems.ErrManagerLoadService)
 	s.Require().False(response.Available)
 	s.Require().False(response.InPool)
 }

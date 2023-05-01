@@ -25,14 +25,17 @@ func initServerClient(
 	addr string,
 	allowOrigins []string,
 	v1Swagger *openapi3.T,
+
 	keycloakClient *keycloakclient.Client,
 	resource string,
 	role string,
+
 	msgRepo *messagesrepo.Repo,
 	chatRepo *chatsrepo.Repo,
 	problemRepo *problemsrepo.Repo,
 	outboxSrv *outbox.Service,
 	db *store.Database,
+
 	isProduction bool,
 ) (*server.Server, error) {
 	lg := zap.L().Named(nameServerClient)
@@ -47,7 +50,7 @@ func initServerClient(
 		return nil, fmt.Errorf("create send message usecase: %v", err)
 	}
 
-	v1Handlers, err := clientv1.NewHandlers(clientv1.NewOptions(lg, getHistoryUseCase, sendMsgUseCase))
+	v1Handlers, err := clientv1.NewHandlers(clientv1.NewOptions(getHistoryUseCase, sendMsgUseCase))
 	if err != nil {
 		return nil, fmt.Errorf("create v1 handlers: %v", err)
 	}

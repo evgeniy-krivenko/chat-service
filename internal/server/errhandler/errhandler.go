@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"github.com/evgeniy-krivenko/chat-service/internal/errors"
+	internalerrors "github.com/evgeniy-krivenko/chat-service/internal/errors"
 )
 
 var _ echo.HTTPErrorHandler = Handler{}.Handle
@@ -37,14 +37,13 @@ func New(opts Options) (Handler, error) {
 }
 
 func (h Handler) Handle(err error, eCtx echo.Context) {
-	code, msg, details := errors.ProcessServerError(err)
+	code, msg, details := internalerrors.ProcessServerError(err)
 	if h.productionMode {
 		details = ""
 	}
 
 	resp := h.responseBuilder(code, msg, details)
-	err = eCtx.JSON(http.StatusOK, &resp)
-	if err != nil {
-		h.lg.Error(err.Error())
+	if err2 := eCtx.JSON(http.StatusOK, &resp); err2 != nil {
+		h.lg.Error("error handler JSON", zap.Error(err))
 	}
 }

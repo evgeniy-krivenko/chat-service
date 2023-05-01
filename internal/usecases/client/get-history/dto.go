@@ -17,14 +17,13 @@ type Request struct {
 }
 
 func (r Request) Validate() error {
-	isValidPage := r.PageSize >= 10 && r.PageSize <= 100
-
 	if r.Cursor == "" && r.PageSize == 0 {
 		return errors.New("neither cursor nor pagesize specified")
 	}
-	if r.Cursor != "" && isValidPage {
+	if r.Cursor != "" && r.PageSize != 0 {
 		return errors.New("cursor and pagesize specified")
 	}
+
 	return validator.Validator.Struct(r)
 }
 

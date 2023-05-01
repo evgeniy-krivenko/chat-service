@@ -124,7 +124,7 @@ tasks:
       - .{{.DEV_TOOLS_PATH}}/ent generate {{.SCHEMA_PATH}} --feature sql/upsert,sql/lock --template ./internal/store/templates
       - task: tidy
     sources:
-      - ./internal/store/schema/*.go
+      - "{{.SCHEMA_PATH}}/*.go"
       - ./internal/store/templates
     generates:
       - ./internal/store/*.go

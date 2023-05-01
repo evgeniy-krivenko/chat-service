@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	errs "github.com/evgeniy-krivenko/chat-service/internal/errors"
+	internalerrors "github.com/evgeniy-krivenko/chat-service/internal/errors"
 	"github.com/evgeniy-krivenko/chat-service/internal/middlewares"
 	gethistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-history"
 	"github.com/evgeniy-krivenko/chat-service/pkg/pointer"
@@ -23,7 +23,7 @@ func (h Handlers) PostGetHistory(
 	var req GetHistoryRequest
 	err := eCtx.Bind(&req)
 	if err != nil {
-		return errs.NewServerError(http.StatusBadRequest, "bind request", err)
+		return internalerrors.NewServerError(http.StatusBadRequest, "bind request", err)
 	}
 
 	useCaseResponse, err := h.getHistory.Handle(ctx, gethistory.Request{
@@ -34,13 +34,13 @@ func (h Handlers) PostGetHistory(
 	})
 	if err != nil {
 		if errors.Is(err, gethistory.ErrInvalidRequest) {
-			return errs.NewServerError(http.StatusBadRequest, "invalid request for get history", err)
+			return internalerrors.NewServerError(http.StatusBadRequest, "invalid request for get history", err)
 		}
 		if errors.Is(err, gethistory.ErrInvalidCursor) {
-			return errs.NewServerError(http.StatusBadRequest, "invalid cursor for get history", err)
+			return internalerrors.NewServerError(http.StatusBadRequest, "invalid cursor for get history", err)
 		}
 
-		return errs.NewServerError(http.StatusInternalServerError, "unknown error while get history", err)
+		return internalerrors.NewServerError(http.StatusInternalServerError, "unknown error while get history", err)
 	}
 
 	page := &MessagesPage{

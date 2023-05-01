@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/url"
 	"time"
 
 	"entgo.io/ent"
@@ -26,7 +27,9 @@ func NewPSQLClient(opts PSQLOptions) (*Client, error) {
 	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("validate options: %v", err)
 	}
+
 	lg := zap.L().Named("psql")
+
 	db, err := NewPgxDB(NewPgxOptions(opts.address, opts.username, opts.password, opts.database))
 	if err != nil {
 		return nil, fmt.Errorf("init db driver: %v", err)
@@ -69,15 +72,14 @@ func NewPgxDB(opts PgxOptions) (*sql.DB, error) {
 		return nil, fmt.Errorf("validate pgx options: %v", err)
 	}
 
-	databaseSource := fmt.Sprintf(
-		"postgres://%s:%s@%s/%s",
-		opts.username,
-		opts.password,
-		opts.address,
-		opts.database,
-	)
+	ds := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(opts.username, opts.password),
+		Host:   opts.address,
+		Path:   opts.database,
+	}
 
-	db, err := sql.Open("pgx", databaseSource)
+	db, err := sql.Open("pgx", ds.String())
 	if err != nil {
 		return nil, fmt.Errorf("open connect to db: %v", err)
 	}

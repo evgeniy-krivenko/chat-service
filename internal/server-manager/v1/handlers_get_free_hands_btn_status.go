@@ -1,11 +1,12 @@
 package managerv1
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/evgeniy-krivenko/chat-service/internal/errors"
+	internalerrors "github.com/evgeniy-krivenko/chat-service/internal/errors"
 	"github.com/evgeniy-krivenko/chat-service/internal/middlewares"
 	canreceiveproblems "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/can-receive-problems"
 )
@@ -18,8 +19,11 @@ func (h Handlers) PostGetFreeHandsBtnAvailability(eCtx echo.Context, params Post
 		ID:        params.XRequestID,
 		ManagerID: managerID,
 	})
+	if errors.Is(err, canreceiveproblems.ErrInvalidRequest) {
+		return internalerrors.NewServerError(http.StatusBadRequest, "invalid request", err)
+	}
 	if err != nil {
-		return errors.NewServerError(http.StatusInternalServerError, "internal error", err)
+		return internalerrors.NewServerError(http.StatusInternalServerError, "internal error", err)
 	}
 
 	response := GetFreeHandsBtnAvailability{

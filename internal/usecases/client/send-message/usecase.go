@@ -3,6 +3,7 @@ package sendmessage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
@@ -70,37 +71,36 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 
 	var msg *messagesrepo.Message
 
-	err := u.txtor.RunInTx(ctx, func(ctx context.Context) error {
+	if err := u.txtor.RunInTx(ctx, func(ctx context.Context) error {
 		m, err := u.msgRepo.GetMessageByRequestID(ctx, req.ID)
-		if errors.Is(err, messagesrepo.ErrMsgNotFound) {
-			chatID, err := u.chatRepo.CreateIfNotExists(ctx, req.ClientID)
-			if err != nil {
-				return ErrChatNotCreated
-			}
-
-			problemID, err := u.problemRepo.CreateIfNotExists(ctx, chatID)
-			if err != nil {
-				return ErrProblemNotCreated
-			}
-
-			newMsg, err := u.msgRepo.CreateClientVisible(ctx, req.ID, problemID, chatID, req.ClientID, req.MessageBody)
-			if err != nil {
-				return err
-			}
-
-			msg = newMsg
-
-			return u.putToOutbox(ctx, newMsg.ID)
+		if nil == err {
+			msg = m
+			return nil
 		}
+		if !errors.Is(err, messagesrepo.ErrMsgNotFound) {
+			return fmt.Errorf("get msg by initial request id: %v", err)
+		}
+
+		chatID, err := u.chatRepo.CreateIfNotExists(ctx, req.ClientID)
 		if err != nil {
-			return err
+			return fmt.Errorf("%w: %v", ErrChatNotCreated, err)
+		}
+
+		problemID, err := u.problemRepo.CreateIfNotExists(ctx, chatID)
+		if err != nil {
+			return fmt.Errorf("%w: %v", ErrProblemNotCreated, err)
+		}
+
+		m, err = u.msgRepo.CreateClientVisible(ctx, req.ID, problemID, chatID, req.ClientID, req.MessageBody)
+		if err != nil {
+			return fmt.Errorf("create client visible message: %v", err)
 		}
 
 		msg = m
-		return nil
-	})
-	if err != nil {
-		return Response{}, err
+
+		return u.putToOutbox(ctx, m.ID)
+	}); err != nil {
+		return Response{}, fmt.Errorf("`send client message` tx: %w", err)
 	}
 
 	return Response{
@@ -113,12 +113,12 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 func (u UseCase) putToOutbox(ctx context.Context, msgID types.MessageID) error {
 	outboxPayload, err := sendclientmessagejob.MarshalPayload(msgID)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal when put to outbox: %v", err)
 	}
 
 	_, err = u.outboxSrv.Put(ctx, sendclientmessagejob.Name, outboxPayload, time.Now())
 	if err != nil {
-		return err
+		return fmt.Errorf("put to outbox: %v", err)
 	}
 
 	return nil
