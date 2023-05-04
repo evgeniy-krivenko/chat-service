@@ -45,6 +45,7 @@ vars:
     RequestID
     JobID
     FailedJobID
+    EventID
 
   TYPES_PKG: types
   TYPES_SRC: ./internal/types

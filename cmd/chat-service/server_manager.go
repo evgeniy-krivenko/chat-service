@@ -14,6 +14,7 @@ import (
 	inmemmanagerpool "github.com/evgeniy-krivenko/chat-service/internal/services/manager-pool/in-mem"
 	canreceiveproblems "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/can-receive-problems"
 	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
+	websocketstream "github.com/evgeniy-krivenko/chat-service/internal/websocket-stream"
 )
 
 const nameServerManager = "server-manager"
@@ -21,9 +22,13 @@ const nameServerManager = "server-manager"
 func initServerManager(
 	addr string,
 	allowOrigins []string,
+
 	v1Swagger *openapi3.T,
 	keycloakClient *keycloakclient.Client,
+	wsHTTPHandler *websocketstream.HTTPHandler,
+
 	mLoadSrv *managerload.Service,
+
 	resource string,
 	role string,
 	isProduction bool,
@@ -70,5 +75,6 @@ func initServerManager(
 		func(router server.EchoRouter) {
 			managerv1.RegisterHandlers(router, v1Handlers)
 		},
+		wsHTTPHandler,
 	))
 }

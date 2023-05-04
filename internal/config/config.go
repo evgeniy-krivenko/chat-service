@@ -37,12 +37,14 @@ type DebugServerConfig struct {
 type ClientServerConfig struct {
 	Addr           string         `toml:"addr" validate:"hostname_port"`
 	AllowOrigins   []string       `toml:"allow_origins" validate:"dive,url,min=1"`
+	SecWSProtocol  string         `toml:"sec_ws_protocol" validate:"required"`
 	RequiredAccess RequiredAccess `toml:"required_access" validate:"required,dive"`
 }
 
 type ManagerServerConfig struct {
 	Addr           string         `toml:"addr" validate:"hostname_port"`
 	AllowOrigins   []string       `toml:"allow_origins" validate:"dive,url,min=1"`
+	SecWSProtocol  string         `toml:"sec_ws_protocol" validate:"required"`
 	RequiredAccess RequiredAccess `toml:"required_access" validate:"required,dive"`
 }
 

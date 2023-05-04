@@ -17,6 +17,7 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	gethistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-history"
 	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/send-message"
+	websocketstream "github.com/evgeniy-krivenko/chat-service/internal/websocket-stream"
 )
 
 const nameServerClient = "server-client"
@@ -27,6 +28,8 @@ func initServerClient(
 	v1Swagger *openapi3.T,
 
 	keycloakClient *keycloakclient.Client,
+	wsHTTPHandler *websocketstream.HTTPHandler,
+
 	resource string,
 	role string,
 
@@ -78,6 +81,7 @@ func initServerClient(
 		func(router server.EchoRouter) {
 			clientv1.RegisterHandlers(router, v1Handlers)
 		},
+		wsHTTPHandler,
 	))
 	if err != nil {
 		return nil, fmt.Errorf("%s: %v", nameServerClient, err)

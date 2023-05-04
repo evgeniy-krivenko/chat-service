@@ -11,7 +11,7 @@ addr = ":8079"
 [servers.client]
 addr = ":8080"
 allow_origins = ["http://localhost:3011", "http://localhost:3000"]
-
+sec_ws_protocol = "some-protocol-for-auth"
 [servers.client.required_access]
 resource = "some-resource"
 role = "some-role"
@@ -19,7 +19,7 @@ role = "some-role"
 [servers.manager]
 addr = ":8081"
 allow_origins = ["http://localhost:3011", "http://localhost:3001"]
-
+sec_ws_protocol = "some-protocol-for-auth"
 [servers.manager.required_access]
 resource = "some-resourse"
 role = "some-role"

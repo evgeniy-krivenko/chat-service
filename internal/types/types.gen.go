@@ -339,8 +339,55 @@ func (r FailedJobID) IsZero() bool {
 	return r == FailedJobIDNil 
 }
 
+type EventID uuid.UUID
+
+var EventIDNil = EventID(uuid.Nil)
+
+func NewEventID() EventID {
+	return EventID(uuid.New())
+}
+
+func (r EventID) String() string {
+	return uuid.UUID(r).String()
+}
+
+func (r EventID) Value() (driver.Value, error) {
+	return r.String(), nil
+}
+
+func (r *EventID) Scan(src any) error {
+	return (*uuid.UUID)(r).Scan(src)
+}
+
+func (r EventID) MarshalText() ([]byte, error) {
+	return uuid.UUID(r).MarshalText()
+}
+
+func (r *EventID) UnmarshalText(data []byte) error {
+	return (*uuid.UUID)(r).UnmarshalText(data)
+}
+
+func (r EventID) Validate() error {
+	if r.IsZero() {
+		return errors.New("zero EventID")
+	}
+	return nil
+}
+
+func (r EventID) Matches(x any) bool {
+	v, ok := x.(EventID)
+	if !ok {
+		return false
+	}
+	return r.String() == v.String() 
+}
+
+func (r EventID) IsZero() bool {
+	return r == EventIDNil 
+}
+
 type Types interface {
-	ChatID | MessageID | ProblemID | UserID | RequestID | JobID | FailedJobID
+	ChatID | MessageID | ProblemID | UserID | RequestID | JobID | FailedJobID | EventID
 }
 
 func Parse[T Types](s string) (T, error) {

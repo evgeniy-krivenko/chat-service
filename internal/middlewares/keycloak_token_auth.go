@@ -3,6 +3,7 @@ package middlewares
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
@@ -22,56 +23,70 @@ type Introspector interface {
 	IntrospectToken(ctx context.Context, token string) (*keycloakclient.IntrospectTokenResult, error)
 }
 
+func validator(introspector Introspector, resource, role string) func(tokenStr string, eCtx echo.Context) (bool, error) {
+	return func(tokenStr string, eCtx echo.Context) (bool, error) {
+		ctx := eCtx.Request().Context()
+
+		tokenStr, _ = strings.CutPrefix(tokenStr, "chat-service-protocol, ")
+
+		introspectResult, err := introspector.IntrospectToken(ctx, tokenStr)
+		if err != nil {
+			return false, err
+		}
+
+		if !introspectResult.Active {
+			return false, nil
+		}
+
+		var cl claims
+
+		token, _ := jwt.ParseWithClaims(
+			tokenStr,
+			&cl,
+			func(token *jwt.Token) (interface{}, error) {
+				return nil, nil
+			},
+		)
+
+		if err := cl.Valid(); err != nil {
+			return false, err
+		}
+
+		resource, ok := cl.ResourceAccess[resource]
+		if !ok {
+			return false, ErrNoRequiredResourceRole
+		}
+
+		roles, ok := resource["roles"]
+		if !ok {
+			return false, ErrNoRequiredResourceRole
+		}
+
+		for _, r := range roles {
+			if r == role {
+				eCtx.Set(tokenCtxKey, token)
+				return true, nil
+			}
+		}
+		return false, ErrNoRequiredResourceRole
+	}
+}
+
 // NewKeyCloakTokenAuth returns a middleware that implements "active" authentication:
 // each request is verified by the Keycloak server.
 func NewKeyCloakTokenAuth(introspector Introspector, resource, role string) echo.MiddlewareFunc {
 	return middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
 		KeyLookup:  "header:Authorization",
 		AuthScheme: "Bearer",
-		Validator: func(tokenStr string, eCtx echo.Context) (bool, error) {
-			ctx := eCtx.Request().Context()
+		Validator:  validator(introspector, resource, role),
+	})
+}
 
-			introspectResult, err := introspector.IntrospectToken(ctx, tokenStr)
-			if err != nil {
-				return false, err
-			}
-
-			if !introspectResult.Active {
-				return false, nil
-			}
-
-			var cl claims
-
-			token, _ := jwt.ParseWithClaims(
-				tokenStr,
-				&cl,
-				func(token *jwt.Token) (interface{}, error) {
-					return nil, nil
-				},
-			)
-
-			if err := cl.Valid(); err != nil {
-				return false, err
-			}
-
-			resource, ok := cl.ResourceAccess[resource]
-			if !ok {
-				return false, ErrNoRequiredResourceRole
-			}
-
-			roles, ok := resource["roles"]
-			if !ok {
-				return false, ErrNoRequiredResourceRole
-			}
-
-			for _, r := range roles {
-				if r == role {
-					eCtx.Set(tokenCtxKey, token)
-					return true, nil
-				}
-			}
-			return false, ErrNoRequiredResourceRole
-		},
+func NewKeyCloakWSTokenAuth(introspector Introspector, resource, role string) echo.MiddlewareFunc {
+	return middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
+		KeyLookup:  "header:Sec-WebSocket-Protocol",
+		AuthScheme: "chat-service-protocol,",
+		Validator:  validator(introspector, resource, role),
 	})
 }
 

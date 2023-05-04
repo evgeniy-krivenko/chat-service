@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/evgeniy-krivenko/chat-service/internal/buildinfo"
@@ -28,6 +29,7 @@ import (
 	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/migrate"
+	websocketstream "github.com/evgeniy-krivenko/chat-service/internal/websocket-stream"
 )
 
 var configPath = flag.String("config", "configs/config.toml", "Path to config file")
@@ -189,19 +191,45 @@ func run() (errReturned error) {
 		return fmt.Errorf("init keycloak client: %v", err)
 	}
 
+	shutdown := make(chan struct{})
+
+	// Websocket client stream.
+	wsClient, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
+		zap.L().Named("websocket-client"),
+		websocketstream.DummyEventStream{},
+		websocketstream.DummyAdapter{},
+		websocketstream.JSONEventWriter{},
+		websocketstream.NewUpgrader(cfg.Servers.Client.AllowOrigins, cfg.Servers.Client.SecWSProtocol),
+		shutdown,
+	))
+
+	// Websocket manager stream.
+	wsManager, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
+		zap.L().Named("websocket-client"),
+		websocketstream.DummyEventStream{},
+		websocketstream.DummyAdapter{},
+		websocketstream.JSONEventWriter{},
+		websocketstream.NewUpgrader(cfg.Servers.Manager.AllowOrigins, cfg.Servers.Manager.SecWSProtocol),
+		shutdown,
+	))
+
 	// Servers.
 	srvClient, err := initServerClient(
 		cfg.Servers.Client.Addr,
 		cfg.Servers.Client.AllowOrigins,
 		swaggerClientV1,
 		keycloakClient,
+		wsClient,
+
 		cfg.Servers.Client.RequiredAccess.Resource,
 		cfg.Servers.Client.RequiredAccess.Role,
+
 		msgRepo,
 		chatsRepo,
 		problemsRepo,
 		outboxService,
 		database,
+
 		cfg.Global.IsProduction(),
 	)
 	if err != nil {
@@ -211,8 +239,11 @@ func run() (errReturned error) {
 	srvManager, err := initServerManager(
 		cfg.Servers.Manager.Addr,
 		cfg.Servers.Manager.AllowOrigins,
+
 		swaggerManagerV1,
 		keycloakClient,
+		wsManager,
+
 		managerLoadService,
 		cfg.Servers.Manager.RequiredAccess.Resource,
 		cfg.Servers.Manager.RequiredAccess.Role,
@@ -230,9 +261,13 @@ func run() (errReturned error) {
 	eg.Go(func() error { return srvManager.Run(ctx) })
 	eg.Go(func() error { return outboxService.Run(ctx) })
 
-	// Run services.
-	// Ждут своего часа.
-	// ...
+	// Websocket shutdown.
+	eg.Go(func() error {
+		<-ctx.Done()
+
+		shutdown <- struct{}{}
+		return nil
+	})
 
 	if err = eg.Wait(); err != nil && !errors.Is(err, context.Canceled) {
 		return fmt.Errorf("wait app stop: %v", err)
