@@ -91,13 +91,7 @@ func TestHTTPHandler(t *testing.T) {
 		c.SetPingHandler(func(appData string) error {
 			pings++
 			log.Debug("new ping received, send pong")
-			//w, _ := c.NextWriter(gorillaws.PongMessage)
-			//c.SetWriteDeadline(time.Now().Add(time.Second))
-			//_ = c.WriteMessage(gorillaws.TextMessage, []byte("message"))
 			return defaultPingHandler(appData)
-			// log.Debug("pong was sent")
-			// require.NoError(t, err)
-			// return nil
 		})
 	}
 
