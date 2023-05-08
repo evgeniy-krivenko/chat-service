@@ -30,6 +30,7 @@ type Options struct {
 	addr      string      `option:"mandatory" validate:"required,hostname_port"`
 	v1Client  *openapi3.T `option:"mandatory" validate:"required"`
 	v1Manager *openapi3.T `option:"mandatory" validate:"required"`
+	events    *openapi3.T `option:"mandatory" validate:"required"`
 }
 
 type Server struct {
@@ -37,6 +38,7 @@ type Server struct {
 	srv       *http.Server
 	v1Client  *openapi3.T
 	v1Manager *openapi3.T
+	events    *openapi3.T
 }
 
 func New(opts Options) (*Server, error) {
@@ -58,6 +60,7 @@ func New(opts Options) (*Server, error) {
 		},
 		v1Client:  opts.v1Client,
 		v1Manager: opts.v1Manager,
+		events:    opts.events,
 	}
 	index := newIndexPage()
 
@@ -71,6 +74,7 @@ func New(opts Options) (*Server, error) {
 	e.GET("/debug/error", s.Error)
 	e.GET("/schema/client", s.SchemaClient)
 	e.GET("/schema/manager", s.SchemaManager)
+	e.GET("/schema/events", s.SchemaEvents)
 
 	index.addPage("/version", "Get build information")
 	index.addPage("/debug/pprof/", "Go to std profiler")
@@ -78,6 +82,7 @@ func New(opts Options) (*Server, error) {
 	index.addPage("/debug/error", "Debug Sentry error event")
 	index.addPage("/schema/client", "Get client OpenAPI specification")
 	index.addPage("/schema/manager", "Get client OpenAPI specification")
+	index.addPage("/schema/events", "Get events OpenAPI specification")
 
 	e.GET("/", index.handler)
 
@@ -145,4 +150,8 @@ func (s *Server) SchemaClient(eCtx echo.Context) error {
 
 func (s *Server) SchemaManager(eCtx echo.Context) error {
 	return eCtx.JSON(http.StatusOK, &s.v1Manager)
+}
+
+func (s *Server) SchemaEvents(eCtx echo.Context) error {
+	return eCtx.JSON(http.StatusOK, &s.events)
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	clientevents "github.com/evgeniy-krivenko/chat-service/internal/server-client/events"
 	"log"
 	"os/signal"
 	"syscall"
@@ -75,11 +76,16 @@ func run() (errReturned error) {
 		return fmt.Errorf("get manager swagger: %v", err)
 	}
 
+	swaggerEvents, err := clientevents.GetSwagger()
+	if err != nil {
+		return fmt.Errorf("get events swagger: %v", err)
+	}
 	// Debug server.
 	srvDebug, err := serverdebug.New(serverdebug.NewOptions(
 		cfg.Servers.Debug.Addr,
 		swaggerClientV1,
 		swaggerManagerV1,
+		swaggerEvents,
 	))
 	if err != nil {
 		return fmt.Errorf("init debug server: %v", err)
