@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	clientevents "github.com/evgeniy-krivenko/chat-service/internal/server-client/events"
+	inmemeventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream/in-mem"
 	"log"
 	"os/signal"
 	"syscall"
@@ -80,6 +81,7 @@ func run() (errReturned error) {
 	if err != nil {
 		return fmt.Errorf("get events swagger: %v", err)
 	}
+
 	// Debug server.
 	srvDebug, err := serverdebug.New(serverdebug.NewOptions(
 		cfg.Servers.Debug.Addr,
@@ -170,10 +172,13 @@ func run() (errReturned error) {
 		return fmt.Errorf("init manager load service: %v", err)
 	}
 
+	eventStream := inmemeventstream.New()
+
 	// Outbox Jobs.
 	sendClientMessageJob, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(
 		msgProducer,
 		msgRepo,
+		eventStream,
 	))
 	if err != nil {
 		return fmt.Errorf("create send client message job: %v", err)
@@ -202,8 +207,8 @@ func run() (errReturned error) {
 	// Websocket client stream.
 	wsClient, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
 		zap.L().Named("websocket-client"),
-		websocketstream.DummyEventStream{},
-		websocketstream.DummyAdapter{},
+		eventStream,
+		clientevents.Adapter{},
 		websocketstream.JSONEventWriter{},
 		websocketstream.NewUpgrader(cfg.Servers.Client.AllowOrigins, cfg.Servers.Client.SecWSProtocol),
 		shutdown,
@@ -211,9 +216,9 @@ func run() (errReturned error) {
 
 	// Websocket manager stream.
 	wsManager, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
-		zap.L().Named("websocket-client"),
-		websocketstream.DummyEventStream{},
-		websocketstream.DummyAdapter{},
+		zap.L().Named("websocket-manager"),
+		eventStream,
+		clientevents.Adapter{},
 		websocketstream.JSONEventWriter{},
 		websocketstream.NewUpgrader(cfg.Servers.Manager.AllowOrigins, cfg.Servers.Manager.SecWSProtocol),
 		shutdown,
