@@ -3,6 +3,7 @@ package sendclientmessagejob
 import (
 	"context"
 	"fmt"
+	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 
 	"go.uber.org/zap"
 
@@ -24,10 +25,15 @@ type messageRepository interface {
 	GetMessageByID(ctx context.Context, msgID types.MessageID) (*messagesrepo.Message, error)
 }
 
+type eventStream interface {
+	Publish(ctx context.Context, userID types.UserID, event eventstream.Event) error
+}
+
 //go:generate options-gen -out-filename=job_options.gen.go -from-struct=Options
 type Options struct {
 	msgProducer messageProducer   `option:"mandatory" validate:"required"`
 	msgRepo     messageRepository `option:"mandatory" validate:"required"`
+	eventStream eventStream       `option:"mandatory" validate:"required"`
 }
 
 type Job struct {
@@ -71,6 +77,19 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		FromClient: true,
 	}); err != nil {
 		j.lg.Error("produce message", zap.Error(err))
+	}
+
+	if err := j.eventStream.Publish(ctx, msg.AuthorID, eventstream.NewNewMessageEvent(
+		types.NewEventID(),
+		msg.InitialRequestId,
+		msg.ChatID,
+		msg.ID,
+		msg.AuthorID,
+		msg.CreatedAt,
+		msg.Body,
+		msg.IsService,
+	)); err != nil {
+		return fmt.Errorf("publish new msg to event stream: %v", err)
 	}
 
 	j.lg.Info("success to produce message. Job done")
