@@ -3,7 +3,6 @@ package sendclientmessagejob_test
 import (
 	"context"
 	"fmt"
-	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	"testing"
 	"time"
 
@@ -11,9 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
+	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
 	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
 	sendclientmessagejobmocks "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message/mocks"
+	msgjobpayload "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/msg-job-payload"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -41,7 +42,7 @@ func TestJob_Handle(t *testing.T) {
 		ID:                  msgID,
 		ChatID:              chatID,
 		AuthorID:            clientID,
-		InitialRequestId:    reqID,
+		InitialRequestID:    reqID,
 		Body:                body,
 		CreatedAt:           createdAt,
 		IsVisibleForClient:  true,
@@ -71,7 +72,7 @@ func TestJob_Handle(t *testing.T) {
 	)).Return(nil)
 
 	// Action & assert.
-	payload, err := sendclientmessagejob.MarshalPayload(msgID)
+	payload, err := msgjobpayload.MarshalPayload(msgID)
 	require.NoError(t, err)
 
 	err = job.Handle(ctx, payload)

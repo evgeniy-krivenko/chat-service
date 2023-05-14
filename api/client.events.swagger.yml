@@ -67,6 +67,10 @@ components:
       allOf:
         - $ref: "#/components/schemas/CommonMessage"
 
+    MessageBlockedEvent:
+      allOf:
+        - $ref: "#/components/schemas/CommonMessage"
+
     EventType:
       type: string
       enum:

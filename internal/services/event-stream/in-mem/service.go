@@ -3,10 +3,12 @@ package inmemeventstream
 import (
 	"context"
 	"fmt"
+	"sync"
+
+	"go.uber.org/zap"
+
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
-	"go.uber.org/zap"
-	"sync"
 )
 
 const serviceName = "event-stream"
@@ -46,7 +48,6 @@ func (s *Service) Subscribe(ctx context.Context, userID types.UserID) (<-chan ev
 				return
 			}
 		}
-
 	}(&s.wg)
 
 	s.subs[userID] = append(s.subs[userID], in)

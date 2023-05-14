@@ -35,6 +35,21 @@ func TestAdapter_Adapt(t *testing.T) {
 		},
 
 		{
+			name: "blocked",
+			ev: eventstream.NewMessageBlockedEvent(
+				types.MustParse[types.EventID]("d0ffbd36-bc30-11ed-8286-461e464ebed8"),
+				types.MustParse[types.RequestID]("cee5f290-bc30-11ed-b7fe-461e464ebed8"),
+				types.MustParse[types.MessageID]("cb36a888-bc30-11ed-b843-461e464ebed8"),
+			),
+			expJSON: `{
+				"eventId": "d0ffbd36-bc30-11ed-8286-461e464ebed8",
+				"eventType": "MessageBlockedEvent",
+				"messageId": "cb36a888-bc30-11ed-b843-461e464ebed8",
+				"requestId": "cee5f290-bc30-11ed-b7fe-461e464ebed8"
+			}`,
+		},
+
+		{
 			name: "service message",
 			ev: eventstream.NewNewMessageEvent(
 				types.MustParse[types.EventID]("d0ffbd36-bc30-11ed-8286-461e464ebed8"),

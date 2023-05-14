@@ -56,3 +56,15 @@ reserve_for = "5m"
 
 [services.manager_load]
 max_problems_at_same_time = 5
+
+[services.afc_verdicts_processor]
+brokers = ["localhost:9092"]
+consumers = 2
+consumer_group = "some group id"
+verdicts_topic = "topic for verdicts msg"
+verdicts_dlq_topic = "afc.msg-verdicts.dlq"
+verdicts_signing_public_key = """
+-----BEGIN PUBLIC KEY-----
+...
+-----END PUBLIC KEY-----
+"""

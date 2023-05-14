@@ -39,7 +39,7 @@ func NewKafkaAdapted() *KafkaAdapted {
 }
 
 func (k *KafkaAdapted) WithServiceName(name string) *KafkaAdapted {
-	k.lg.Named(name)
+	k.lg = k.lg.Named(name)
 	return k
 }
 

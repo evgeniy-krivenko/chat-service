@@ -5,11 +5,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	clientevents "github.com/evgeniy-krivenko/chat-service/internal/server-client/events"
-	inmemeventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream/in-mem"
 	"log"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -22,17 +21,23 @@ import (
 	jobsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/jobs"
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
+	clientevents "github.com/evgeniy-krivenko/chat-service/internal/server-client/events"
 	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
 	serverdebug "github.com/evgeniy-krivenko/chat-service/internal/server-debug"
 	managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1"
+	afcverdictsprocessor "github.com/evgeniy-krivenko/chat-service/internal/services/afc-verdicts-processor"
+	inmemeventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream/in-mem"
 	managerload "github.com/evgeniy-krivenko/chat-service/internal/services/manager-load"
 	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
+	clientmessagesentjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-sent"
 	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/migrate"
 	websocketstream "github.com/evgeniy-krivenko/chat-service/internal/websocket-stream"
 )
+
+const shutdownTimeout = 3 * time.Second
 
 var configPath = flag.String("config", "configs/config.toml", "Path to config file")
 
@@ -42,6 +47,7 @@ func main() {
 	}
 }
 
+//nolint:gocyclo
 func run() (errReturned error) {
 	flag.Parse()
 
@@ -173,6 +179,7 @@ func run() (errReturned error) {
 	}
 
 	eventStream := inmemeventstream.New()
+	defer eventStream.Close()
 
 	// Outbox Jobs.
 	sendClientMessageJob, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(
@@ -184,8 +191,36 @@ func run() (errReturned error) {
 		return fmt.Errorf("create send client message job: %v", err)
 	}
 
+	clientMessageSentJob, err := clientmessagesentjob.New(clientmessagesentjob.NewOptions(msgRepo, eventStream))
+	if err != nil {
+		return fmt.Errorf("create client msg sent job: %v", err)
+	}
+
 	if err := outboxService.RegisterJob(sendClientMessageJob); err != nil {
 		return fmt.Errorf("register send client message job: %v", err)
+	}
+
+	if err := outboxService.RegisterJob(clientMessageSentJob); err != nil {
+		return fmt.Errorf("register client msg sent job: %v", err)
+	}
+
+	afcVerdictProcessor, err := afcverdictsprocessor.New(afcverdictsprocessor.NewOptions(
+		cfg.Services.AFCVerdictsProcessor.Brokers,
+		cfg.Services.AFCVerdictsProcessor.Consumers,
+		cfg.Services.AFCVerdictsProcessor.ConsumerGroup,
+		cfg.Services.AFCVerdictsProcessor.VerdictsTopic,
+		afcverdictsprocessor.NewKafkaReader,
+		afcverdictsprocessor.NewKafkaDLQWriter(
+			cfg.Services.AFCVerdictsProcessor.Brokers,
+			cfg.Services.AFCVerdictsProcessor.VerdictsDLQTopic,
+		),
+		database,
+		msgRepo,
+		outboxService,
+		afcverdictsprocessor.WithVerdictsSignKey(cfg.Services.AFCVerdictsProcessor.VerdictsSigningPublicKey),
+	))
+	if err != nil {
+		return fmt.Errorf("init afc verdict processor: %v", err)
 	}
 
 	// Clients.
@@ -202,7 +237,8 @@ func run() (errReturned error) {
 		return fmt.Errorf("init keycloak client: %v", err)
 	}
 
-	shutdown := make(chan struct{})
+	shutdownClient := make(chan struct{})
+	shutdownManager := make(chan struct{})
 
 	// Websocket client stream.
 	wsClient, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
@@ -211,8 +247,11 @@ func run() (errReturned error) {
 		clientevents.Adapter{},
 		websocketstream.JSONEventWriter{},
 		websocketstream.NewUpgrader(cfg.Servers.Client.AllowOrigins, cfg.Servers.Client.SecWSProtocol),
-		shutdown,
+		shutdownClient,
 	))
+	if err != nil {
+		return fmt.Errorf("init websocket client: %v", err)
+	}
 
 	// Websocket manager stream.
 	wsManager, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
@@ -221,8 +260,11 @@ func run() (errReturned error) {
 		clientevents.Adapter{},
 		websocketstream.JSONEventWriter{},
 		websocketstream.NewUpgrader(cfg.Servers.Manager.AllowOrigins, cfg.Servers.Manager.SecWSProtocol),
-		shutdown,
+		shutdownManager,
 	))
+	if err != nil {
+		return fmt.Errorf("init websocket manager: %v", err)
+	}
 
 	// Servers.
 	srvClient, err := initServerClient(
@@ -271,12 +313,28 @@ func run() (errReturned error) {
 	eg.Go(func() error { return srvClient.Run(ctx) })
 	eg.Go(func() error { return srvManager.Run(ctx) })
 	eg.Go(func() error { return outboxService.Run(ctx) })
+	eg.Go(func() error { return afcVerdictProcessor.Run(ctx) })
 
-	// Websocket shutdown.
+	// Websockets shutdown.
 	eg.Go(func() error {
 		<-ctx.Done()
 
-		shutdown <- struct{}{}
+		select {
+		case shutdownClient <- struct{}{}:
+		case <-time.After(shutdownTimeout):
+		}
+
+		return nil
+	})
+
+	eg.Go(func() error {
+		<-ctx.Done()
+
+		select {
+		case shutdownManager <- struct{}{}:
+		case <-time.After(shutdownTimeout):
+		}
+
 		return nil
 	})
 

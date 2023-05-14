@@ -43,6 +43,9 @@ type Message struct {
 	union json.RawMessage
 }
 
+// MessageBlockedEvent defines model for MessageBlockedEvent.
+type MessageBlockedEvent = CommonMessage
+
 // MessageSentEvent defines model for MessageSentEvent.
 type MessageSentEvent = CommonMessage
 
@@ -120,15 +123,16 @@ func (t *Message) UnmarshalJSON(b []byte) error {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/7RUPW/bMBD9K8a1I2Ul6BJwy9fQoSnQtFOQgZbOFmuSp5InuYah/16QUmxFVYsmSCcL",
-	"9/Hu3btHH6AgW5NDxwHkAUJRoVXp85qsJfcJQ1AbjIHaU42eNaY0tuj4Yxk/1+StYpDQNLoEAbyvESQE",
-	"9tptQMDPbEOZUzYGb1PbzVN0KI0/YTmTy7StyXMar7gCCRvNVbNaFmRzbDfo9D7bet2i21JeVIqzgL7V",
-	"BebaMXqnTJ7AoetEz/lrGnmA9x7XIOFdflIgH9bPb4+FnQDbS/DyXQft/rDtbPZt9/X4o8Hwiit9GRrn",
-	"mc9m35L5QF17LEE+jM4mjrYbn2W86GMn4HZ8ZnSNjSB3uBsUT2kQT+e5R8eT0JWhYotlH32cStUd6yJ+",
-	"qUPhtdVOMfnRM9nf9VLi2Erk8PMa5MPf3Tel2j12M2zlAZQx/wD3/CEnsOmE12KJ6b+Cargi/3LDXfZ9",
-	"8377FtD/z2eyonIfoX47c+FRMZaX/GydUjFmrC3CjDN0uO8HjQBXRAaVg6mvT/DjvoHPyXa0+o5FckEE",
-	"0G5NCVuzidkr5baL+6aOeiyuK8WLa6PR8SJdNoCAFn3Q5EBCe55MWKNTtQYJH5bnyzMQScMA0jXGCIhC",
-	"oQ/JCiVGc9fct99gi4ZqG9H7KhDQeAMSdkHmuaFCmYoCy4uzi7N8FyLnXwEAAP//AJEXhWIGAAA=",
+	"H4sIAAAAAAAC/7RUzW7bPBB8FWO/70hZCXoJeMvfoYemQNOeghxoaW2xJrkquZJrGHr3gpRiK6paNGl6",
+	"srA/w9nZWR+gIFuTQ8cB5AFCUaFV6fOarCX3AUNQG4yB2lONnjWmNLbo+H0ZP9fkrWKQ0DS6BAG8rxEk",
+	"BPbabUDA92xDmVM2Bm9T281TdCiNP2E5k8u0rclzel5xBRI2mqtmtSzI5thu0Ol9tvW6RbelvKgUZwF9",
+	"qwvMtWP0Tpk8gUPXiZ7z5/TkAf73uAYJ/+UnBfJh/Pz2WNgJsL0EL5910O4X085m33Zej98aDK/Y0qeh",
+	"cZ75bPYtmQ/UtccS5MNobeJou/FaxoM+dgJux2tG19gIcoe7QfGUBvG0nnt0PAldGSq2WPbRx6lU3bEu",
+	"4pc6FF5b7RSTH53J/q6XEsdWIocf1yAffu++KdXusZunJg+gjPkDxOe3PMY7Tf83YFPGr8US038Z1XBF",
+	"/uUGvuz75v37JaD/l2e3onIfoX6yTeFRMZaX/GycUjFmrC3CjNN0uO8fGgGuiAwqB9M7OcGP+wY+JxvT",
+	"6isWyVURQLs1JWzNJmavlNsu7ps66rG4rhQvro1Gx4u02QACWvRBkwMJ7XkydY1O1RokvFueL89AJA0D",
+	"SNcYIyAKhT4kK5QYj6Xmvv0GWzRU24jeV4GAxhuQsAsyzw0VylQUWF6cXZzluxA5/wgAAP//guX8n7IG",
+	"AAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
