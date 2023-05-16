@@ -9,13 +9,19 @@ servers:
 
 components:
   schemas:
-    Message:
+    Event:
+      required: [ eventType ]
+      properties:
+        eventType:
+          $ref: "#/components/schemas/EventType"
       oneOf:
       - $ref: "#/components/schemas/NewMessageEvent"
+      - $ref: "#/components/schemas/MessageSentEvent"
+      - $ref: "#/components/schemas/MessageBlockedEvent"
       discriminator:
         propertyName: eventType
 
-    CommonMessage:
+    CommonEvent:
       required: [ eventType, eventId, messageId, requestId ]
       properties:
         eventType:
@@ -44,7 +50,7 @@ components:
 
     NewMessageEvent:
       allOf:
-        - $ref: "#/components/schemas/CommonMessage"
+        - $ref: "#/components/schemas/CommonEvent"
         - type: object
           required: [ createdAt, isService, body ]
           properties:
@@ -65,11 +71,11 @@ components:
 
     MessageSentEvent:
       allOf:
-        - $ref: "#/components/schemas/CommonMessage"
+        - $ref: "#/components/schemas/CommonEvent"
 
     MessageBlockedEvent:
       allOf:
-        - $ref: "#/components/schemas/CommonMessage"
+        - $ref: "#/components/schemas/CommonEvent"
 
     EventType:
       type: string
