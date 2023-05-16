@@ -27,27 +27,28 @@ const (
 	EventTypeNewMessageEvent     EventType = "NewMessageEvent"
 )
 
-// CommonMessage defines model for CommonMessage.
-type CommonMessage struct {
+// CommonEvent defines model for CommonEvent.
+type CommonEvent struct {
 	EventID   types.EventID   `json:"eventId"`
 	EventType EventType       `json:"eventType"`
 	MessageID types.MessageID `json:"messageId"`
 	RequestID types.RequestID `json:"requestId"`
 }
 
+// Event defines model for Event.
+type Event struct {
+	EventType EventType `json:"eventType"`
+	union     json.RawMessage
+}
+
 // EventType defines model for EventType.
 type EventType string
 
-// Message defines model for Message.
-type Message struct {
-	union json.RawMessage
-}
-
 // MessageBlockedEvent defines model for MessageBlockedEvent.
-type MessageBlockedEvent = CommonMessage
+type MessageBlockedEvent = CommonEvent
 
 // MessageSentEvent defines model for MessageSentEvent.
-type MessageSentEvent = CommonMessage
+type MessageSentEvent = CommonEvent
 
 // NewMessageEvent defines model for NewMessageEvent.
 type NewMessageEvent struct {
@@ -61,24 +62,26 @@ type NewMessageEvent struct {
 	RequestID types.RequestID `json:"requestId"`
 }
 
-// AsNewMessageEvent returns the union data inside the Message as a NewMessageEvent
-func (t Message) AsNewMessageEvent() (NewMessageEvent, error) {
+// AsNewMessageEvent returns the union data inside the Event as a NewMessageEvent
+func (t Event) AsNewMessageEvent() (NewMessageEvent, error) {
 	var body NewMessageEvent
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromNewMessageEvent overwrites any union data inside the Message as the provided NewMessageEvent
-func (t *Message) FromNewMessageEvent(v NewMessageEvent) error {
-	v.EventType = "NewMessageEvent"
+// FromNewMessageEvent overwrites any union data inside the Event as the provided NewMessageEvent
+func (t *Event) FromNewMessageEvent(v NewMessageEvent) error {
+	t.EventType = "NewMessageEvent"
+
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeNewMessageEvent performs a merge with any union data inside the Message, using the provided NewMessageEvent
-func (t *Message) MergeNewMessageEvent(v NewMessageEvent) error {
-	v.EventType = "NewMessageEvent"
+// MergeNewMessageEvent performs a merge with any union data inside the Event, using the provided NewMessageEvent
+func (t *Event) MergeNewMessageEvent(v NewMessageEvent) error {
+	t.EventType = "NewMessageEvent"
+
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -89,7 +92,67 @@ func (t *Message) MergeNewMessageEvent(v NewMessageEvent) error {
 	return err
 }
 
-func (t Message) Discriminator() (string, error) {
+// AsMessageSentEvent returns the union data inside the Event as a MessageSentEvent
+func (t Event) AsMessageSentEvent() (MessageSentEvent, error) {
+	var body MessageSentEvent
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMessageSentEvent overwrites any union data inside the Event as the provided MessageSentEvent
+func (t *Event) FromMessageSentEvent(v MessageSentEvent) error {
+	t.EventType = "MessageSentEvent"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeMessageSentEvent performs a merge with any union data inside the Event, using the provided MessageSentEvent
+func (t *Event) MergeMessageSentEvent(v MessageSentEvent) error {
+	t.EventType = "MessageSentEvent"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsMessageBlockedEvent returns the union data inside the Event as a MessageBlockedEvent
+func (t Event) AsMessageBlockedEvent() (MessageBlockedEvent, error) {
+	var body MessageBlockedEvent
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMessageBlockedEvent overwrites any union data inside the Event as the provided MessageBlockedEvent
+func (t *Event) FromMessageBlockedEvent(v MessageBlockedEvent) error {
+	t.EventType = "MessageBlockedEvent"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeMessageBlockedEvent performs a merge with any union data inside the Event, using the provided MessageBlockedEvent
+func (t *Event) MergeMessageBlockedEvent(v MessageBlockedEvent) error {
+	t.EventType = "MessageBlockedEvent"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Event) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"eventType"`
 	}
@@ -97,12 +160,16 @@ func (t Message) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t Message) ValueByDiscriminator() (interface{}, error) {
+func (t Event) ValueByDiscriminator() (interface{}, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err
 	}
 	switch discriminator {
+	case "MessageBlockedEvent":
+		return t.AsMessageBlockedEvent()
+	case "MessageSentEvent":
+		return t.AsMessageSentEvent()
 	case "NewMessageEvent":
 		return t.AsNewMessageEvent()
 	default:
@@ -110,29 +177,62 @@ func (t Message) ValueByDiscriminator() (interface{}, error) {
 	}
 }
 
-func (t Message) MarshalJSON() ([]byte, error) {
+func (t Event) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["eventType"], err = json.Marshal(t.EventType)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'eventType': %w", err)
+	}
+
+	b, err = json.Marshal(object)
 	return b, err
 }
 
-func (t *Message) UnmarshalJSON(b []byte) error {
+func (t *Event) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["eventType"]; found {
+		err = json.Unmarshal(raw, &t.EventType)
+		if err != nil {
+			return fmt.Errorf("error reading 'eventType': %w", err)
+		}
+	}
+
 	return err
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/7RUzW7bPBB8FWO/70hZCXoJeMvfoYemQNOeghxoaW2xJrkquZJrGHr3gpRiK6paNGl6",
-	"srA/w9nZWR+gIFuTQ8cB5AFCUaFV6fOarCX3AUNQG4yB2lONnjWmNLbo+H0ZP9fkrWKQ0DS6BAG8rxEk",
-	"BPbabUDA92xDmVM2Bm9T281TdCiNP2E5k8u0rclzel5xBRI2mqtmtSzI5thu0Ol9tvW6RbelvKgUZwF9",
-	"qwvMtWP0Tpk8gUPXiZ7z5/TkAf73uAYJ/+UnBfJh/Pz2WNgJsL0EL5910O4X085m33Zej98aDK/Y0qeh",
-	"cZ75bPYtmQ/UtccS5MNobeJou/FaxoM+dgJux2tG19gIcoe7QfGUBvG0nnt0PAldGSq2WPbRx6lU3bEu",
-	"4pc6FF5b7RSTH53J/q6XEsdWIocf1yAffu++KdXusZunJg+gjPkDxOe3PMY7Tf83YFPGr8US038Z1XBF",
-	"/uUGvuz75v37JaD/l2e3onIfoX6yTeFRMZaX/GycUjFmrC3CjNN0uO8fGgGuiAwqB9M7OcGP+wY+JxvT",
-	"6isWyVURQLs1JWzNJmavlNsu7ps66rG4rhQvro1Gx4u02QACWvRBkwMJ7XkydY1O1RokvFueL89AJA0D",
-	"SNcYIyAKhT4kK5QYj6Xmvv0GWzRU24jeV4GAxhuQsAsyzw0VylQUWF6cXZzluxA5/wgAAP//guX8n7IG",
-	"AAA=",
+	"H4sIAAAAAAAC/7RUT2/bPgz9KgF/v6Mct9il0K3/Dj2sA5btVOSg2EysRRI9iXYWBP7ug2w3cROvWILu",
+	"FEckn/j4nriDjGxJDh0HkDsIWYFWtZ/3ZC25xxodx7+lpxI9a2yDGI+f8vi5JG8Vg4Sq0jkI4G2JICGw",
+	"124FAn4lK0qcsvGwRXt6eD3tU+NPmI7EEm1L8t31iguQsNJcVItpRjbFeoVOb5O11zW6NaVZoTgJ6Gud",
+	"Yaodo3fKpC04NI3oev7WXrmD/z0uQcJ/6YF/2pNPH/eJjQCLIagVns/1c184znY0+rF8Pf6sMFyg0te+",
+	"cLzz0ehHdt63rj3mIF8Gsom97YayDInOGwF7x+Y6ZF5b7RSTH1h4+9zRxKHM5PDLEuTL+854xk0vXHdL",
+	"I97P75Nn6PisgjtD2RrzvmYuxl7fmU7+41T3M3sFRFfZmHJMVsAJnf3Rm4bnx/ZqxvPkDpQxfzH24Spq",
+	"5s1II5dDHbO8DEkcL0hVcUH+/Ld329WNP73vAf2/3BgLyrcR6kS9zKNizG/5DZ1cMSasLcKI4DrMuosG",
+	"gAsig8qdmPEAP6zr+zm4iRY/MGtliwDaLanF1mxi9E659WRWlXEek/tC8eTeaHQ8aSUKIKBGHzQ5kFBf",
+	"t2++RKdKDRI+Ta+nVyDaGQaQrjJGQBwU+tAaIce4S0ruyh+wRkOljehdFgiovAEJmyDT1FCmTEGB5c3V",
+	"zVW6CbHn3wEAAP//WNl8hmsHAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

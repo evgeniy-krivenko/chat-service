@@ -371,7 +371,7 @@
   "otpPolicyLookAheadWindow" : 1,
   "otpPolicyPeriod" : 30,
   "otpPolicyCodeReusable" : false,
-  "otpSupportedApplications" : [ "totpAppMicrosoftAuthenticatorName", "totpAppFreeOTPName", "totpAppGoogleName" ],
+  "otpSupportedApplications" : [ "totpAppGoogleName", "totpAppFreeOTPName", "totpAppMicrosoftAuthenticatorName" ],
   "webAuthnPolicyRpEntityName" : "keycloak",
   "webAuthnPolicySignatureAlgorithms" : [ "ES256" ],
   "webAuthnPolicyRpId" : "",
@@ -484,6 +484,31 @@
       "userLabel" : "My password",
       "createdDate" : 1682500364408,
       "secretData" : "{\"value\":\"ninowbdXIagwucoTjE7+ljkUE4TIbyrPdm61p87+6Qo=\",\"salt\":\"QyDztqcwxdwcNdjwM/0mSg==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-bank" ],
+    "clientRoles" : {
+      "chat-ui-client" : [ "support-chat-client" ]
+    },
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "70d69014-1af4-49a6-be3f-a6356bfd9a3a",
+    "createdTimestamp" : 1684184091968,
+    "username" : "e2e_client_2",
+    "enabled" : true,
+    "totp" : false,
+    "emailVerified" : true,
+    "firstName" : "",
+    "lastName" : "",
+    "credentials" : [ {
+      "id" : "aed9315b-579a-4cd2-abb7-9f8f8cc29fef",
+      "type" : "password",
+      "userLabel" : "My password",
+      "createdDate" : 1684184105640,
+      "secretData" : "{\"value\":\"SUQAG8l8Ec9JRBQElRmHt3F0cle8ilzcvcrL0noOUbA=\",\"salt\":\"DhNn58HDA1sHFsemUF3zWQ==\",\"additionalParameters\":{}}",
       "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
     } ],
     "disableableCredentialTypes" : [ ],

@@ -54,7 +54,7 @@ func (r *Repo) FindAndReserveJob(ctx context.Context, until time.Time) (Job, err
 		return nil
 	})
 	if err != nil {
-		return Job{}, err
+		return Job{}, fmt.Errorf("%w: find and reserve job", err)
 	}
 
 	return Job{

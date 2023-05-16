@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	clientmessageblockedjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-blocked"
 	"log"
 	"os/signal"
 	"syscall"
@@ -47,7 +48,6 @@ func main() {
 	}
 }
 
-//nolint:gocyclo
 func run() (errReturned error) {
 	flag.Parse()
 
@@ -181,29 +181,6 @@ func run() (errReturned error) {
 	eventStream := inmemeventstream.New()
 	defer eventStream.Close()
 
-	// Outbox Jobs.
-	sendClientMessageJob, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(
-		msgProducer,
-		msgRepo,
-		eventStream,
-	))
-	if err != nil {
-		return fmt.Errorf("create send client message job: %v", err)
-	}
-
-	clientMessageSentJob, err := clientmessagesentjob.New(clientmessagesentjob.NewOptions(msgRepo, eventStream))
-	if err != nil {
-		return fmt.Errorf("create client msg sent job: %v", err)
-	}
-
-	if err := outboxService.RegisterJob(sendClientMessageJob); err != nil {
-		return fmt.Errorf("register send client message job: %v", err)
-	}
-
-	if err := outboxService.RegisterJob(clientMessageSentJob); err != nil {
-		return fmt.Errorf("register client msg sent job: %v", err)
-	}
-
 	afcVerdictProcessor, err := afcverdictsprocessor.New(afcverdictsprocessor.NewOptions(
 		cfg.Services.AFCVerdictsProcessor.Brokers,
 		cfg.Services.AFCVerdictsProcessor.Consumers,
@@ -222,6 +199,31 @@ func run() (errReturned error) {
 	if err != nil {
 		return fmt.Errorf("init afc verdict processor: %v", err)
 	}
+
+	// Outbox Jobs.
+	sendClientMessageJob, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(
+		msgProducer,
+		msgRepo,
+		eventStream,
+	))
+	if err != nil {
+		return fmt.Errorf("create send client message job: %v", err)
+	}
+
+	clientMessageSentJob, err := clientmessagesentjob.New(clientmessagesentjob.NewOptions(msgRepo, eventStream))
+	if err != nil {
+		return fmt.Errorf("create client msg sent job: %v", err)
+	}
+
+	clientMessageBlockedJob, err := clientmessageblockedjob.New(clientmessageblockedjob.NewOptions(msgRepo, eventStream))
+	if err != nil {
+		return fmt.Errorf("create client msg block job: %v", err)
+	}
+
+	// Register jobs
+	outboxService.MustRegisterJob(sendClientMessageJob)
+	outboxService.MustRegisterJob(clientMessageSentJob)
+	outboxService.MustRegisterJob(clientMessageBlockedJob)
 
 	// Clients.
 	keycloakClient, err := keycloakclient.New(keycloakclient.NewOptions(
