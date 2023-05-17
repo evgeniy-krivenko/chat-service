@@ -6,10 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"entgo.io/ent/dialect/sql"
-
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
-	storejob "github.com/evgeniy-krivenko/chat-service/internal/store/job"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -23,46 +20,41 @@ type Job struct {
 }
 
 func (r *Repo) FindAndReserveJob(ctx context.Context, until time.Time) (Job, error) {
-	var job *store.Job
-	var err error
+	query := `
+	with cte as (
+		select "id" from "jobs"
+		where "available_at" <= now()
+			and "reserved_until" <= now()
+		limit 1 for update skip locked
+	)
+	update "jobs" as "j" 
+	set "attempts" = "attempts" + 1, "reserved_until" = $1 
+	from cte 
+	where "cte"."id" = "j"."id" returning
+		"j".id,
+		"j".name,
+		"j".payload,
+		"j".attempts;`
 
-	err = r.db.RunInTx(ctx, func(ctx context.Context) error {
-		job, err = r.db.Job(ctx).Query().
-			ForUpdate(sql.WithLockAction(sql.SkipLocked)).
-			Where(storejob.And(
-				storejob.AvailableAtLTE(time.Now()),
-				storejob.ReservedUntilLTE(time.Now()),
-			)).
-			Order(store.Asc(storejob.FieldCreatedAt)).
-			First(ctx)
-
-		if store.IsNotFound(err) {
-			return ErrNoJobs
-		}
-		if err != nil {
-			return err
-		}
-
-		job, err = job.Update().
-			SetReservedUntil(until).
-			AddAttempts(1).
-			Save(ctx)
-		if err != nil {
-			return fmt.Errorf("update job for reserve: %v", err)
-		}
-
-		return nil
-	})
+	rows, err := r.db.Job(ctx).QueryContext(ctx, query, until)
 	if err != nil {
-		return Job{}, fmt.Errorf("%w: find and reserve job", err)
+		return Job{}, fmt.Errorf("query context: %w", err)
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		if err := rows.Err(); err != nil {
+			return Job{}, fmt.Errorf("rows err: %v", err)
+		}
+		return Job{}, ErrNoJobs
 	}
 
-	return Job{
-		ID:       job.ID,
-		Name:     job.Name,
-		Payload:  job.Payload,
-		Attempts: job.Attempts,
-	}, nil
+	var j Job
+	if err := rows.Scan(&j.ID, &j.Name, &j.Payload, &j.Attempts); err != nil {
+		return Job{}, fmt.Errorf("scan job: %v", err)
+	}
+
+	return j, nil
 }
 
 func (r *Repo) CreateJob(ctx context.Context, name, payload string, availableAt time.Time) (types.JobID, error) {

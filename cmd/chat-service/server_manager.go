@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
 	keycloakclient "github.com/evgeniy-krivenko/chat-service/internal/clients/keycloak"
@@ -22,15 +23,16 @@ const nameServerManager = "server-manager"
 func initServerManager(
 	addr string,
 	allowOrigins []string,
-
 	v1Swagger *openapi3.T,
+
 	keycloakClient *keycloakclient.Client,
 	wsHTTPHandler *websocketstream.HTTPHandler,
 
-	mLoadSrv *managerload.Service,
-
 	resource string,
 	role string,
+
+	mLoadSrv *managerload.Service,
+
 	isProduction bool,
 ) (*server.Server, error) {
 	lg := zap.L().Named(nameServerManager)
@@ -72,7 +74,7 @@ func initServerManager(
 		resource,
 		role,
 		errHandleFunc,
-		func(router server.EchoRouter) {
+		func(router *echo.Group) {
 			managerv1.RegisterHandlers(router, v1Handlers)
 		},
 		wsHTTPHandler,

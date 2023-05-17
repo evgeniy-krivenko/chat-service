@@ -39,13 +39,13 @@ vars:
 
   TYPES: |
     ChatID
+    EventID
+    FailedJobID
+    JobID
     MessageID
     ProblemID
-    UserID
     RequestID
-    JobID
-    FailedJobID
-    EventID
+    UserID
 
   TYPES_PKG: types
   TYPES_SRC: ./internal/types
@@ -137,7 +137,7 @@ tasks:
   ent:gen:
     cmds:
       - echo "Generate ent..."
-      - .{{.DEV_TOOLS_PATH}}/ent generate {{.SCHEMA_PATH}} --feature sql/upsert,sql/lock --template ./internal/store/templates
+      - .{{.DEV_TOOLS_PATH}}/ent generate {{.SCHEMA_PATH}} --feature sql/upsert,sql/lock,sql/execquery --template ./internal/store/templates
       - task: tidy
     sources:
       - "{{.SCHEMA_PATH}}/*.go"

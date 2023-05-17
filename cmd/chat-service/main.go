@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	clientmessageblockedjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-blocked"
 	"log"
 	"os/signal"
 	"syscall"
@@ -31,6 +30,7 @@ import (
 	managerload "github.com/evgeniy-krivenko/chat-service/internal/services/manager-load"
 	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
+	clientmessageblockedjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-blocked"
 	clientmessagesentjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-sent"
 	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
@@ -48,6 +48,7 @@ func main() {
 	}
 }
 
+//nolint:gocyclo
 func run() (errReturned error) {
 	flag.Parse()
 
@@ -299,9 +300,11 @@ func run() (errReturned error) {
 		keycloakClient,
 		wsManager,
 
-		managerLoadService,
 		cfg.Servers.Manager.RequiredAccess.Resource,
 		cfg.Servers.Manager.RequiredAccess.Role,
+
+		managerLoadService,
+
 		cfg.Global.IsProduction(),
 	)
 	if err != nil {
@@ -314,6 +317,8 @@ func run() (errReturned error) {
 	eg.Go(func() error { return srvDebug.Run(ctx) })
 	eg.Go(func() error { return srvClient.Run(ctx) })
 	eg.Go(func() error { return srvManager.Run(ctx) })
+
+	// Run services.
 	eg.Go(func() error { return outboxService.Run(ctx) })
 	eg.Go(func() error { return afcVerdictProcessor.Run(ctx) })
 

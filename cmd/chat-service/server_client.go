@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
 	keycloakclient "github.com/evgeniy-krivenko/chat-service/internal/clients/keycloak"
@@ -78,7 +79,7 @@ func initServerClient(
 		resource,
 		role,
 		errHandleFunc,
-		func(router server.EchoRouter) {
+		func(router *echo.Group) {
 			clientv1.RegisterHandlers(router, v1Handlers)
 		},
 		wsHTTPHandler,

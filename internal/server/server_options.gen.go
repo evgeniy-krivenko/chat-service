@@ -22,7 +22,7 @@ func NewOptions(
 	resource string,
 	role string,
 	httpErrorHandler echo.HTTPErrorHandler,
-	registerHandlers func(router EchoRouter),
+	registerHandlers func(*echo.Group),
 	wsHandler wsHTTPHandler,
 	options ...OptOptionsSetter,
 ) Options {

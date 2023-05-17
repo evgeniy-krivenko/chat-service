@@ -22,7 +22,6 @@ func (h Handlers) PostFreeHands(eCtx echo.Context, params PostFreeHandsParams) e
 	if errors.Is(err, freehands.ErrManagerOverloaded) {
 		return internalerrors.NewServerError(ErrorCodeManagerOverloaded, "manager overloaded", err)
 	}
-
 	if err != nil {
 		return internalerrors.NewServerError(http.StatusInternalServerError, "internal error", err)
 	}

@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	jobsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/jobs"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
@@ -37,7 +37,6 @@ type Options struct {
 
 type Service struct {
 	registry map[string]Job
-	lg       *zap.Logger
 	Options
 }
 
@@ -47,14 +46,13 @@ func New(opts Options) (*Service, error) {
 	}
 	return &Service{
 		registry: make(map[string]Job),
-		lg:       zap.L().Named(serviceName),
 		Options:  opts,
 	}, nil
 }
 
 func (s *Service) RegisterJob(job Job) error {
 	if _, ok := s.registry[job.Name()]; ok {
-		return errors.New("job exists")
+		return fmt.Errorf("job %v exists", job.Name())
 	}
 
 	s.registry[job.Name()] = job
@@ -68,24 +66,49 @@ func (s *Service) MustRegisterJob(job Job) {
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	var wg sync.WaitGroup
-	wg.Add(s.workers)
+	eg, ctx := errgroup.WithContext(ctx)
+
 	for i := 0; i < s.workers; i++ {
-		go func() {
-			defer wg.Done()
+		logger := zap.L().Named(serviceName).With(zap.Int("worker", i+1))
+		eg.Go(func() error {
 			for {
+				if err := s.processAvailableJob(ctx, logger); err != nil {
+					if ctx.Err() != nil {
+						return nil
+					}
+					logger.Warn("job error", zap.Error(err))
+					return err
+				}
+
 				select {
 				case <-ctx.Done():
-					return
-				default:
-					s.worker(ctx)
+					return nil
+				case <-time.After(s.idleTime):
 				}
 			}
-		}()
+		})
 	}
-	s.lg.Info("service run", zap.Int("workers", s.workers), zap.Duration("idle time", s.idleTime))
-	wg.Wait()
-	return nil
+
+	return eg.Wait()
+}
+
+func (s *Service) processAvailableJob(ctx context.Context, lg *zap.Logger) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
+
+		if err := s.work(ctx, lg); err != nil {
+			if errors.Is(err, jobsrepo.ErrNoJobs) {
+				lg.Debug("no jobs to process")
+				return nil
+			}
+
+			return fmt.Errorf("process job: %v", err)
+		}
+	}
 }
 
 func (s *Service) job(name string) (Job, bool) {
@@ -93,20 +116,10 @@ func (s *Service) job(name string) (Job, bool) {
 	return j, ok
 }
 
-func (s *Service) worker(ctx context.Context) {
-	if err := s.work(ctx); err != nil {
-		s.lg.Error("handle job", zap.Error(err))
-	}
-}
-
-func (s *Service) work(ctx context.Context) error {
+func (s *Service) work(ctx context.Context, lg *zap.Logger) error {
 	jobInfo, err := s.jobsRepo.FindAndReserveJob(ctx, time.Now().Add(s.reserveFor))
-	if errors.Is(err, jobsrepo.ErrNoJobs) {
-		time.Sleep(s.idleTime)
-		return nil
-	}
 	if err != nil {
-		return fmt.Errorf("find and reserve job: %v", err)
+		return fmt.Errorf("find and reserve job: %w", err)
 	}
 
 	job, ok := s.job(jobInfo.Name)
@@ -114,19 +127,25 @@ func (s *Service) work(ctx context.Context) error {
 		return s.moveToFailedJobWithReason(ctx, jobInfo, "no find registered job")
 	}
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, job.ExecutionTimeout())
-	defer cancel()
+	func() {
+		ctx, cancel := context.WithTimeout(ctx, job.ExecutionTimeout())
+		defer cancel()
 
-	if err := job.Handle(ctxWithTimeout, jobInfo.Payload); err != nil {
+		err = job.Handle(ctx, jobInfo.Payload)
+	}()
+
+	if err != nil {
+		lg.Warn("hande job error", zap.Error(err))
+
 		if jobInfo.Attempts >= job.MaxAttempts() {
 			return s.moveToFailedJobWithReason(ctx, jobInfo, "max attempts exceeded")
 		}
 
-		return fmt.Errorf("job name %s, job id %s: %v", job.Name(), jobInfo.ID, err)
+		return nil
 	}
 
-	if err := s.jobsRepo.DeleteJob(ctx, jobInfo.ID); err != nil {
-		return fmt.Errorf("delete job with ID %s: %v", jobInfo.ID.String(), err)
+	if err := s.jobsRepo.DeleteJob(context.Background(), jobInfo.ID); err != nil {
+		lg.Warn("delete job error", zap.Error(err))
 	}
 
 	return nil
@@ -141,12 +160,6 @@ func (s *Service) moveToFailedJobWithReason(ctx context.Context, job jobsrepo.Jo
 		if err := s.jobsRepo.DeleteJob(ctx, job.ID); err != nil {
 			return fmt.Errorf("delete job while move to failed: %v", err)
 		}
-
-		s.lg.Warn(
-			"job will be move to failed queue",
-			zap.String("name", job.Name),
-			zap.String("reason", reason),
-		)
 
 		return nil
 	})
