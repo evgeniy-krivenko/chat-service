@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	errs "github.com/evgeniy-krivenko/chat-service/internal/errors"
+	internalerrors "github.com/evgeniy-krivenko/chat-service/internal/errors"
 	"github.com/evgeniy-krivenko/chat-service/internal/middlewares"
 	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/send-message"
 	"github.com/evgeniy-krivenko/chat-service/pkg/pointer"
@@ -18,7 +18,7 @@ func (h Handlers) PostSendMessage(eCtx echo.Context, params PostSendMessageParam
 
 	var req SendMessageRequest
 	if err := eCtx.Bind(&req); err != nil {
-		return errs.NewServerError(http.StatusBadRequest, "bind request", err)
+		return internalerrors.NewServerError(http.StatusBadRequest, "bind request", err)
 	}
 
 	message, err := h.sendMsgUseCase.Handle(ctx, sendmessage.Request{
@@ -26,14 +26,18 @@ func (h Handlers) PostSendMessage(eCtx echo.Context, params PostSendMessageParam
 		ClientID:    clientID,
 		MessageBody: req.MessageBody,
 	})
-	if errors.Is(err, sendmessage.ErrInvalidRequest) {
-		return errs.NewServerError(http.StatusBadRequest, "invalid request", err)
-	}
-	if errors.Is(err, sendmessage.ErrChatNotCreated) {
-		return errs.NewServerError(ErrorCodeCreateChatError, "create chat", err)
-	}
-	if errors.Is(err, sendmessage.ErrProblemNotCreated) {
-		return errs.NewServerError(ErrorCodeCreateProblemError, "create problem", err)
+	if err != nil {
+		if errors.Is(err, sendmessage.ErrInvalidRequest) {
+			return internalerrors.NewServerError(http.StatusBadRequest, "invalid request", err)
+		}
+		if errors.Is(err, sendmessage.ErrChatNotCreated) {
+			return internalerrors.NewServerError(ErrorCodeCreateChatError, "create chat", err)
+		}
+		if errors.Is(err, sendmessage.ErrProblemNotCreated) {
+			return internalerrors.NewServerError(ErrorCodeCreateProblemError, "create problem", err)
+		}
+
+		return internalerrors.NewServerError(http.StatusInternalServerError, "unknown error while send message", err)
 	}
 
 	return eCtx.JSON(http.StatusOK, &SendMessageResponse{

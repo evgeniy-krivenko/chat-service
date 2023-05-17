@@ -3,6 +3,7 @@ package messagesrepo
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	storemessage "github.com/evgeniy-krivenko/chat-service/internal/store/message"
@@ -18,7 +19,7 @@ func (r *Repo) GetMessageByRequestID(ctx context.Context, reqID types.RequestID)
 		return nil, ErrMsgNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query message by requies id %v: %v", reqID, err)
 	}
 
 	return pointer.Ptr(adaptStoreMessage(msg)), nil
@@ -43,7 +44,19 @@ func (r *Repo) CreateClientVisible(
 		SetIsVisibleForClient(true).
 		Save(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create msg for client by request id %v: %v", reqID, err)
+	}
+
+	return pointer.Ptr(adaptStoreMessage(msg)), nil
+}
+
+func (r *Repo) GetMessageByID(ctx context.Context, msgID types.MessageID) (*Message, error) {
+	msg, err := r.db.Message(ctx).Get(ctx, msgID)
+	if store.IsNotFound(err) {
+		return nil, ErrMsgNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get msg by id %v: %v", msgID, err)
 	}
 
 	return pointer.Ptr(adaptStoreMessage(msg)), nil

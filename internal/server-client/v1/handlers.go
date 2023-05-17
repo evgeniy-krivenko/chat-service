@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"go.uber.org/zap"
-
 	gethistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-history"
 	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/send-message"
 )
@@ -22,10 +20,8 @@ type sendMessageUseCase interface {
 
 //go:generate options-gen -out-filename=handler_options.gen.go -from-struct=Options
 type Options struct {
-	logger         *zap.Logger        `option:"mandatory" validate:"required"`
 	getHistory     getHistoryUseCase  `option:"mandatory" validate:"required"`
 	sendMsgUseCase sendMessageUseCase `option:"mandatory" validate:"required"`
-	// Ждут своего часа.
 }
 
 type Handlers struct {

@@ -16,10 +16,16 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/config"
 	"github.com/evgeniy-krivenko/chat-service/internal/logger"
 	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
+	jobsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/jobs"
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
 	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
 	serverdebug "github.com/evgeniy-krivenko/chat-service/internal/server-debug"
+	managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1"
+	managerload "github.com/evgeniy-krivenko/chat-service/internal/services/manager-load"
+	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
+	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/migrate"
 )
@@ -56,14 +62,22 @@ func run() (errReturned error) {
 	}
 	defer logger.Sync()
 
+	// Swaggers.
 	swaggerClientV1, err := clientv1.GetSwagger()
 	if err != nil {
 		return fmt.Errorf("get client swagger: %v", err)
 	}
 
+	swaggerManagerV1, err := managerv1.GetSwagger()
+	if err != nil {
+		return fmt.Errorf("get manager swagger: %v", err)
+	}
+
+	// Debug server.
 	srvDebug, err := serverdebug.New(serverdebug.NewOptions(
 		cfg.Servers.Debug.Addr,
 		swaggerClientV1,
+		swaggerManagerV1,
 	))
 	if err != nil {
 		return fmt.Errorf("init debug server: %v", err)
@@ -71,6 +85,7 @@ func run() (errReturned error) {
 
 	clientUserAgent := fmt.Sprintf("chat-service/%s", buildinfo.BuildInfo.Main.Version)
 
+	// Database and migrations.
 	storeClient, err := store.NewPSQLClient(store.NewPSQLOptions(
 		cfg.DB.Address,
 		cfg.DB.User,
@@ -83,6 +98,7 @@ func run() (errReturned error) {
 	}
 	defer storeClient.Close()
 
+	// Migrations.
 	if err := storeClient.Schema.Create(
 		ctx,
 		migrate.WithDropIndex(true),
@@ -93,6 +109,7 @@ func run() (errReturned error) {
 
 	database := store.NewDatabase(storeClient)
 
+	// Repositories.
 	msgRepo, err := messagesrepo.New(messagesrepo.NewOptions(database))
 	if err != nil {
 		return fmt.Errorf("init messages repo: %v", err)
@@ -108,6 +125,57 @@ func run() (errReturned error) {
 		return fmt.Errorf("init problems repo: %v", err)
 	}
 
+	jobsRepo, err := jobsrepo.New(jobsrepo.NewOptions(database))
+	if err != nil {
+		return fmt.Errorf("init jobs repo: %v", err)
+	}
+
+	// Services.
+	msgProducer, err := msgproducer.New(msgproducer.NewOptions(
+		msgproducer.NewKafkaWriter(
+			cfg.Services.MsgProducer.Brokers,
+			cfg.Services.MsgProducer.Topic,
+			cfg.Services.MsgProducer.BatchSize,
+		),
+		msgproducer.WithEncryptKey(cfg.Services.MsgProducer.EncryptKey),
+	))
+	if err != nil {
+		return fmt.Errorf("init msg producer: %v", err)
+	}
+
+	outboxService, err := outbox.New(outbox.NewOptions(
+		cfg.Services.Outbox.Workers,
+		cfg.Services.Outbox.IDLE,
+		cfg.Services.Outbox.ReserveFor,
+		jobsRepo,
+		database,
+	))
+	if err != nil {
+		return fmt.Errorf("init outbox service: %v", err)
+	}
+
+	managerLoadService, err := managerload.New(managerload.NewOptions(
+		cfg.Services.ManagerLoad.MaxProblemsAtSameTime,
+		problemsRepo,
+	))
+	if err != nil {
+		return fmt.Errorf("init manager load service: %v", err)
+	}
+
+	// Outbox Jobs.
+	sendClientMessageJob, err := sendclientmessagejob.New(sendclientmessagejob.NewOptions(
+		msgProducer,
+		msgRepo,
+	))
+	if err != nil {
+		return fmt.Errorf("create send client message job: %v", err)
+	}
+
+	if err := outboxService.RegisterJob(sendClientMessageJob); err != nil {
+		return fmt.Errorf("register send client message job: %v", err)
+	}
+
+	// Clients.
 	keycloakClient, err := keycloakclient.New(keycloakclient.NewOptions(
 		cfg.Clients.Keycloak.BasePath,
 		cfg.Clients.Keycloak.Realm,
@@ -121,8 +189,9 @@ func run() (errReturned error) {
 		return fmt.Errorf("init keycloak client: %v", err)
 	}
 
+	// Servers.
 	srvClient, err := initServerClient(
-		cfg.Servers.Client.Add,
+		cfg.Servers.Client.Addr,
 		cfg.Servers.Client.AllowOrigins,
 		swaggerClientV1,
 		keycloakClient,
@@ -131,6 +200,7 @@ func run() (errReturned error) {
 		msgRepo,
 		chatsRepo,
 		problemsRepo,
+		outboxService,
 		database,
 		cfg.Global.IsProduction(),
 	)
@@ -138,11 +208,27 @@ func run() (errReturned error) {
 		return fmt.Errorf("init server client: %v", err)
 	}
 
+	srvManager, err := initServerManager(
+		cfg.Servers.Manager.Addr,
+		cfg.Servers.Manager.AllowOrigins,
+		swaggerManagerV1,
+		keycloakClient,
+		managerLoadService,
+		cfg.Servers.Manager.RequiredAccess.Resource,
+		cfg.Servers.Manager.RequiredAccess.Role,
+		cfg.Global.IsProduction(),
+	)
+	if err != nil {
+		return fmt.Errorf("init server manager: %v", err)
+	}
+
 	eg, ctx := errgroup.WithContext(ctx)
 
 	// Run servers.
 	eg.Go(func() error { return srvDebug.Run(ctx) })
 	eg.Go(func() error { return srvClient.Run(ctx) })
+	eg.Go(func() error { return srvManager.Run(ctx) })
+	eg.Go(func() error { return outboxService.Run(ctx) })
 
 	// Run services.
 	// Ждут своего часа.
