@@ -35,29 +35,6 @@ func (e NewMessageEvent) Validate() error {
 	return validator.Validator.Struct(e)
 }
 
-//func NewNewMessageEvent(
-//	eventID types.EventID,
-//	reqID types.RequestID,
-//	chatID types.ChatID,
-//	msgID types.MessageID,
-//	authorID types.UserID,
-//	createdAt time.Time,
-//	msgBody string,
-//	isService bool,
-//) *NewMessageEvent {
-//	return &NewMessageEvent{
-//		event:       event{},
-//		MessageBody: msgBody,
-//		EventID:     eventID,
-//		RequestID:   reqID,
-//		ChatID:      chatID,
-//		MessageID:   msgID,
-//		AuthorID:    authorID,
-//		CreatedAt:   createdAt,
-//		IsService:   isService,
-//	}
-//}
-
 type MessageSentEvent struct {
 	event `gonstructor:"-"`
 
@@ -70,18 +47,6 @@ func (e MessageSentEvent) Validate() error {
 	return validator.Validator.Struct(e)
 }
 
-//func NewMessageSentEvent(
-//	eventID types.EventID,
-//	reqID types.RequestID,
-//	msgID types.MessageID,
-//) *MessageSentEvent {
-//	return &MessageSentEvent{
-//		EventID:   eventID,
-//		RequestID: reqID,
-//		MessageID: msgID,
-//	}
-//}
-
 type MessageBlockedEvent struct {
 	event `gonstructor:"-"`
 
@@ -93,18 +58,6 @@ type MessageBlockedEvent struct {
 func (e MessageBlockedEvent) Validate() error {
 	return validator.Validator.Struct(e)
 }
-
-//func NewMessageBlockedEvent(
-//	eventID types.EventID,
-//	reqID types.RequestID,
-//	msgID types.MessageID,
-//) *MessageBlockedEvent {
-//	return &MessageBlockedEvent{
-//		EventID:   eventID,
-//		RequestID: reqID,
-//		MessageID: msgID,
-//	}
-//}
 
 type NewChatEvent struct {
 	event `gonstructor:"-"`
@@ -119,19 +72,3 @@ type NewChatEvent struct {
 func (e NewChatEvent) Validate() error {
 	return validator.Validator.Struct(e)
 }
-
-//func NewNewChatEvent(
-//	eventID types.EventID,
-//	reqID types.RequestID,
-//	chatID types.ChatID,
-//	clientID types.UserID,
-//	canTakeMoreProblem bool,
-//) *NewChatEvent {
-//	return &NewChatEvent{
-//		EventID:            eventID,
-//		RequestID:          reqID,
-//		ChatID:             chatID,
-//		ClientID:           clientID,
-//		CanTakeMoreProblem: canTakeMoreProblem,
-//	}
-//}

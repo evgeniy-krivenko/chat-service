@@ -10,7 +10,8 @@ services:
     environment:
       URLS: "[{ url: 'doc/client.v1.swagger.yml', name: 'Bank Client V1' },
       { url: 'doc/manager.v1.swagger.yml', name: 'Bank Manager V1' }, 
-      { url: 'doc/client.events.swagger.yml', name: 'Bank Events' }]
+      { url: 'doc/client.events.swagger.yml', name: 'Bank Client Events' }]
+      { url: 'doc/manager.events.swagger.yml', name: 'Bank Manager Events' }]
       "
     volumes:
       - ../../api:/usr/share/nginx/html/doc

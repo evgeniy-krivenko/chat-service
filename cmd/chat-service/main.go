@@ -8,7 +8,6 @@ import (
 	"log"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"golang.org/x/sync/errgroup"
 
@@ -23,6 +22,7 @@ import (
 	clientevents "github.com/evgeniy-krivenko/chat-service/internal/server-client/events"
 	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
 	serverdebug "github.com/evgeniy-krivenko/chat-service/internal/server-debug"
+	managerevents "github.com/evgeniy-krivenko/chat-service/internal/server-manager/events"
 	managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1"
 	afcverdictsprocessor "github.com/evgeniy-krivenko/chat-service/internal/services/afc-verdicts-processor"
 	inmemeventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream/in-mem"
@@ -39,8 +39,6 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/store/migrate"
 )
 
-const shutdownTimeout = 3 * time.Second
-
 var configPath = flag.String("config", "configs/config.toml", "Path to config file")
 
 func main() {
@@ -49,7 +47,6 @@ func main() {
 	}
 }
 
-//nolint:gocyclo
 func run() (errReturned error) {
 	flag.Parse()
 
@@ -85,9 +82,14 @@ func run() (errReturned error) {
 		return fmt.Errorf("get manager swagger: %v", err)
 	}
 
-	swaggerEvents, err := clientevents.GetSwagger()
+	swaggerClientEvents, err := clientevents.GetSwagger()
 	if err != nil {
-		return fmt.Errorf("get events swagger: %v", err)
+		return fmt.Errorf("get client swagger events: %v", err)
+	}
+
+	swaggerManagerEvents, err := managerevents.GetSwagger()
+	if err != nil {
+		return fmt.Errorf("get manager swagger events: %v", err)
 	}
 
 	// Debug server.
@@ -95,7 +97,8 @@ func run() (errReturned error) {
 		cfg.Servers.Debug.Addr,
 		swaggerClientV1,
 		swaggerManagerV1,
-		swaggerEvents,
+		swaggerClientEvents,
+		swaggerManagerEvents,
 	))
 	if err != nil {
 		return fmt.Errorf("init debug server: %v", err)

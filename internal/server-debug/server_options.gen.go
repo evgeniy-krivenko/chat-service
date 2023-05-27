@@ -15,7 +15,8 @@ func NewOptions(
 	addr string,
 	v1Client *openapi3.T,
 	v1Manager *openapi3.T,
-	events *openapi3.T,
+	clientEvents *openapi3.T,
+	managerEvents *openapi3.T,
 	options ...OptOptionsSetter,
 ) Options {
 	o := Options{}
@@ -25,7 +26,8 @@ func NewOptions(
 	o.addr = addr
 	o.v1Client = v1Client
 	o.v1Manager = v1Manager
-	o.events = events
+	o.clientEvents = clientEvents
+	o.managerEvents = managerEvents
 
 	for _, opt := range options {
 		opt(&o)
@@ -38,7 +40,8 @@ func (o *Options) Validate() error {
 	errs.Add(errors461e464ebed9.NewValidationError("addr", _validate_Options_addr(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("v1Client", _validate_Options_v1Client(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("v1Manager", _validate_Options_v1Manager(o)))
-	errs.Add(errors461e464ebed9.NewValidationError("events", _validate_Options_events(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("clientEvents", _validate_Options_clientEvents(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("managerEvents", _validate_Options_managerEvents(o)))
 	return errs.AsError()
 }
 
@@ -63,9 +66,16 @@ func _validate_Options_v1Manager(o *Options) error {
 	return nil
 }
 
-func _validate_Options_events(o *Options) error {
-	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.events, "required"); err != nil {
-		return fmt461e464ebed9.Errorf("field `events` did not pass the test: %w", err)
+func _validate_Options_clientEvents(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.clientEvents, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `clientEvents` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_managerEvents(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.managerEvents, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `managerEvents` did not pass the test: %w", err)
 	}
 	return nil
 }
