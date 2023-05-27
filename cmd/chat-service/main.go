@@ -24,14 +24,18 @@ import (
 	clientevents "github.com/evgeniy-krivenko/chat-service/internal/server-client/events"
 	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
 	serverdebug "github.com/evgeniy-krivenko/chat-service/internal/server-debug"
+	managerevents "github.com/evgeniy-krivenko/chat-service/internal/server-manager/events"
 	managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1"
 	afcverdictsprocessor "github.com/evgeniy-krivenko/chat-service/internal/services/afc-verdicts-processor"
 	inmemeventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream/in-mem"
 	managerload "github.com/evgeniy-krivenko/chat-service/internal/services/manager-load"
+	inmemmanagerpool "github.com/evgeniy-krivenko/chat-service/internal/services/manager-pool/in-mem"
+	managerscheduler "github.com/evgeniy-krivenko/chat-service/internal/services/manager-scheduler"
 	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
 	clientmessageblockedjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-blocked"
 	clientmessagesentjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-sent"
+	managerassignedtoproblemjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/manager-assigned-to-problem"
 	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/migrate"
@@ -147,6 +151,13 @@ func run() (errReturned error) {
 		return fmt.Errorf("init jobs repo: %v", err)
 	}
 
+	// In-memory storages.
+	eventStream := inmemeventstream.New()
+	defer eventStream.Close()
+
+	mngrPool := inmemmanagerpool.New()
+	defer mngrPool.Close()
+
 	// Services.
 	msgProducer, err := msgproducer.New(msgproducer.NewOptions(
 		msgproducer.NewKafkaWriter(
@@ -179,9 +190,6 @@ func run() (errReturned error) {
 		return fmt.Errorf("init manager load service: %v", err)
 	}
 
-	eventStream := inmemeventstream.New()
-	defer eventStream.Close()
-
 	afcVerdictProcessor, err := afcverdictsprocessor.New(afcverdictsprocessor.NewOptions(
 		cfg.Services.AFCVerdictsProcessor.Brokers,
 		cfg.Services.AFCVerdictsProcessor.Consumers,
@@ -199,6 +207,18 @@ func run() (errReturned error) {
 	))
 	if err != nil {
 		return fmt.Errorf("init afc verdict processor: %v", err)
+	}
+
+	managerScheduler, err := managerscheduler.New(managerscheduler.NewOptions(
+		cfg.Services.ManagerScheduler.Period,
+		mngrPool,
+		msgRepo,
+		outboxService,
+		problemsRepo,
+		database,
+	))
+	if err != nil {
+		return fmt.Errorf("init manager scheduler: %v", err)
 	}
 
 	// Outbox Jobs.
@@ -221,10 +241,21 @@ func run() (errReturned error) {
 		return fmt.Errorf("create client msg block job: %v", err)
 	}
 
+	managerAssignedToProblem, err := managerassignedtoproblemjob.New(managerassignedtoproblemjob.NewOptions(
+		chatsRepo,
+		msgRepo,
+		managerLoadService,
+		eventStream,
+	))
+	if err != nil {
+		return fmt.Errorf("create manager assigned to problem job: %v", err)
+	}
+
 	// Register jobs
 	outboxService.MustRegisterJob(sendClientMessageJob)
 	outboxService.MustRegisterJob(clientMessageSentJob)
 	outboxService.MustRegisterJob(clientMessageBlockedJob)
+	outboxService.MustRegisterJob(managerAssignedToProblem)
 
 	// Clients.
 	keycloakClient, err := keycloakclient.New(keycloakclient.NewOptions(
@@ -260,7 +291,7 @@ func run() (errReturned error) {
 	wsManager, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
 		zap.L().Named("websocket-manager"),
 		eventStream,
-		clientevents.Adapter{},
+		managerevents.Adapter{},
 		websocketstream.JSONEventWriter{},
 		websocketstream.NewUpgrader(cfg.Servers.Manager.AllowOrigins, cfg.Servers.Manager.SecWSProtocol),
 		shutdownManager,
@@ -304,6 +335,7 @@ func run() (errReturned error) {
 		cfg.Servers.Manager.RequiredAccess.Role,
 
 		managerLoadService,
+		mngrPool,
 
 		cfg.Global.IsProduction(),
 	)
@@ -321,6 +353,7 @@ func run() (errReturned error) {
 	// Run services.
 	eg.Go(func() error { return outboxService.Run(ctx) })
 	eg.Go(func() error { return afcVerdictProcessor.Run(ctx) })
+	eg.Go(func() error { return managerScheduler.Run(ctx) })
 
 	// Websockets shutdown.
 	eg.Go(func() error {

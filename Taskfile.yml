@@ -66,6 +66,10 @@ vars:
   CLIENT_EVENTS_DST: ./internal/server-client/events/events.gen.go
   CLIENT_EVENTS_PKG: clientevents
 
+  MANAGER_EVENTS_SRC: ./api/manager.events.swagger.yml
+  MANAGER_EVENTS_DST: ./internal/server-manager/events/events.gen.go
+  MANAGER_EVENTS_PKG: managerevents
+
   # const for e2e-client code gen
   CLIENT_V1_E2E_DST: ./tests/e2e/api/client/v1/client.gen.go
   CLIENT_V1_E2E_PKG: apiclientv1
@@ -100,16 +104,22 @@ tasks:
     generates:
       - "{{.MANAGER_V1_DST}}"
 
-  gen:events:
+  gen:client-events:
     cmds:
       - echo "Generate events spec..."
       - .{{.DEV_TOOLS_PATH}}/oapi-codegen --old-config-style -package {{.CLIENT_EVENTS_PKG}} -generate skip-prune,types,spec {{.CLIENT_EVENTS_SRC}} > {{.CLIENT_EVENTS_DST}}
+
+  gen:manager-events:
+    cmds:
+      - echo "Generate events spec..."
+      - .{{.DEV_TOOLS_PATH}}/oapi-codegen --old-config-style -package {{.MANAGER_EVENTS_PKG}} -generate skip-prune,types,spec {{.MANAGER_EVENTS_SRC}} > {{.MANAGER_EVENTS_DST}}
 
   gen:api:
     cmds:
       - task: gen:client
       - task: gen:manager
-      - task: gen:events
+      - task: gen:client-events
+      - task: gen:manager-events
       - task: tidy
 
   gen:e2e:

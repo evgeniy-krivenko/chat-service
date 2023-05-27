@@ -103,3 +103,33 @@ func NewMessageBlockedEvent(
 		MessageID: msgID,
 	}
 }
+
+type NewChatEvent struct {
+	event
+
+	EventID            types.EventID   `validate:"required"`
+	RequestID          types.RequestID `validate:"required"`
+	ChatID             types.ChatID    `validate:"required"`
+	ClientID           types.UserID    `validate:"required"`
+	CanTakeMoreProblem bool
+}
+
+func (e NewChatEvent) Validate() error {
+	return validator.Validator.Struct(e)
+}
+
+func NewNewChatEvent(
+	eventID types.EventID,
+	reqID types.RequestID,
+	chatID types.ChatID,
+	clientID types.UserID,
+	canTakeMoreProblem bool,
+) *NewChatEvent {
+	return &NewChatEvent{
+		EventID:            eventID,
+		RequestID:          reqID,
+		ChatID:             chatID,
+		ClientID:           clientID,
+		CanTakeMoreProblem: canTakeMoreProblem,
+	}
+}

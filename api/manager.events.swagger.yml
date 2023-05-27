@@ -1,0 +1,66 @@
+openapi: 3.1.0
+info:
+  title: Bank Support Chat Manager Events
+  version: v1
+
+servers:
+  - url: ws://localhost:8081/ws
+    description: Development server
+
+components:
+  schemas:
+    Event:
+      required: [ eventType ]
+      properties:
+        eventType:
+          $ref: "#/components/schemas/EventType"
+      oneOf:
+        - $ref: "#/components/schemas/NewChatEvent"
+
+    CommonEvent:
+      required: [ eventType, eventId, messageId, requestId ]
+      properties:
+        eventType:
+          $ref: "#/components/schemas/EventType"
+        eventId:
+          type: string
+          format: uuid
+          x-go-type: types.EventID
+          x-go-name: EventID
+          x-go-type-import:
+            path: "github.com/evgeniy-krivenko/chat-service/internal/types"
+        requestId:
+          type: string
+          format: uuid
+          x-go-name: RequestID
+          x-go-type: types.RequestID
+          x-go-type-import:
+            path: "github.com/evgeniy-krivenko/chat-service/internal/types"
+
+    NewChatEvent:
+      allOf:
+        - $ref: "#/components/schemas/CommonEvent"
+        - type: object
+          required: [ chatId, clientId, canTakeMoreProblems ]
+          properties:
+            chatId:
+              type: string
+              format: uuid
+              x-go-name: ChatID
+              x-go-type: types.ChatID
+              x-go-type-import:
+                path: "github.com/evgeniy-krivenko/chat-service/internal/types"
+            clientId:
+              type: string
+              format: uuid
+              x-go-name: ClientID
+              x-go-type: types.UserID
+              x-go-type-import:
+                path: "github.com/evgeniy-krivenko/chat-service/internal/types"
+            canTakeMoreProblems:
+              type: boolean
+
+    EventType:
+      type: string
+      enum:
+        - NewChatEvent

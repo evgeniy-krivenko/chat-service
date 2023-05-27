@@ -61,3 +61,24 @@ func (r *Repo) GetMessageByID(ctx context.Context, msgID types.MessageID) (*Mess
 
 	return pointer.Ptr(adaptStoreMessage(msg)), nil
 }
+
+func (r *Repo) CreateClientService(
+	ctx context.Context,
+	problemID types.ProblemID,
+	chatID types.ChatID,
+	msgBody string,
+) (*Message, error) {
+	msg, err := r.db.Message(ctx).Create().
+		SetProblemID(problemID).
+		SetChatID(chatID).
+		SetBody(msgBody).
+		SetIsVisibleForManager(false).
+		SetIsVisibleForClient(true).
+		SetIsService(true).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("create service msg for client: %v", err)
+	}
+
+	return pointer.Ptr(adaptStoreMessage(msg)), nil
+}

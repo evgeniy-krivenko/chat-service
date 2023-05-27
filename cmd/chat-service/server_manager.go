@@ -32,12 +32,11 @@ func initServerManager(
 	role string,
 
 	mLoadSrv *managerload.Service,
+	mPool *inmemmanagerpool.Service,
 
 	isProduction bool,
 ) (*server.Server, error) {
 	lg := zap.L().Named(nameServerManager)
-
-	mPool := inmemmanagerpool.New()
 
 	canReceiveProblemUseCase, err := canreceiveproblems.New(canreceiveproblems.NewOptions(mLoadSrv, mPool))
 	if err != nil {
