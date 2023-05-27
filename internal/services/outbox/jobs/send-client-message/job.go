@@ -7,8 +7,10 @@ import (
 	"go.uber.org/zap"
 
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
+	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
+	msgjobpayload "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/msg-job-payload"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -24,10 +26,15 @@ type messageRepository interface {
 	GetMessageByID(ctx context.Context, msgID types.MessageID) (*messagesrepo.Message, error)
 }
 
+type eventStream interface {
+	Publish(ctx context.Context, userID types.UserID, event eventstream.Event) error
+}
+
 //go:generate options-gen -out-filename=job_options.gen.go -from-struct=Options
 type Options struct {
 	msgProducer messageProducer   `option:"mandatory" validate:"required"`
 	msgRepo     messageRepository `option:"mandatory" validate:"required"`
+	eventStream eventStream       `option:"mandatory" validate:"required"`
 }
 
 type Job struct {
@@ -52,7 +59,7 @@ func (j *Job) Name() string {
 }
 
 func (j *Job) Handle(ctx context.Context, payload string) error {
-	msgID, err := unmarshalPayload(payload)
+	msgID, err := msgjobpayload.UnmarshalPayload(payload)
 	if err != nil {
 		j.lg.Error("unmarshal payload", zap.Error(err))
 		return err
@@ -71,6 +78,19 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		FromClient: true,
 	}); err != nil {
 		j.lg.Error("produce message", zap.Error(err))
+	}
+
+	if err := j.eventStream.Publish(ctx, msg.AuthorID, eventstream.NewNewMessageEvent(
+		types.NewEventID(),
+		msg.InitialRequestID,
+		msg.ChatID,
+		msg.ID,
+		msg.AuthorID,
+		msg.CreatedAt,
+		msg.Body,
+		msg.IsService,
+	)); err != nil {
+		return fmt.Errorf("publish new msg to event stream: %v", err)
 	}
 
 	j.lg.Info("success to produce message. Job done")

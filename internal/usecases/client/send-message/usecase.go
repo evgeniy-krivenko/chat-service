@@ -8,6 +8,7 @@ import (
 
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
+	msgjobpayload "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/msg-job-payload"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -111,7 +112,7 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 }
 
 func (u UseCase) putToOutbox(ctx context.Context, msgID types.MessageID) error {
-	outboxPayload, err := sendclientmessagejob.MarshalPayload(msgID)
+	outboxPayload, err := msgjobpayload.MarshalPayload(msgID)
 	if err != nil {
 		return fmt.Errorf("marshal when put to outbox: %v", err)
 	}

@@ -24,14 +24,3 @@ func MarshalPayload(messageID types.MessageID) (string, error) {
 
 	return string(data), nil
 }
-
-func unmarshalPayload(payload string) (types.MessageID, error) {
-	var pl msgPayload
-
-	err := json.Unmarshal([]byte(payload), &pl)
-	if err != nil {
-		return types.MessageIDNil, fmt.Errorf("send client message job: %v", err)
-	}
-
-	return pl.MessageID, nil
-}

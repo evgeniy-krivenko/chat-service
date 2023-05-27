@@ -13,6 +13,9 @@ import (
 
 func NewLogger(lg *zap.Logger) echo.MiddlewareFunc {
 	return middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		Skipper: func(c echo.Context) bool {
+			return c.Request().Method == http.MethodOptions
+		},
 		LogLatency:   true,
 		LogHost:      true,
 		LogMethod:    true,

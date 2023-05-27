@@ -37,12 +37,14 @@ type DebugServerConfig struct {
 type ClientServerConfig struct {
 	Addr           string         `toml:"addr" validate:"hostname_port"`
 	AllowOrigins   []string       `toml:"allow_origins" validate:"dive,url,min=1"`
+	SecWSProtocol  string         `toml:"sec_ws_protocol" validate:"required"`
 	RequiredAccess RequiredAccess `toml:"required_access" validate:"required,dive"`
 }
 
 type ManagerServerConfig struct {
 	Addr           string         `toml:"addr" validate:"hostname_port"`
 	AllowOrigins   []string       `toml:"allow_origins" validate:"dive,url,min=1"`
+	SecWSProtocol  string         `toml:"sec_ws_protocol" validate:"required"`
 	RequiredAccess RequiredAccess `toml:"required_access" validate:"required,dive"`
 }
 
@@ -76,9 +78,10 @@ type DBConfig struct {
 }
 
 type ServicesConfig struct {
-	Outbox      OutboxConfig      `toml:"outbox"`
-	MsgProducer MsgProducerConfig `toml:"msg_producer"`
-	ManagerLoad ManagerLoadConfig `toml:"manager_load"`
+	Outbox               OutboxConfig               `toml:"outbox"`
+	MsgProducer          MsgProducerConfig          `toml:"msg_producer"`
+	ManagerLoad          ManagerLoadConfig          `toml:"manager_load"`
+	AFCVerdictsProcessor AFCVerdictsProcessorConfig `toml:"afc_verdicts_processor"`
 }
 
 type OutboxConfig struct {
@@ -96,4 +99,13 @@ type MsgProducerConfig struct {
 
 type ManagerLoadConfig struct {
 	MaxProblemsAtSameTime int `toml:"max_problems_at_same_time" validate:"required,gt=0"`
+}
+
+type AFCVerdictsProcessorConfig struct {
+	Brokers                  []string `toml:"brokers" validate:"required,gt=0,dive,required,hostname_port"`
+	Consumers                int      `toml:"consumers" validate:"min=1,max=16"`
+	ConsumerGroup            string   `toml:"consumer_group" validate:"required"`
+	VerdictsTopic            string   `toml:"verdicts_topic" validate:"required"`
+	VerdictsDLQTopic         string   `toml:"verdicts_dlq_topic" validate:"required"`
+	VerdictsSigningPublicKey string   `toml:"verdicts_signing_public_key" validate:"startswith=-----BEGIN PUBLIC KEY-----"`
 }

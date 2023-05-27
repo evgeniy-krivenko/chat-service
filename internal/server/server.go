@@ -21,35 +21,30 @@ import (
 const (
 	readHeaderTimeout = time.Second
 	shutdownTimeout   = 3 * time.Second
+	bodySize          = "12KB"
 )
-
-type EchoRouter interface {
-	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-}
 
 type KeycloakClient interface {
 	IntrospectToken(ctx context.Context, token string) (*keycloakclient.IntrospectTokenResult, error)
 }
 
+type wsHTTPHandler interface {
+	Serve(eCtx echo.Context) error
+}
+
 //go:generate options-gen -out-filename=server_options.gen.go -from-struct=Options
 type Options struct {
-	logger           *zap.Logger             `option:"mandatory" validate:"required"`
-	addr             string                  `option:"mandatory" validate:"required,hostname_port"`
-	allowOrigins     []string                `option:"mandatory" validate:"min=1"`
-	v1Swagger        *openapi3.T             `option:"mandatory" validate:"required"`
-	keycloakClient   KeycloakClient          `option:"mandatory" validate:"required"`
-	resource         string                  `option:"mandatory" validate:"required"`
-	role             string                  `option:"mandatory" validate:"required"`
-	httpErrorHandler echo.HTTPErrorHandler   `option:"mandatory" validate:"required"`
-	registerHandlers func(router EchoRouter) `option:"mandatory" validate:"required"`
+	logger           *zap.Logger           `option:"mandatory" validate:"required"`
+	addr             string                `option:"mandatory" validate:"required,hostname_port"`
+	allowOrigins     []string              `option:"mandatory" validate:"min=1"`
+	v1Swagger        *openapi3.T           `option:"mandatory" validate:"required"`
+	keycloakClient   KeycloakClient        `option:"mandatory" validate:"required"`
+	resource         string                `option:"mandatory" validate:"required"`
+	role             string                `option:"mandatory" validate:"required"`
+	httpErrorHandler echo.HTTPErrorHandler `option:"mandatory" validate:"required"`
+	registerHandlers func(*echo.Group)     `option:"mandatory" validate:"required"`
+
+	wsHandler wsHTTPHandler `option:"mandatory" validate:"required"`
 }
 
 type Server struct {
@@ -63,26 +58,35 @@ func New(opts Options) (*Server, error) {
 	}
 
 	e := echo.New()
+
+	e.GET(
+		"/ws",
+		opts.wsHandler.Serve,
+		middlewares.NewKeyCloakWSTokenAuth(opts.keycloakClient, opts.resource, opts.role),
+	)
+
 	e.Use(
 		middleware.CORSWithConfig(middleware.CORSConfig{
 			AllowOrigins: opts.allowOrigins,
 			AllowMethods: []string{http.MethodPost},
 		}),
-		middlewares.NewKeyCloakTokenAuth(opts.keycloakClient, opts.resource, opts.role),
 		middlewares.NewLogger(opts.logger),
 		middlewares.NewRecovery(opts.logger),
-		middleware.BodyLimit("12KB"),
+		middleware.BodyLimit(bodySize),
 	)
 
 	e.HTTPErrorHandler = opts.httpErrorHandler
 
-	v1 := e.Group("v1", oapimdlwr.OapiRequestValidatorWithOptions(opts.v1Swagger, &oapimdlwr.Options{
-		Options: openapi3filter.Options{
-			ExcludeRequestBody:  false,
-			ExcludeResponseBody: true,
-			AuthenticationFunc:  openapi3filter.NoopAuthenticationFunc,
-		},
-	}))
+	v1 := e.Group("v1",
+		middlewares.NewKeyCloakTokenAuth(opts.keycloakClient, opts.resource, opts.role),
+		oapimdlwr.OapiRequestValidatorWithOptions(opts.v1Swagger, &oapimdlwr.Options{
+			Options: openapi3filter.Options{
+				ExcludeRequestBody:  false,
+				ExcludeResponseBody: true,
+				AuthenticationFunc:  openapi3filter.NoopAuthenticationFunc,
+			},
+		}),
+	)
 
 	opts.registerHandlers(v1)
 
