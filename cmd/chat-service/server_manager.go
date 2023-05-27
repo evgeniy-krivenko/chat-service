@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	managerevents "github.com/evgeniy-krivenko/chat-service/internal/server-manager/events"
+	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
@@ -26,13 +28,14 @@ func initServerManager(
 	v1Swagger *openapi3.T,
 
 	keycloakClient *keycloakclient.Client,
-	wsHTTPHandler *websocketstream.HTTPHandler,
 
 	resource string,
 	role string,
+	secWSProtocol string,
 
 	mLoadSrv *managerload.Service,
 	mPool *inmemmanagerpool.Service,
+	stream eventstream.EventStream,
 
 	isProduction bool,
 ) (*server.Server, error) {
@@ -64,6 +67,20 @@ func initServerManager(
 
 	errHandleFunc := errHandler.Handle
 
+	shutdown := make(chan struct{})
+
+	wsManager, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
+		zap.L().Named("websocket-manager"),
+		stream,
+		managerevents.Adapter{},
+		websocketstream.JSONEventWriter{},
+		websocketstream.NewUpgrader(allowOrigins, secWSProtocol),
+		shutdown,
+	))
+	if err != nil {
+		return nil, fmt.Errorf("init websocket manager: %v", err)
+	}
+
 	return server.New(server.NewOptions(
 		lg,
 		addr,
@@ -76,6 +93,9 @@ func initServerManager(
 		func(router *echo.Group) {
 			managerv1.RegisterHandlers(router, v1Handlers)
 		},
-		wsHTTPHandler,
+		func() {
+			close(shutdown)
+		},
+		wsManager,
 	))
 }

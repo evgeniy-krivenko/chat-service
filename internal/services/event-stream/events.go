@@ -7,6 +7,8 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/validator"
 )
 
+//go:generate gonstructor --output=events.gen.go --type=NewMessageEvent --type=MessageSentEvent --type=MessageBlockedEvent --type=NewChatEvent
+
 type Event interface {
 	eventMarker()
 	Validate() error
@@ -17,15 +19,15 @@ func (*event) eventMarker() {}
 
 // NewMessageEvent is a signal about the appearance of a new message in the chat.
 type NewMessageEvent struct {
-	event
+	event `gonstructor:"-"`
 
 	EventID     types.EventID   `validate:"required"`
 	RequestID   types.RequestID `validate:"required"`
 	ChatID      types.ChatID    `validate:"required"`
 	MessageID   types.MessageID `validate:"required"`
 	AuthorID    types.UserID    `validate:"omitempty"`
-	CreatedAt   time.Time       `validate:"omitempty"`
-	MessageBody string          `validate:"omitempty"`
+	CreatedAt   time.Time       `validate:"required"`
+	MessageBody string          `validate:"required,max=3000"`
 	IsService   bool
 }
 
@@ -33,31 +35,31 @@ func (e NewMessageEvent) Validate() error {
 	return validator.Validator.Struct(e)
 }
 
-func NewNewMessageEvent(
-	eventID types.EventID,
-	reqID types.RequestID,
-	chatID types.ChatID,
-	msgID types.MessageID,
-	authorID types.UserID,
-	createdAt time.Time,
-	msgBody string,
-	isService bool,
-) *NewMessageEvent {
-	return &NewMessageEvent{
-		event:       event{},
-		MessageBody: msgBody,
-		EventID:     eventID,
-		RequestID:   reqID,
-		ChatID:      chatID,
-		MessageID:   msgID,
-		AuthorID:    authorID,
-		CreatedAt:   createdAt,
-		IsService:   isService,
-	}
-}
+//func NewNewMessageEvent(
+//	eventID types.EventID,
+//	reqID types.RequestID,
+//	chatID types.ChatID,
+//	msgID types.MessageID,
+//	authorID types.UserID,
+//	createdAt time.Time,
+//	msgBody string,
+//	isService bool,
+//) *NewMessageEvent {
+//	return &NewMessageEvent{
+//		event:       event{},
+//		MessageBody: msgBody,
+//		EventID:     eventID,
+//		RequestID:   reqID,
+//		ChatID:      chatID,
+//		MessageID:   msgID,
+//		AuthorID:    authorID,
+//		CreatedAt:   createdAt,
+//		IsService:   isService,
+//	}
+//}
 
 type MessageSentEvent struct {
-	event
+	event `gonstructor:"-"`
 
 	EventID   types.EventID   `validate:"required"`
 	RequestID types.RequestID `validate:"required"`
@@ -68,20 +70,20 @@ func (e MessageSentEvent) Validate() error {
 	return validator.Validator.Struct(e)
 }
 
-func NewMessageSentEvent(
-	eventID types.EventID,
-	reqID types.RequestID,
-	msgID types.MessageID,
-) *MessageSentEvent {
-	return &MessageSentEvent{
-		EventID:   eventID,
-		RequestID: reqID,
-		MessageID: msgID,
-	}
-}
+//func NewMessageSentEvent(
+//	eventID types.EventID,
+//	reqID types.RequestID,
+//	msgID types.MessageID,
+//) *MessageSentEvent {
+//	return &MessageSentEvent{
+//		EventID:   eventID,
+//		RequestID: reqID,
+//		MessageID: msgID,
+//	}
+//}
 
 type MessageBlockedEvent struct {
-	event
+	event `gonstructor:"-"`
 
 	EventID   types.EventID   `validate:"required"`
 	RequestID types.RequestID `validate:"required"`
@@ -92,20 +94,20 @@ func (e MessageBlockedEvent) Validate() error {
 	return validator.Validator.Struct(e)
 }
 
-func NewMessageBlockedEvent(
-	eventID types.EventID,
-	reqID types.RequestID,
-	msgID types.MessageID,
-) *MessageBlockedEvent {
-	return &MessageBlockedEvent{
-		EventID:   eventID,
-		RequestID: reqID,
-		MessageID: msgID,
-	}
-}
+//func NewMessageBlockedEvent(
+//	eventID types.EventID,
+//	reqID types.RequestID,
+//	msgID types.MessageID,
+//) *MessageBlockedEvent {
+//	return &MessageBlockedEvent{
+//		EventID:   eventID,
+//		RequestID: reqID,
+//		MessageID: msgID,
+//	}
+//}
 
 type NewChatEvent struct {
-	event
+	event `gonstructor:"-"`
 
 	EventID            types.EventID   `validate:"required"`
 	RequestID          types.RequestID `validate:"required"`
@@ -118,18 +120,18 @@ func (e NewChatEvent) Validate() error {
 	return validator.Validator.Struct(e)
 }
 
-func NewNewChatEvent(
-	eventID types.EventID,
-	reqID types.RequestID,
-	chatID types.ChatID,
-	clientID types.UserID,
-	canTakeMoreProblem bool,
-) *NewChatEvent {
-	return &NewChatEvent{
-		EventID:            eventID,
-		RequestID:          reqID,
-		ChatID:             chatID,
-		ClientID:           clientID,
-		CanTakeMoreProblem: canTakeMoreProblem,
-	}
-}
+//func NewNewChatEvent(
+//	eventID types.EventID,
+//	reqID types.RequestID,
+//	chatID types.ChatID,
+//	clientID types.UserID,
+//	canTakeMoreProblem bool,
+//) *NewChatEvent {
+//	return &NewChatEvent{
+//		EventID:            eventID,
+//		RequestID:          reqID,
+//		ChatID:             chatID,
+//		ClientID:           clientID,
+//		CanTakeMoreProblem: canTakeMoreProblem,
+//	}
+//}

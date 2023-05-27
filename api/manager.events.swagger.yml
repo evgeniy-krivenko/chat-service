@@ -9,16 +9,18 @@ servers:
 
 components:
   schemas:
-    Event:
-      required: [ eventType ]
-      properties:
-        eventType:
-          $ref: "#/components/schemas/EventType"
-      oneOf:
-        - $ref: "#/components/schemas/NewChatEvent"
+#    MessageId:
+#      required: [ messageId ]
+#      properties:
+#        messageId:
+#          type: string
+#          format: uuid
+#          x-go-type: types.MessageID
+#          x-go-type-import:
+#            path: "github.com/evgeniy-krivenko/chat-service/internal/types"
 
-    CommonEvent:
-      required: [ eventType, eventId, messageId, requestId ]
+    Event:
+      required: [ eventType, eventId, requestId ]
       properties:
         eventType:
           $ref: "#/components/schemas/EventType"
@@ -26,39 +28,38 @@ components:
           type: string
           format: uuid
           x-go-type: types.EventID
-          x-go-name: EventID
           x-go-type-import:
             path: "github.com/evgeniy-krivenko/chat-service/internal/types"
         requestId:
           type: string
           format: uuid
-          x-go-name: RequestID
           x-go-type: types.RequestID
           x-go-type-import:
             path: "github.com/evgeniy-krivenko/chat-service/internal/types"
+      oneOf:
+        - $ref: "#/components/schemas/NewChatEvent"
+      discriminator:
+        propertyName: eventType
+        mapping:
+          NewChatEvent: "#/components/schemas/NewChatEvent"
 
     NewChatEvent:
-      allOf:
-        - $ref: "#/components/schemas/CommonEvent"
-        - type: object
-          required: [ chatId, clientId, canTakeMoreProblems ]
-          properties:
-            chatId:
-              type: string
-              format: uuid
-              x-go-name: ChatID
-              x-go-type: types.ChatID
-              x-go-type-import:
-                path: "github.com/evgeniy-krivenko/chat-service/internal/types"
-            clientId:
-              type: string
-              format: uuid
-              x-go-name: ClientID
-              x-go-type: types.UserID
-              x-go-type-import:
-                path: "github.com/evgeniy-krivenko/chat-service/internal/types"
-            canTakeMoreProblems:
-              type: boolean
+      required: [ chatId, clientId, canTakeMoreProblems ]
+      properties:
+        chatId:
+          type: string
+          format: uuid
+          x-go-type: types.ChatID
+          x-go-type-import:
+            path: "github.com/evgeniy-krivenko/chat-service/internal/types"
+        clientId:
+          type: string
+          format: uuid
+          x-go-type: types.UserID
+          x-go-type-import:
+            path: "github.com/evgeniy-krivenko/chat-service/internal/types"
+        canTakeMoreProblems:
+          type: boolean
 
     EventType:
       type: string

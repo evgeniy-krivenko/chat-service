@@ -91,22 +91,27 @@ func (h *HTTPHandler) Serve(eCtx echo.Context) error {
 	})
 
 	eg.Go(func() error {
-		<-h.shutdownCh
+		select {
+		case <-ctx.Done():
+		case <-h.shutdownCh:
+			closer.Close(websocket.CloseNormalClosure)
+		}
 
-		h.logger.Info("graceful shutdown websocket service")
+		h.logger.Info("shutdown websocket service")
 
-		closer.Close(websocket.CloseNormalClosure)
 		return nil
 	})
 
-	if err := eg.Wait(); err != nil && !errors.Is(err, context.Canceled) {
-		if websocket.IsCloseError(err, websocket.CloseNoStatusReceived) {
-			h.logger.Warn("ws closed", zap.Error(err))
-			return nil
+	if err := eg.Wait(); err != nil {
+		if !errors.Is(err, websocket.ErrCloseSent) {
+			h.logger.Error("unexpected error", zap.Error(err))
+			closer.Close(websocket.CloseInternalServerErr)
 		}
 
-		return fmt.Errorf("wait ws stop: %v", err)
+		return nil
 	}
+
+	closer.Close(websocket.CloseNormalClosure)
 	return nil
 }
 

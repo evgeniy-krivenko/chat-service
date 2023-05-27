@@ -23,6 +23,7 @@ func NewOptions(
 	role string,
 	httpErrorHandler echo.HTTPErrorHandler,
 	registerHandlers func(*echo.Group),
+	shutdown func(),
 	wsHandler wsHTTPHandler,
 	options ...OptOptionsSetter,
 ) Options {
@@ -39,6 +40,7 @@ func NewOptions(
 	o.role = role
 	o.httpErrorHandler = httpErrorHandler
 	o.registerHandlers = registerHandlers
+	o.shutdown = shutdown
 	o.wsHandler = wsHandler
 
 	for _, opt := range options {
@@ -58,6 +60,7 @@ func (o *Options) Validate() error {
 	errs.Add(errors461e464ebed9.NewValidationError("role", _validate_Options_role(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("httpErrorHandler", _validate_Options_httpErrorHandler(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("registerHandlers", _validate_Options_registerHandlers(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("shutdown", _validate_Options_shutdown(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("wsHandler", _validate_Options_wsHandler(o)))
 	return errs.AsError()
 }
@@ -121,6 +124,13 @@ func _validate_Options_httpErrorHandler(o *Options) error {
 func _validate_Options_registerHandlers(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.registerHandlers, "required"); err != nil {
 		return fmt461e464ebed9.Errorf("field `registerHandlers` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_shutdown(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.shutdown, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `shutdown` did not pass the test: %w", err)
 	}
 	return nil
 }

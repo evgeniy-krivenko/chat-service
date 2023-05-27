@@ -17,32 +17,41 @@ func (Adapter) Adapt(ev eventstream.Event) (any, error) {
 		return nil, fmt.Errorf("validate while adapt: %v", err)
 	}
 
+	var event Event
+	var err error
+
 	switch e := ev.(type) {
 	case *eventstream.NewMessageEvent:
-		return &NewMessageEvent{
-			EventID:   e.EventID,
-			MessageID: e.MessageID,
-			RequestID: e.RequestID,
+		event.EventId = e.EventID
+		event.RequestId = e.RequestID
+
+		err = event.FromNewMessageEvent(NewMessageEvent{
+			AuthorId:  pointer.PtrWithZeroAsNil(e.AuthorID),
 			CreatedAt: e.CreatedAt,
 			IsService: e.IsService,
 			Body:      e.MessageBody,
-			EventType: EventTypeNewMessageEvent,
-			AuthorID:  pointer.PtrWithZeroAsNil(e.AuthorID),
-		}, nil
+			MessageId: e.MessageID,
+		})
 	case *eventstream.MessageSentEvent:
-		return &MessageSentEvent{
-			EventID:   e.EventID,
-			MessageID: e.MessageID,
-			RequestID: e.RequestID,
-			EventType: EventTypeMessageSentEvent,
-		}, nil
+		event.EventId = e.EventID
+		event.RequestId = e.RequestID
+
+		err = event.FromMessageSentEvent(MessageSentEvent{
+			MessageId: e.MessageID,
+		})
 	case *eventstream.MessageBlockedEvent:
-		return &MessageBlockedEvent{
-			EventID:   e.EventID,
-			MessageID: e.MessageID,
-			RequestID: e.RequestID,
-			EventType: EventTypeMessageBlockedEvent,
-		}, nil
+		event.EventId = e.EventID
+		event.RequestId = e.RequestID
+
+		err = event.FromMessageBlockedEvent(MessageBlockedEvent{
+			MessageId: e.MessageID,
+		})
+	default:
+		return nil, fmt.Errorf("unknown client event: %v (%T)", e, e)
 	}
-	return nil, nil
+	if err != nil {
+		return nil, err
+	}
+
+	return event, nil
 }

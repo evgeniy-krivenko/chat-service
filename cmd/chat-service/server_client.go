@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	clientevents "github.com/evgeniy-krivenko/chat-service/internal/server-client/events"
+	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
@@ -29,16 +31,17 @@ func initServerClient(
 	v1Swagger *openapi3.T,
 
 	keycloakClient *keycloakclient.Client,
-	wsHTTPHandler *websocketstream.HTTPHandler,
 
 	resource string,
 	role string,
+	secWSProtocol string,
 
 	msgRepo *messagesrepo.Repo,
 	chatRepo *chatsrepo.Repo,
 	problemRepo *problemsrepo.Repo,
 	outboxSrv *outbox.Service,
 	db *store.Database,
+	stream eventstream.EventStream,
 
 	isProduction bool,
 ) (*server.Server, error) {
@@ -70,6 +73,20 @@ func initServerClient(
 
 	errHandleFunc := errHandler.Handle
 
+	shutdown := make(chan struct{})
+
+	wsClient, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
+		zap.L().Named("websocket-client"),
+		stream,
+		clientevents.Adapter{},
+		websocketstream.JSONEventWriter{},
+		websocketstream.NewUpgrader(allowOrigins, secWSProtocol),
+		shutdown,
+	))
+	if err != nil {
+		return nil, fmt.Errorf("init websocket client: %v", err)
+	}
+
 	srv, err := server.New(server.NewOptions(
 		lg,
 		addr,
@@ -82,7 +99,10 @@ func initServerClient(
 		func(router *echo.Group) {
 			clientv1.RegisterHandlers(router, v1Handlers)
 		},
-		wsHTTPHandler,
+		func() {
+			close(shutdown)
+		},
+		wsClient,
 	))
 	if err != nil {
 		return nil, fmt.Errorf("%s: %v", nameServerClient, err)

@@ -16,16 +16,25 @@ func (Adapter) Adapt(ev eventstream.Event) (any, error) {
 		return nil, fmt.Errorf("validate while apapt event: %v", err)
 	}
 
+	var event Event
+	var err error
+
 	switch e := ev.(type) {
 	case *eventstream.NewChatEvent:
-		return &NewChatEvent{
-			EventID:             e.EventID,
-			ClientID:            e.ClientID,
+		event.EventId = e.EventID
+		event.RequestId = e.RequestID
+
+		err = event.FromNewChatEvent(NewChatEvent{
 			CanTakeMoreProblems: e.CanTakeMoreProblem,
-			RequestID:           e.RequestID,
-			EventType:           EventTypeNewChatEvent,
-		}, nil
+			ClientId:            e.ClientID,
+			ChatId:              e.ChatID,
+		})
+	default:
+		return nil, fmt.Errorf("unknown manager event: %v (%T)", e, e)
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, nil
+	return event, nil
 }

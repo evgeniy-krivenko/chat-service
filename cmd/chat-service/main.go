@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/evgeniy-krivenko/chat-service/internal/buildinfo"
@@ -24,7 +23,6 @@ import (
 	clientevents "github.com/evgeniy-krivenko/chat-service/internal/server-client/events"
 	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
 	serverdebug "github.com/evgeniy-krivenko/chat-service/internal/server-debug"
-	managerevents "github.com/evgeniy-krivenko/chat-service/internal/server-manager/events"
 	managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1"
 	afcverdictsprocessor "github.com/evgeniy-krivenko/chat-service/internal/services/afc-verdicts-processor"
 	inmemeventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream/in-mem"
@@ -39,7 +37,6 @@ import (
 	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/migrate"
-	websocketstream "github.com/evgeniy-krivenko/chat-service/internal/websocket-stream"
 )
 
 const shutdownTimeout = 3 * time.Second
@@ -271,51 +268,23 @@ func run() (errReturned error) {
 		return fmt.Errorf("init keycloak client: %v", err)
 	}
 
-	shutdownClient := make(chan struct{})
-	shutdownManager := make(chan struct{})
-
-	// Websocket client stream.
-	wsClient, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
-		zap.L().Named("websocket-client"),
-		eventStream,
-		clientevents.Adapter{},
-		websocketstream.JSONEventWriter{},
-		websocketstream.NewUpgrader(cfg.Servers.Client.AllowOrigins, cfg.Servers.Client.SecWSProtocol),
-		shutdownClient,
-	))
-	if err != nil {
-		return fmt.Errorf("init websocket client: %v", err)
-	}
-
-	// Websocket manager stream.
-	wsManager, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
-		zap.L().Named("websocket-manager"),
-		eventStream,
-		managerevents.Adapter{},
-		websocketstream.JSONEventWriter{},
-		websocketstream.NewUpgrader(cfg.Servers.Manager.AllowOrigins, cfg.Servers.Manager.SecWSProtocol),
-		shutdownManager,
-	))
-	if err != nil {
-		return fmt.Errorf("init websocket manager: %v", err)
-	}
-
 	// Servers.
 	srvClient, err := initServerClient(
 		cfg.Servers.Client.Addr,
 		cfg.Servers.Client.AllowOrigins,
 		swaggerClientV1,
 		keycloakClient,
-		wsClient,
 
 		cfg.Servers.Client.RequiredAccess.Resource,
 		cfg.Servers.Client.RequiredAccess.Role,
+		cfg.Servers.Client.SecWSProtocol,
 
 		msgRepo,
 		chatsRepo,
 		problemsRepo,
 		outboxService,
 		database,
+		eventStream,
 
 		cfg.Global.IsProduction(),
 	)
@@ -329,13 +298,14 @@ func run() (errReturned error) {
 
 		swaggerManagerV1,
 		keycloakClient,
-		wsManager,
 
 		cfg.Servers.Manager.RequiredAccess.Resource,
 		cfg.Servers.Manager.RequiredAccess.Role,
+		cfg.Servers.Manager.SecWSProtocol,
 
 		managerLoadService,
 		mngrPool,
+		eventStream,
 
 		cfg.Global.IsProduction(),
 	)
@@ -354,29 +324,6 @@ func run() (errReturned error) {
 	eg.Go(func() error { return outboxService.Run(ctx) })
 	eg.Go(func() error { return afcVerdictProcessor.Run(ctx) })
 	eg.Go(func() error { return managerScheduler.Run(ctx) })
-
-	// Websockets shutdown.
-	eg.Go(func() error {
-		<-ctx.Done()
-
-		select {
-		case shutdownClient <- struct{}{}:
-		case <-time.After(shutdownTimeout):
-		}
-
-		return nil
-	})
-
-	eg.Go(func() error {
-		<-ctx.Done()
-
-		select {
-		case shutdownManager <- struct{}{}:
-		case <-time.After(shutdownTimeout):
-		}
-
-		return nil
-	})
 
 	if err = eg.Wait(); err != nil && !errors.Is(err, context.Canceled) {
 		return fmt.Errorf("wait app stop: %v", err)
