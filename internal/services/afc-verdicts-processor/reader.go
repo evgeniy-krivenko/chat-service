@@ -9,6 +9,12 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/logger"
 )
 
+const (
+	startOffset    = kafka.LastOffset
+	minBytesToRead = 1
+	maxBytesToRead = 10 << 10 // 10KB
+)
+
 //go:generate mockgen -source=$GOFILE -destination=mocks/reader_mock.gen.go -package=afcverdictsprocessormocks
 
 type KafkaReaderFactory func(brokers []string, groupID string, topic string) KafkaReader
@@ -25,7 +31,10 @@ func NewKafkaReader(brokers []string, groupID string, topic string) KafkaReader 
 		Brokers:               brokers,
 		GroupID:               groupID,
 		Topic:                 topic,
-		StartOffset:           kafka.FirstOffset,
+		StartOffset:           startOffset,
+		CommitInterval:        0,
+		MinBytes:              minBytesToRead,
+		MaxBytes:              maxBytesToRead,
 		Logger:                logger.NewKafkaAdapted().WithServiceName(serviceName),
 		ErrorLogger:           logger.NewKafkaAdapted().WithServiceName(serviceName).ForErrors(),
 	})

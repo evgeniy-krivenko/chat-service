@@ -20,7 +20,7 @@ import (
 
 	clientmessageblockedjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-blocked"
 	clientmessagesentjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-sent"
-	msgjobpayload "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/msg-job-payload"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/payload/simpleid"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -123,14 +123,11 @@ func (s *Service) consume(ctx context.Context) error {
 	msgs := make([]kafka.Message, 0, s.processBatchSize)
 
 	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		default:
-		}
-
 		msg, err := reader.FetchMessage(ctx)
 		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		if errors.Is(err, context.Canceled) {
 			return nil
 		}
 		if err != nil {
@@ -184,27 +181,22 @@ func (s *Service) handleMsg(ctx context.Context, msg kafka.Message) error {
 		return nil
 	}
 
-	outBoxPayload, err := msgjobpayload.MarshalPayload(v.MessageID)
-	if err != nil {
-		return fmt.Errorf("marshal job payload: %v", err)
-	}
-
 	if !v.IsSuccess() {
-		if err := s.blockMessage(ctx, v, outBoxPayload); err != nil {
+		if err := s.blockMessage(ctx, v); err != nil {
 			s.writeToDLQ(ctx, msg, err.Error())
 		}
 
 		return nil
 	}
 
-	if err := s.markAsVisibleForManager(ctx, v, outBoxPayload); err != nil {
+	if err := s.markAsVisibleForManager(ctx, v); err != nil {
 		s.writeToDLQ(ctx, msg, err.Error())
 	}
 
 	return nil
 }
 
-func (s *Service) blockMessage(ctx context.Context, v Verdict, payload string) error {
+func (s *Service) blockMessage(ctx context.Context, v Verdict) error {
 	txWithBackoff := s.backoffTx(s.txtor.RunInTx)
 
 	return txWithBackoff(ctx, func(ctx context.Context) error {
@@ -212,7 +204,12 @@ func (s *Service) blockMessage(ctx context.Context, v Verdict, payload string) e
 			return fmt.Errorf("block msg: %v", err)
 		}
 
-		if _, err := s.outBox.Put(ctx, clientmessageblockedjob.Name, payload, time.Now()); err != nil {
+		if _, err := s.outBox.Put(
+			ctx,
+			clientmessageblockedjob.Name,
+			simpleid.MustMarshal(v.MessageID),
+			time.Now(),
+		); err != nil {
 			return fmt.Errorf("put job %v to outbox: %v", clientmessageblockedjob.Name, err)
 		}
 
@@ -220,7 +217,7 @@ func (s *Service) blockMessage(ctx context.Context, v Verdict, payload string) e
 	})
 }
 
-func (s *Service) markAsVisibleForManager(ctx context.Context, v Verdict, payload string) error {
+func (s *Service) markAsVisibleForManager(ctx context.Context, v Verdict) error {
 	txWithBackoff := s.backoffTx(s.txtor.RunInTx)
 
 	return txWithBackoff(ctx, func(ctx context.Context) error {
@@ -228,7 +225,12 @@ func (s *Service) markAsVisibleForManager(ctx context.Context, v Verdict, payloa
 			return fmt.Errorf("mark msg as visible for manager: %v", err)
 		}
 
-		if _, err := s.outBox.Put(ctx, clientmessagesentjob.Name, payload, time.Now()); err != nil {
+		if _, err := s.outBox.Put(
+			ctx,
+			clientmessagesentjob.Name,
+			simpleid.MustMarshal(v.MessageID),
+			time.Now(),
+		); err != nil {
 			return fmt.Errorf("put job %v to outbox: %v", clientmessagesentjob.Name, err)
 		}
 

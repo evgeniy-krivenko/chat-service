@@ -12,7 +12,7 @@ import (
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	clientmessageblockedjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-blocked"
 	clientmessageblockedeventmocks "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-blocked/mocks"
-	msgjobpayload "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/msg-job-payload"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/payload/simpleid"
 	"github.com/evgeniy-krivenko/chat-service/internal/testingh"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
@@ -64,7 +64,7 @@ func (j *JobSuite) TestHandle_Success() {
 	))).Return(nil)
 
 	// Action & assert.
-	payload, err := msgjobpayload.MarshalPayload(j.msg.ID)
+	payload, err := simpleid.Marshal(j.msg.ID)
 	j.Require().NoError(err)
 
 	err = j.job.Handle(j.Ctx, payload)
@@ -77,7 +77,7 @@ func (j *JobSuite) TestHandle_ErrorMsgRepo() {
 		Return(nil, errors.New("unexpected"))
 
 	// Action & assert.
-	payload, err := msgjobpayload.MarshalPayload(j.msg.ID)
+	payload, err := simpleid.Marshal(j.msg.ID)
 	j.Require().NoError(err)
 
 	err = j.job.Handle(j.Ctx, payload)
@@ -94,7 +94,7 @@ func (j *JobSuite) TestHandle_ErrorPublish() {
 	))).Return(errors.New("unexpected"))
 
 	// Action & assert.
-	payload, err := msgjobpayload.MarshalPayload(j.msg.ID)
+	payload, err := simpleid.Marshal(j.msg.ID)
 	j.Require().NoError(err)
 
 	err = j.job.Handle(j.Ctx, payload)

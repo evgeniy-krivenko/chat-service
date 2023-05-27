@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	clientevents "github.com/evgeniy-krivenko/chat-service/internal/server-client/events"
-	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
@@ -14,8 +12,10 @@ import (
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
 	"github.com/evgeniy-krivenko/chat-service/internal/server"
+	clientevents "github.com/evgeniy-krivenko/chat-service/internal/server-client/events"
 	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
 	"github.com/evgeniy-krivenko/chat-service/internal/server/errhandler"
+	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	gethistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-history"

@@ -68,6 +68,6 @@ verdicts_signing_public_key = """
 ...
 -----END PUBLIC KEY-----
 """
-
+batch_size = 1
 [services.manager_scheduler]
 period = "1s"

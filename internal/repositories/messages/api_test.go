@@ -165,7 +165,6 @@ func (s *MsgRepoAPISuite) Test_CreateClientService() {
 	authorID := types.NewUserID()
 	// Create chat and problem.
 	problemID, chatID := s.createProblemAndChat(authorID)
-	initialRequestID := types.NewRequestID()
 
 	msg, err := s.repo.CreateClientService(s.Ctx, problemID, chatID, msgBody)
 	s.Require().NoError(err)
@@ -182,15 +181,8 @@ func (s *MsgRepoAPISuite) Test_CreateClientService() {
 	dbMsg, err := s.Database.Message(s.Ctx).Get(s.Ctx, msg.ID)
 	s.Require().NoError(err)
 	s.Require().NotNil(dbMsg)
-
-	s.Run("message is visible for client and invisible for manager", func() {
-		s.True(dbMsg.IsVisibleForClient)
-		s.False(dbMsg.IsVisibleForManager)
-	})
-
-	s.Run("initial_request_id is set correctly", func() {
-		s.Equal(initialRequestID, dbMsg.InitialRequestID)
-	})
+	s.True(dbMsg.IsVisibleForClient)
+	s.False(dbMsg.IsVisibleForManager)
 }
 
 func (s *MsgRepoAPISuite) Test_CreateClientVisible_DuplicationError() {

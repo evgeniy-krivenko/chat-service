@@ -10,7 +10,7 @@ import (
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
-	msgjobpayload "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/msg-job-payload"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/payload/simpleid"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -59,7 +59,7 @@ func (j *Job) Name() string {
 }
 
 func (j *Job) Handle(ctx context.Context, payload string) error {
-	msgID, err := msgjobpayload.UnmarshalPayload(payload)
+	msgID, err := simpleid.Unmarshal[types.MessageID](payload)
 	if err != nil {
 		j.lg.Error("unmarshal payload", zap.Error(err))
 		return err

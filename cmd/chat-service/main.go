@@ -201,6 +201,7 @@ func run() (errReturned error) {
 		msgRepo,
 		outboxService,
 		afcverdictsprocessor.WithVerdictsSignKey(cfg.Services.AFCVerdictsProcessor.VerdictsSigningPublicKey),
+		afcverdictsprocessor.WithProcessBatchSize(cfg.Services.AFCVerdictsProcessor.BatchSize),
 	))
 	if err != nil {
 		return fmt.Errorf("init afc verdict processor: %v", err)

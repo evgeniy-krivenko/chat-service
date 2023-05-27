@@ -109,6 +109,7 @@ type AFCVerdictsProcessorConfig struct {
 	VerdictsTopic            string   `toml:"verdicts_topic" validate:"required"`
 	VerdictsDLQTopic         string   `toml:"verdicts_dlq_topic" validate:"required"`
 	VerdictsSigningPublicKey string   `toml:"verdicts_signing_public_key" validate:"startswith=-----BEGIN PUBLIC KEY-----"`
+	BatchSize                int      `toml:"batch_size" default:"1"`
 }
 
 type ManagerSchedulerConfig struct {

@@ -12,7 +12,7 @@ import (
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	clientmessagesentjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-sent"
 	clientmessagesentjobmocks "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-sent/mocks"
-	msgjobpayload "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/msg-job-payload"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/payload/simpleid"
 	"github.com/evgeniy-krivenko/chat-service/internal/testingh"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
@@ -29,6 +29,7 @@ type JobSuite struct {
 
 func TestJobSuite(t *testing.T) {
 	t.Parallel()
+
 	suite.Run(t, new(JobSuite))
 }
 
@@ -64,7 +65,7 @@ func (j *JobSuite) TestHandle_Success() {
 	))).Return(nil)
 
 	// Action & assert.
-	payload, err := msgjobpayload.MarshalPayload(j.msg.ID)
+	payload, err := simpleid.Marshal(j.msg.ID)
 	j.Require().NoError(err)
 
 	err = j.job.Handle(j.Ctx, payload)
@@ -77,7 +78,7 @@ func (j *JobSuite) TestHandle_ErrorMsgRepo() {
 		Return(nil, errors.New("unexpected"))
 
 	// Action & assert.
-	payload, err := msgjobpayload.MarshalPayload(j.msg.ID)
+	payload, err := simpleid.Marshal(j.msg.ID)
 	j.Require().NoError(err)
 
 	err = j.job.Handle(j.Ctx, payload)
@@ -94,7 +95,7 @@ func (j *JobSuite) TestHandle_ErrorPublish() {
 	))).Return(errors.New("unexpected"))
 
 	// Action & assert.
-	payload, err := msgjobpayload.MarshalPayload(j.msg.ID)
+	payload, err := simpleid.Marshal(j.msg.ID)
 	j.Require().NoError(err)
 
 	err = j.job.Handle(j.Ctx, payload)

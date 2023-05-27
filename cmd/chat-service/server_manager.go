@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	managerevents "github.com/evgeniy-krivenko/chat-service/internal/server-manager/events"
-	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
@@ -11,8 +9,10 @@ import (
 
 	keycloakclient "github.com/evgeniy-krivenko/chat-service/internal/clients/keycloak"
 	"github.com/evgeniy-krivenko/chat-service/internal/server"
+	managerevents "github.com/evgeniy-krivenko/chat-service/internal/server-manager/events"
 	managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1"
 	"github.com/evgeniy-krivenko/chat-service/internal/server/errhandler"
+	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	managerload "github.com/evgeniy-krivenko/chat-service/internal/services/manager-load"
 	inmemmanagerpool "github.com/evgeniy-krivenko/chat-service/internal/services/manager-pool/in-mem"
 	canreceiveproblems "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/can-receive-problems"

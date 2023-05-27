@@ -36,8 +36,8 @@ func (s *Service) Subscribe(ctx context.Context, userID types.UserID) (<-chan ev
 	in := make(chan eventstream.Event, 1024)
 
 	s.wg.Add(1)
-	go func(wg *sync.WaitGroup) {
-		defer wg.Done()
+	go func() {
+		defer s.wg.Done()
 		for {
 			select {
 			case ev := <-in:
@@ -48,7 +48,7 @@ func (s *Service) Subscribe(ctx context.Context, userID types.UserID) (<-chan ev
 				return
 			}
 		}
-	}(&s.wg)
+	}()
 
 	s.subs[userID] = append(s.subs[userID], in)
 
@@ -57,7 +57,7 @@ func (s *Service) Subscribe(ctx context.Context, userID types.UserID) (<-chan ev
 	return out, nil
 }
 
-func (s *Service) Publish(_ context.Context, userID types.UserID, event eventstream.Event) error {
+func (s *Service) Publish(ctx context.Context, userID types.UserID, event eventstream.Event) error {
 	if s.closed {
 		return nil
 	}
@@ -75,7 +75,10 @@ func (s *Service) Publish(_ context.Context, userID types.UserID, event eventstr
 	}
 
 	for _, ch := range channels {
-		ch <- event
+		select {
+		case ch <- event:
+		case <-ctx.Done():
+		}
 	}
 
 	return nil

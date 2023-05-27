@@ -129,11 +129,14 @@ func (h *HTTPHandler) readLoop(_ context.Context, ws Websocket) error {
 }
 
 // writeLoop listen events and writes them into Websocket.
-func (h *HTTPHandler) writeLoop(_ context.Context, ws Websocket, events <-chan eventstream.Event) error {
+func (h *HTTPHandler) writeLoop(ctx context.Context, ws Websocket, events <-chan eventstream.Event) error {
 	t := time.NewTicker(h.pingPeriod)
+	defer t.Stop()
 
 	for {
 		select {
+		case <-ctx.Done():
+			return nil
 		case event, ok := <-events:
 			if !ok {
 				if err := ws.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
@@ -179,7 +182,10 @@ func (h *HTTPHandler) writeEvent(ws Websocket, event eventstream.Event) error {
 		return fmt.Errorf("write event: %v", err)
 	}
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("flush writer: %v", err)
+	}
+
 	return nil
 }
 
