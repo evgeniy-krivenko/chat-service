@@ -49,7 +49,7 @@ paths:
 
   /getChatHistory:
     post:
-      description: Get manager chat hisroty
+      description: Get manager chat history
       parameters:
         - $ref: "#/components/parameters/XRequestIDHeader"
       requestBody:

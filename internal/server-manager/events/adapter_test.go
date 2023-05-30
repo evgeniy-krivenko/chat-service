@@ -53,6 +53,7 @@ func TestAdapter_Adapt(t *testing.T) {
 				"body": "I need help!",
 				"createdAt": "1970-01-01T00:00:01.000000001Z",
 				"eventId": "d0ffbd36-bc30-11ed-8286-461e464ebed8",
+				"chatId": "31b4dc06-bc31-11ed-93cc-461e464ebed8",
 				"eventType": "NewMessageEvent",
 				"messageId": "cb36a888-bc30-11ed-b843-461e464ebed8",
 				"requestId": "cee5f290-bc30-11ed-b7fe-461e464ebed8",

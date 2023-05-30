@@ -36,6 +36,7 @@ func (Adapter) Adapt(ev eventstream.Event) (any, error) {
 		err = event.FromNewMessageEvent(NewMessageEvent{
 			AuthorId:  e.AuthorID,
 			CreatedAt: e.CreatedAt,
+			ChatId:    e.ChatID,
 			Body:      e.MessageBody,
 			MessageId: e.MessageID,
 		})

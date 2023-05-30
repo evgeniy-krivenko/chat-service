@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	apimanagerv1 "github.com/evgeniy-krivenko/chat-service/tests/e2e/api/manager/v1"
+	managerworkspace "github.com/evgeniy-krivenko/chat-service/tests/e2e/manager-workspace"
 	"net/http"
 	"os"
 	"strconv"
@@ -41,7 +43,13 @@ var (
 	wsClientOrigin      string
 	wsClientSecProtocol string
 
-	clientsPool *usersPool
+	apiManagerV1Endpoint string
+	wsManagerEndpoint    string
+	wsManagerOrigin      string
+	wsManagerSecProtocol string
+
+	clientsPool  *usersPool
+	managersPool *usersPool
 )
 
 var _ = BeforeSuite(func() {
@@ -53,12 +61,18 @@ var _ = BeforeSuite(func() {
 	wsClientSecProtocol = expectEnv("E2E_CLIENT_WS_SEC_PROTOCOL")
 	wsClientOrigin = expectEnv("E2E_CLIENT_WS_ORIGIN")
 
+	apiManagerV1Endpoint = expectEnv("E2E_MANAGER_V1_API_ENDPOINT")
+	wsManagerEndpoint = expectEnv("E2E_MANAGER_WS_ENDPOINT")
+	wsManagerSecProtocol = expectEnv("E2E_MANAGER_WS_SEC_PROTOCOL")
+	wsManagerOrigin = expectEnv("E2E_MANAGER_WS_ORIGIN")
+
 	kcBasePath := expectEnv("E2E_KEYCLOAK_BASE_PATH")
 	kcRealm := expectEnv("E2E_KEYCLOAK_REALM")
 	kcClientID := expectEnv("E2E_KEYCLOAK_CLIENT_ID")
 	kcClientSecret := expectEnv("E2E_KEYCLOAK_CLIENT_SECRET")
 	kcClientDebug, _ := strconv.ParseBool(expectEnv("E2E_KEYCLOAK_CLIENT_DEBUG"))
-	kcClients := expectEnv("E2E_KEYCLOAK_CLIENTS") // "client1,client2,client3"
+	kcClients := expectEnv("E2E_KEYCLOAK_CLIENTS")   // "client1,client2,client3"
+	kcManagers := expectEnv("E2E_KEYCLOAK_MANAGERS") // "manager1,manager2,manager3"
 
 	var err error
 	kc, err = keycloakclient.New(keycloakclient.NewOptions(
@@ -72,8 +86,13 @@ var _ = BeforeSuite(func() {
 
 	clients, err := parseUsers(kcClients)
 	Expect(err).ShouldNot(HaveOccurred())
-	GinkgoWriter.Printf("clients: %v", clients)
+	GinkgoWriter.Println("clients:", clients)
 	clientsPool = newUsersPool(clients)
+
+	managers, err := parseUsers(kcManagers)
+	Expect(err).ShouldNot(HaveOccurred())
+	GinkgoWriter.Println("managers:", managers)
+	managersPool = newUsersPool(managers)
 })
 
 func expectEnv(k string) string {
@@ -138,6 +157,40 @@ func newClientAPI(ctx context.Context, client user) (*apiclientv1.ClientWithResp
 	return apiClientV1, token.AccessToken
 }
 
+func newManagerWs(ctx context.Context, manager user) *managerworkspace.Workspace {
+	apiManagerV1, token := newManagerAPI(ctx, manager)
+
+	var cl simpleClaims
+	t, _, err := new(jwt.Parser).ParseUnverified(token, &cl)
+	Expect(err).ShouldNot(HaveOccurred())
+
+	managerID, err := types.Parse[types.UserID](t.Claims.(*simpleClaims).Subject)
+	Expect(err).ShouldNot(HaveOccurred())
+	GinkgoWriter.Printf("manager %v has token sub %v\n", manager.Name, managerID)
+
+	managerWs, err := managerworkspace.New(managerworkspace.NewOptions(managerID, token, apiManagerV1))
+	Expect(err).ShouldNot(HaveOccurred())
+
+	return managerWs
+}
+
+func newManagerAPI(ctx context.Context, manager user) (*apimanagerv1.ClientWithResponses, string) {
+	token, err := kc.Auth(ctx, manager.Name, manager.Password)
+	Expect(err).ShouldNot(HaveOccurred())
+
+	authorizator := func(ctx context.Context, req *http.Request) error {
+		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+		return nil
+	}
+	apiManagerV1, err := apimanagerv1.NewClientWithResponses(
+		apiManagerV1Endpoint,
+		apimanagerv1.WithRequestEditorFn(authorizator),
+	)
+	Expect(err).ShouldNot(HaveOccurred())
+
+	return apiManagerV1, token.AccessToken
+}
+
 type user struct {
 	Name     string
 	Password string
@@ -185,5 +238,12 @@ func waitForEvent(stream *wsstream.Stream) {
 	case <-stream.EventSignals():
 	case <-time.After(3 * time.Second):
 		Fail("no expected event in the stream")
+	}
+}
+
+func waitForOptionalEvent(stream *wsstream.Stream) {
+	select {
+	case <-stream.EventSignals():
+	case <-time.After(3 * time.Second):
 	}
 }
