@@ -47,7 +47,7 @@ func (Problem) Edges() []ent.Edge {
 // Indexes of the Problem.
 func (Problem) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("chat_id", "resolved_at").
+		index.Fields("manager_id", "resolved_at").
 			Unique(),
 	}
 }

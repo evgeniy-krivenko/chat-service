@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
+	storechat "github.com/evgeniy-krivenko/chat-service/internal/store/chat"
 	storeproblem "github.com/evgeniy-krivenko/chat-service/internal/store/problem"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
@@ -40,4 +41,27 @@ func (r *Repo) GetManagerOpenProblemsCount(ctx context.Context, managerID types.
 			storeproblem.ResolvedAtIsNil(),
 		).
 		Count(ctx)
+}
+
+func (r *Repo) GetOpenProblemForChat(
+	ctx context.Context,
+	chatID types.ChatID,
+	managerID types.UserID,
+) (*Problem, error) {
+	problem, err := r.db.Problem(ctx).Query().
+		Where(
+			storeproblem.HasChatWith(storechat.ID(chatID)),
+			storeproblem.ResolvedAtIsNil(),
+			storeproblem.ManagerID(managerID),
+		).
+		First(ctx)
+	if store.IsNotFound(err) {
+		return nil, fmt.Errorf("get problem by chat id %v: %w", chatID, ErrProblemNotFound)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get problem by chat id %v: %v", chatID, err)
+	}
+
+	ap := adaptProblem(problem)
+	return &ap, nil
 }

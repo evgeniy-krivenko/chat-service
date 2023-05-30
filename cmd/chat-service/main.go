@@ -310,6 +310,9 @@ func run() (errReturned error) {
 		managerLoadService,
 		mngrPool,
 		eventStream,
+		chatsRepo,
+		msgRepo,
+		problemsRepo,
 
 		cfg.Global.IsProduction(),
 	)

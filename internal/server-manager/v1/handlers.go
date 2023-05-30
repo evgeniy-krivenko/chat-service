@@ -6,6 +6,8 @@ import (
 
 	canreceiveproblems "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/can-receive-problems"
 	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
+	getchathistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chat-history"
+	getchats "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chats"
 )
 
 var _ ServerInterface = (*Handlers)(nil)
@@ -20,10 +22,20 @@ type freeHandsUseCase interface {
 	Handle(ctx context.Context, req freehands.Request) error
 }
 
+type getChatsUseCase interface {
+	Handle(ctx context.Context, req getchats.Request) (getchats.Response, error)
+}
+
+type getChatHistoryUseCase interface {
+	Handle(ctx context.Context, req getchathistory.Request) (getchathistory.Response, error)
+}
+
 //go:generate options-gen -out-filename=handler_options.gen.go -from-struct=Options
 type Options struct {
 	canReceiveProblemUseCase canReceiveProblemsUseCase `option:"mandatory" validate:"required"`
 	freeHandsUseCase         freeHandsUseCase          `option:"mandatory" validate:"required"`
+	getChatsUseCase          getChatsUseCase           `option:"mandatory" validate:"required"`
+	getChatHistoryUseCase    getChatHistoryUseCase     `option:"mandatory" validate:"required"`
 }
 
 type Handlers struct {

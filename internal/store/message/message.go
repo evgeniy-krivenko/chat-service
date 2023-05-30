@@ -31,10 +31,10 @@ const (
 	FieldIsBlocked = "is_blocked"
 	// FieldIsService holds the string denoting the is_service field in the database.
 	FieldIsService = "is_service"
-	// FieldCreatedAt holds the string denoting the created_at field in the database.
-	FieldCreatedAt = "created_at"
 	// FieldInitialRequestID holds the string denoting the initial_request_id field in the database.
 	FieldInitialRequestID = "initial_request_id"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
 	// EdgeChat holds the string denoting the chat edge name in mutations.
 	EdgeChat = "chat"
 	// EdgeProblem holds the string denoting the problem edge name in mutations.
@@ -69,8 +69,8 @@ var Columns = []string{
 	FieldCheckedAt,
 	FieldIsBlocked,
 	FieldIsService,
-	FieldCreatedAt,
 	FieldInitialRequestID,
+	FieldCreatedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

@@ -9,15 +9,15 @@ servers:
 
 components:
   schemas:
-#    MessageId:
-#      required: [ messageId ]
-#      properties:
-#        messageId:
-#          type: string
-#          format: uuid
-#          x-go-type: types.MessageID
-#          x-go-type-import:
-#            path: "github.com/evgeniy-krivenko/chat-service/internal/types"
+    MessageId:
+      required: [ messageId ]
+      properties:
+        messageId:
+          type: string
+          format: uuid
+          x-go-type: types.MessageID
+          x-go-type-import:
+            path: "github.com/evgeniy-krivenko/chat-service/internal/types"
 
     Event:
       required: [ eventType, eventId, requestId ]
@@ -38,10 +38,12 @@ components:
             path: "github.com/evgeniy-krivenko/chat-service/internal/types"
       oneOf:
         - $ref: "#/components/schemas/NewChatEvent"
+        - $ref: "#/components/schemas/NewMessageEvent"
       discriminator:
         propertyName: eventType
         mapping:
           NewChatEvent: "#/components/schemas/NewChatEvent"
+          NewMessageEvent: "#/components/schemas/NewMessageEvent"
 
     NewChatEvent:
       required: [ chatId, clientId, canTakeMoreProblems ]
@@ -61,7 +63,26 @@ components:
         canTakeMoreProblems:
           type: boolean
 
+    NewMessageEvent:
+      allOf:
+        - $ref: "#/components/schemas/MessageId"
+        - type: object
+          required: [ createdAt, body, authorId ]
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            body:
+              type: string
+            authorId:
+              type: string
+              format: uuid
+              x-go-type: types.UserID
+              x-go-type-import:
+                path: "github.com/evgeniy-krivenko/chat-service/internal/types"
+
     EventType:
       type: string
       enum:
         - NewChatEvent
+        - NewMessageEvent

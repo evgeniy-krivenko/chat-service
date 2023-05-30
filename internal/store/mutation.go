@@ -1784,8 +1784,8 @@ type MessageMutation struct {
 	checked_at             *time.Time
 	is_blocked             *bool
 	is_service             *bool
-	created_at             *time.Time
 	initial_request_id     *types.RequestID
+	created_at             *time.Time
 	clearedFields          map[string]struct{}
 	chat                   *types.ChatID
 	clearedchat            bool
@@ -2315,42 +2315,6 @@ func (m *MessageMutation) ResetIsService() {
 	delete(m.clearedFields, message.FieldIsService)
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (m *MessageMutation) SetCreatedAt(t time.Time) {
-	m.created_at = &t
-}
-
-// CreatedAt returns the value of the "created_at" field in the mutation.
-func (m *MessageMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.created_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCreatedAt returns the old "created_at" field's value of the Message entity.
-// If the Message object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MessageMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
-	}
-	return oldValue.CreatedAt, nil
-}
-
-// ResetCreatedAt resets all changes to the "created_at" field.
-func (m *MessageMutation) ResetCreatedAt() {
-	m.created_at = nil
-}
-
 // SetInitialRequestID sets the "initial_request_id" field.
 func (m *MessageMutation) SetInitialRequestID(ti types.RequestID) {
 	m.initial_request_id = &ti
@@ -2398,6 +2362,42 @@ func (m *MessageMutation) InitialRequestIDCleared() bool {
 func (m *MessageMutation) ResetInitialRequestID() {
 	m.initial_request_id = nil
 	delete(m.clearedFields, message.FieldInitialRequestID)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *MessageMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *MessageMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Message entity.
+// If the Message object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *MessageMutation) ResetCreatedAt() {
+	m.created_at = nil
 }
 
 // ClearChat clears the "chat" edge to the Chat entity.
@@ -2514,11 +2514,11 @@ func (m *MessageMutation) Fields() []string {
 	if m.is_service != nil {
 		fields = append(fields, message.FieldIsService)
 	}
-	if m.created_at != nil {
-		fields = append(fields, message.FieldCreatedAt)
-	}
 	if m.initial_request_id != nil {
 		fields = append(fields, message.FieldInitialRequestID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, message.FieldCreatedAt)
 	}
 	return fields
 }
@@ -2546,10 +2546,10 @@ func (m *MessageMutation) Field(name string) (ent.Value, bool) {
 		return m.IsBlocked()
 	case message.FieldIsService:
 		return m.IsService()
-	case message.FieldCreatedAt:
-		return m.CreatedAt()
 	case message.FieldInitialRequestID:
 		return m.InitialRequestID()
+	case message.FieldCreatedAt:
+		return m.CreatedAt()
 	}
 	return nil, false
 }
@@ -2577,10 +2577,10 @@ func (m *MessageMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldIsBlocked(ctx)
 	case message.FieldIsService:
 		return m.OldIsService(ctx)
-	case message.FieldCreatedAt:
-		return m.OldCreatedAt(ctx)
 	case message.FieldInitialRequestID:
 		return m.OldInitialRequestID(ctx)
+	case message.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown Message field %s", name)
 }
@@ -2653,19 +2653,19 @@ func (m *MessageMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetIsService(v)
 		return nil
-	case message.FieldCreatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCreatedAt(v)
-		return nil
 	case message.FieldInitialRequestID:
 		v, ok := value.(types.RequestID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetInitialRequestID(v)
+		return nil
+	case message.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Message field %s", name)
@@ -2794,11 +2794,11 @@ func (m *MessageMutation) ResetField(name string) error {
 	case message.FieldIsService:
 		m.ResetIsService()
 		return nil
-	case message.FieldCreatedAt:
-		m.ResetCreatedAt()
-		return nil
 	case message.FieldInitialRequestID:
 		m.ResetInitialRequestID()
+		return nil
+	case message.FieldCreatedAt:
+		m.ResetCreatedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Message field %s", name)

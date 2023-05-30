@@ -9,6 +9,7 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	storechat "github.com/evgeniy-krivenko/chat-service/internal/store/chat"
 	storemessage "github.com/evgeniy-krivenko/chat-service/internal/store/message"
+	storeproblem "github.com/evgeniy-krivenko/chat-service/internal/store/problem"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 	"github.com/evgeniy-krivenko/chat-service/pkg/utils"
 )
@@ -34,6 +35,25 @@ func (r *Repo) GetClientChatMessages(
 		Unique(false).
 		Where(storemessage.IsVisibleForClient(true)).
 		Where(storemessage.HasChatWith(storechat.ClientID(clientID))).
+		Order(store.Desc(storemessage.FieldCreatedAt))
+
+	return r.getChatMessages(ctx, query, pageSize, cursor)
+}
+
+// GetProblemMessages returns Nth page of messages in the chat for manager side (specific problem).
+func (r *Repo) GetProblemMessages(
+	ctx context.Context,
+	problemID types.ProblemID,
+	pageSize int,
+	cursor *Cursor,
+) ([]Message, *Cursor, error) {
+	query := r.db.Message(ctx).Query().
+		Unique(false).
+		Where(storemessage.IsVisibleForManager(true)).
+		Where(storemessage.HasProblemWith(
+			storeproblem.ID(problemID),
+			storeproblem.ResolvedAtIsNil(),
+		)).
 		Order(store.Desc(storemessage.FieldCreatedAt))
 
 	return r.getChatMessages(ctx, query, pageSize, cursor)

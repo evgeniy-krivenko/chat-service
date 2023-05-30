@@ -8,6 +8,9 @@ import (
 	"go.uber.org/zap"
 
 	keycloakclient "github.com/evgeniy-krivenko/chat-service/internal/clients/keycloak"
+	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
+	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
+	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
 	"github.com/evgeniy-krivenko/chat-service/internal/server"
 	managerevents "github.com/evgeniy-krivenko/chat-service/internal/server-manager/events"
 	managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1"
@@ -17,6 +20,8 @@ import (
 	inmemmanagerpool "github.com/evgeniy-krivenko/chat-service/internal/services/manager-pool/in-mem"
 	canreceiveproblems "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/can-receive-problems"
 	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
+	getchathistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chat-history"
+	getchats "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chats"
 	websocketstream "github.com/evgeniy-krivenko/chat-service/internal/websocket-stream"
 )
 
@@ -36,6 +41,9 @@ func initServerManager(
 	mLoadSrv *managerload.Service,
 	mPool *inmemmanagerpool.Service,
 	stream eventstream.EventStream,
+	chatsRepo *chatsrepo.Repo,
+	msgRepo *messagesrepo.Repo,
+	problemsRepo *problemsrepo.Repo,
 
 	isProduction bool,
 ) (*server.Server, error) {
@@ -51,7 +59,22 @@ func initServerManager(
 		return nil, fmt.Errorf("create free hands use case: %v", err)
 	}
 
-	v1Handlers, err := managerv1.NewHandlers(managerv1.NewOptions(canReceiveProblemUseCase, freeHandsUseCase))
+	getChatsUseCase, err := getchats.New(getchats.NewOptions(chatsRepo))
+	if err != nil {
+		return nil, fmt.Errorf("create get chats use case: %v", err)
+	}
+
+	getChatHistoryUseCase, err := getchathistory.New(getchathistory.NewOptions(msgRepo, problemsRepo))
+	if err != nil {
+		return nil, fmt.Errorf("create get chat history use case: %v", err)
+	}
+
+	v1Handlers, err := managerv1.NewHandlers(managerv1.NewOptions(
+		canReceiveProblemUseCase,
+		freeHandsUseCase,
+		getChatsUseCase,
+		getChatHistoryUseCase,
+	))
 	if err != nil {
 		return nil, fmt.Errorf("create v1 manager handlers: %v", err)
 	}

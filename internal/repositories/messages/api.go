@@ -51,7 +51,11 @@ func (r *Repo) CreateClientVisible(
 }
 
 func (r *Repo) GetMessageByID(ctx context.Context, msgID types.MessageID) (*Message, error) {
-	msg, err := r.db.Message(ctx).Get(ctx, msgID)
+	msg, err := r.db.Message(ctx).
+		Query().
+		Where(storemessage.ID(msgID)).
+		WithProblem().
+		Only(ctx)
 	if store.IsNotFound(err) {
 		return nil, ErrMsgNotFound
 	}

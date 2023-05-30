@@ -136,20 +136,6 @@ func (mc *MessageCreate) SetNillableIsService(b *bool) *MessageCreate {
 	return mc
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (mc *MessageCreate) SetCreatedAt(t time.Time) *MessageCreate {
-	mc.mutation.SetCreatedAt(t)
-	return mc
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (mc *MessageCreate) SetNillableCreatedAt(t *time.Time) *MessageCreate {
-	if t != nil {
-		mc.SetCreatedAt(*t)
-	}
-	return mc
-}
-
 // SetInitialRequestID sets the "initial_request_id" field.
 func (mc *MessageCreate) SetInitialRequestID(ti types.RequestID) *MessageCreate {
 	mc.mutation.SetInitialRequestID(ti)
@@ -160,6 +146,20 @@ func (mc *MessageCreate) SetInitialRequestID(ti types.RequestID) *MessageCreate 
 func (mc *MessageCreate) SetNillableInitialRequestID(ti *types.RequestID) *MessageCreate {
 	if ti != nil {
 		mc.SetInitialRequestID(*ti)
+	}
+	return mc
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (mc *MessageCreate) SetCreatedAt(t time.Time) *MessageCreate {
+	mc.mutation.SetCreatedAt(t)
+	return mc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (mc *MessageCreate) SetNillableCreatedAt(t *time.Time) *MessageCreate {
+	if t != nil {
+		mc.SetCreatedAt(*t)
 	}
 	return mc
 }
@@ -261,13 +261,13 @@ func (mc *MessageCreate) check() error {
 			return &ValidationError{Name: "body", err: fmt.Errorf(`store: validator failed for field "Message.body": %w`, err)}
 		}
 	}
-	if _, ok := mc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`store: missing required field "Message.created_at"`)}
-	}
 	if v, ok := mc.mutation.InitialRequestID(); ok {
 		if err := v.Validate(); err != nil {
 			return &ValidationError{Name: "initial_request_id", err: fmt.Errorf(`store: validator failed for field "Message.initial_request_id": %w`, err)}
 		}
+	}
+	if _, ok := mc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`store: missing required field "Message.created_at"`)}
 	}
 	if v, ok := mc.mutation.ID(); ok {
 		if err := v.Validate(); err != nil {
@@ -341,13 +341,13 @@ func (mc *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 		_spec.SetField(message.FieldIsService, field.TypeBool, value)
 		_node.IsService = value
 	}
-	if value, ok := mc.mutation.CreatedAt(); ok {
-		_spec.SetField(message.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
 	if value, ok := mc.mutation.InitialRequestID(); ok {
 		_spec.SetField(message.FieldInitialRequestID, field.TypeUUID, value)
 		_node.InitialRequestID = value
+	}
+	if value, ok := mc.mutation.CreatedAt(); ok {
+		_spec.SetField(message.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
 	}
 	if nodes := mc.mutation.ChatIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

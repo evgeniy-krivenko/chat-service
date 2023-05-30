@@ -13,8 +13,8 @@ type Chat struct {
 	CreatedAt time.Time
 }
 
-func adaptChat(c *store.Chat) *Chat {
-	return &Chat{
+func adaptChat(c *store.Chat) Chat {
+	return Chat{
 		ID:        c.ID,
 		ClientID:  c.ClientID,
 		CreatedAt: c.CreatedAt,

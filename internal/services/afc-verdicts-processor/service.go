@@ -118,9 +118,20 @@ func (s *Service) Run(ctx context.Context) error {
 
 func (s *Service) consume(ctx context.Context) error {
 	reader := s.readerFactory(s.brokers, s.consumerGroup, s.verdictsTopic)
-	defer reader.Close()
-
 	msgs := make([]kafka.Message, 0, s.processBatchSize)
+
+	defer func() {
+		// commit if msgs not empty when context cancel
+		if len(msgs) > 0 {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+			if err := reader.CommitMessages(ctx, msgs...); err != nil {
+				s.lg.Error("commit messages with ctx cancel")
+			}
+			cancel()
+		}
+
+		reader.Close()
+	}()
 
 	for {
 		msg, err := reader.FetchMessage(ctx)
@@ -213,6 +224,7 @@ func (s *Service) blockMessage(ctx context.Context, v Verdict) error {
 			return fmt.Errorf("put job %v to outbox: %v", clientmessageblockedjob.Name, err)
 		}
 
+		s.lg.Info("block suspicious message", zap.Stringer("message_id", v.MessageID))
 		return nil
 	})
 }
@@ -234,6 +246,7 @@ func (s *Service) markAsVisibleForManager(ctx context.Context, v Verdict) error 
 			return fmt.Errorf("put job %v to outbox: %v", clientmessagesentjob.Name, err)
 		}
 
+		s.lg.Info("mark as visible for manager", zap.Stringer("message_id", v.MessageID))
 		return nil
 	})
 }
