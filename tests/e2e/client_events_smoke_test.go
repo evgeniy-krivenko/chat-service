@@ -4,12 +4,12 @@ package e2e_test
 
 import (
 	"context"
-	managerworkspace "github.com/evgeniy-krivenko/chat-service/tests/e2e/manager-workspace"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	clientchat "github.com/evgeniy-krivenko/chat-service/tests/e2e/client-chat"
+	managerworkspace "github.com/evgeniy-krivenko/chat-service/tests/e2e/manager-workspace"
 	wsstream "github.com/evgeniy-krivenko/chat-service/tests/e2e/ws-stream"
 )
 

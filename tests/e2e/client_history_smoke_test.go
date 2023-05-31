@@ -4,14 +4,14 @@ package e2e_test
 
 import (
 	"context"
-	managerworkspace "github.com/evgeniy-krivenko/chat-service/tests/e2e/manager-workspace"
-	wsstream "github.com/evgeniy-krivenko/chat-service/tests/e2e/ws-stream"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 	clientchat "github.com/evgeniy-krivenko/chat-service/tests/e2e/client-chat"
+	managerworkspace "github.com/evgeniy-krivenko/chat-service/tests/e2e/manager-workspace"
+	wsstream "github.com/evgeniy-krivenko/chat-service/tests/e2e/ws-stream"
 )
 
 var _ = Describe("Client History Smoke", Ordered, func() {

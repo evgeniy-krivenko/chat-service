@@ -6,8 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	apimanagerv1 "github.com/evgeniy-krivenko/chat-service/tests/e2e/api/manager/v1"
-	managerworkspace "github.com/evgeniy-krivenko/chat-service/tests/e2e/manager-workspace"
 	"net/http"
 	"os"
 	"strconv"
@@ -23,7 +21,9 @@ import (
 	keycloakclient "github.com/evgeniy-krivenko/chat-service/internal/clients/keycloak"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 	apiclientv1 "github.com/evgeniy-krivenko/chat-service/tests/e2e/api/client/v1"
+	apimanagerv1 "github.com/evgeniy-krivenko/chat-service/tests/e2e/api/manager/v1"
 	clientchat "github.com/evgeniy-krivenko/chat-service/tests/e2e/client-chat"
+	managerworkspace "github.com/evgeniy-krivenko/chat-service/tests/e2e/manager-workspace"
 	wsstream "github.com/evgeniy-krivenko/chat-service/tests/e2e/ws-stream"
 )
 

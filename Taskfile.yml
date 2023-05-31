@@ -140,12 +140,12 @@ tasks:
       - .{{.DEV_TOOLS_PATH}}/oapi-codegen --old-config-style -generate types,client -package {{.E2E_MANAGER_V1_PKG}} {{.MANAGER_V1_SRC}} > {{.E2E_MANAGER_V1_DST}}
       - echo "[E2E] Generate manager events..."
       - .{{.DEV_TOOLS_PATH}}/oapi-codegen --old-config-style -generate skip-prune,types -package {{.E2E_MANAGER_EVENTS_PKG}} {{.MANAGER_EVENTS_SRC}} > {{.E2E_MANAGER_EVENTS_DST}}
-#    sources:
-#      - "{{.CLIENT_V1_SRC}}"
-#      - "{{.CLIENT_EVENTS_SRC}}"
-#    generates:
-#      - "{{.E2E_CLIENT_V1_DST}}"
-#      - "{{.E2E_CLIENT_EVENTS_DST}}"
+    sources:
+      - "{{.CLIENT_V1_SRC}}"
+      - "{{.CLIENT_EVENTS_SRC}}"
+    generates:
+      - "{{.E2E_CLIENT_V1_DST}}"
+      - "{{.E2E_CLIENT_EVENTS_DST}}"
 
   gen:types:
     cmds:

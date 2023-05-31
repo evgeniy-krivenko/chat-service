@@ -6,10 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
+
 	"github.com/onsi/ginkgo/v2"
 	"go.uber.org/atomic"
 	"golang.org/x/sync/errgroup"
-	"sync"
 
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 	"github.com/evgeniy-krivenko/chat-service/pkg/pointer"
