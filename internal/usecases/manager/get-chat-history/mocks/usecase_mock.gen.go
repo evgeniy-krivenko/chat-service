@@ -77,7 +77,7 @@ func (m *MockproblemsRepository) EXPECT() *MockproblemsRepositoryMockRecorder {
 }
 
 // GetOpenProblemForChat mocks base method.
-func (m *MockproblemsRepository) GetOpenProblemForChat(ctx context.Context, chatID types.ChatID, managerID types.UserID) (*problemsrepo.Problem, error) {
+func (m *MockproblemsRepository) GetAssignedProblem(ctx context.Context, managerID types.UserID, chatID types.ChatID, ) (*problemsrepo.Problem, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOpenProblemForChat", ctx, chatID, managerID)
 	ret0, _ := ret[0].(*problemsrepo.Problem)
@@ -88,5 +88,5 @@ func (m *MockproblemsRepository) GetOpenProblemForChat(ctx context.Context, chat
 // GetOpenProblemForChat indicates an expected call of GetOpenProblemForChat.
 func (mr *MockproblemsRepositoryMockRecorder) GetOpenProblemForChat(ctx, chatID, managerID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOpenProblemForChat", reflect.TypeOf((*MockproblemsRepository)(nil).GetOpenProblemForChat), ctx, chatID, managerID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOpenProblemForChat", reflect.TypeOf((*MockproblemsRepository)(nil).GetAssignedProblem), ctx, chatID, managerID)
 }

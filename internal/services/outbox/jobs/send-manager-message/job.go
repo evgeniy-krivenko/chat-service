@@ -3,13 +3,14 @@ package sendmanagermessagejob
 import (
 	"context"
 	"fmt"
-	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
-	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
-	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/payload/simpleid"
+
 	"go.uber.org/zap"
 
+	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/payload/simpleid"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 

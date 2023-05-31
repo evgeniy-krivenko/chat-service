@@ -151,7 +151,7 @@ func (s *ProblemsRepoSuite) TestGetOpenProblemByChatID() {
 			Save(s.Ctx)
 		s.Require().NoError(err)
 
-		problem, err := s.repo.GetOpenProblemForChat(s.Ctx, chat.ID, managerID)
+		problem, err := s.repo.GetAssignedProblem(s.Ctx, managerID, chat.ID)
 		s.Require().ErrorIs(err, problemsrepo.ErrProblemNotFound)
 		s.Empty(problem)
 	})
@@ -170,7 +170,7 @@ func (s *ProblemsRepoSuite) TestGetOpenProblemByChatID() {
 			Save(s.Ctx)
 		s.Require().NoError(err)
 
-		problem, err := s.repo.GetOpenProblemForChat(s.Ctx, chat.ID, managerID)
+		problem, err := s.repo.GetAssignedProblem(s.Ctx, managerID, chat.ID)
 		s.Require().ErrorIs(err, problemsrepo.ErrProblemNotFound)
 		s.Empty(problem)
 	})
@@ -186,7 +186,7 @@ func (s *ProblemsRepoSuite) TestGetOpenProblemByChatID() {
 			Save(s.Ctx)
 		s.Require().NoError(err)
 
-		problem, err := s.repo.GetOpenProblemForChat(s.Ctx, chat.ID, types.NewUserID())
+		problem, err := s.repo.GetAssignedProblem(s.Ctx, types.NewUserID(), chat.ID)
 		s.Require().ErrorIs(err, problemsrepo.ErrProblemNotFound)
 		s.Empty(problem)
 	})
@@ -202,7 +202,7 @@ func (s *ProblemsRepoSuite) TestGetOpenProblemByChatID() {
 			Save(s.Ctx)
 		s.Require().NoError(err)
 
-		problem, err := s.repo.GetOpenProblemForChat(s.Ctx, chat.ID, managerID)
+		problem, err := s.repo.GetAssignedProblem(s.Ctx, managerID, chat.ID)
 		s.Require().NoError(err)
 		s.NotEmpty(problem)
 		s.Equal(problem.ChatID, chat.ID)

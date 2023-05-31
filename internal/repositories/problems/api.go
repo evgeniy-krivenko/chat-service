@@ -43,11 +43,7 @@ func (r *Repo) GetManagerOpenProblemsCount(ctx context.Context, managerID types.
 		Count(ctx)
 }
 
-func (r *Repo) GetOpenProblemForChat(
-	ctx context.Context,
-	chatID types.ChatID,
-	managerID types.UserID,
-) (*Problem, error) {
+func (r *Repo) GetAssignedProblem(ctx context.Context, managerID types.UserID, chatID types.ChatID) (*Problem, error) {
 	problem, err := r.db.Problem(ctx).Query().
 		Where(
 			storeproblem.HasChatWith(storechat.ID(chatID)),

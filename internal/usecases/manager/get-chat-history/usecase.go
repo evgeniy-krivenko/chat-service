@@ -29,11 +29,7 @@ type messagesRepository interface {
 }
 
 type problemsRepository interface {
-	GetOpenProblemForChat(
-		ctx context.Context,
-		chatID types.ChatID,
-		managerID types.UserID,
-	) (*problemsrepo.Problem, error)
+	GetAssignedProblem(ctx context.Context, managerID types.UserID, chatID types.ChatID) (*problemsrepo.Problem, error)
 }
 
 //go:generate options-gen -out-filename=usecase_options.gen.go -from-struct=Options
@@ -67,7 +63,7 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 		}
 	}
 
-	problem, err := u.problemsRepo.GetOpenProblemForChat(ctx, req.ChatID, req.ManagerID)
+	problem, err := u.problemsRepo.GetAssignedProblem(ctx, req.ManagerID, req.ChatID)
 	if err != nil {
 		return Response{}, fmt.Errorf(
 			"get problem for manager %v and chat %v: %v",

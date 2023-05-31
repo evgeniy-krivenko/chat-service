@@ -3,6 +3,12 @@ package sendmanagermessagejob_test
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
+
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
@@ -10,10 +16,6 @@ import (
 	sendmanagermessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-manager-message"
 	sendmanagermessagejobmocks "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-manager-message/mocks"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestJob_Handle(t *testing.T) {
