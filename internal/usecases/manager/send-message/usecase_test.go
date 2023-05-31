@@ -79,7 +79,7 @@ func (s *UseCaseSuite) TestGetProblemNotFoundError() {
 		MessageBody: msgBody,
 	}
 
-	s.problemRepo.EXPECT().GetAssignedProblemID(gomock.Any(), req.ManagerID, req.ChatID).
+	s.problemRepo.EXPECT().GetAssignedProblem(gomock.Any(), req.ManagerID, req.ChatID).
 		Return(nil, problemsrepo.ErrProblemNotFound)
 
 	// Action.
@@ -100,7 +100,7 @@ func (s *UseCaseSuite) TestGetProblemUnknownError() {
 		MessageBody: msgBody,
 	}
 
-	s.problemRepo.EXPECT().GetAssignedProblemID(gomock.Any(), req.ManagerID, req.ChatID).
+	s.problemRepo.EXPECT().GetAssignedProblem(gomock.Any(), req.ManagerID, req.ChatID).
 		Return(nil, errors.New("unexpected"))
 
 	// Action.
@@ -122,7 +122,7 @@ func (s *UseCaseSuite) TestCreateMessageError() {
 		MessageBody: msgBody,
 	}
 
-	s.problemRepo.EXPECT().GetAssignedProblemID(gomock.Any(), req.ManagerID, req.ChatID).
+	s.problemRepo.EXPECT().GetAssignedProblem(gomock.Any(), req.ManagerID, req.ChatID).
 		Return(&problemsrepo.Problem{ID: problemID}, nil)
 
 	s.txtor.EXPECT().RunInTx(gomock.Any(), gomock.Any()).DoAndReturn(
@@ -154,7 +154,7 @@ func (s *UseCaseSuite) TestPubJobError() {
 		MessageBody: msgBody,
 	}
 
-	s.problemRepo.EXPECT().GetAssignedProblemID(gomock.Any(), req.ManagerID, req.ChatID).
+	s.problemRepo.EXPECT().GetAssignedProblem(gomock.Any(), req.ManagerID, req.ChatID).
 		Return(&problemsrepo.Problem{ID: problemID}, nil)
 	s.txtor.EXPECT().RunInTx(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, f func(ctx context.Context) error) error {
@@ -190,7 +190,7 @@ func (s *UseCaseSuite) TestTransactionError() {
 		MessageBody: msgBody,
 	}
 
-	s.problemRepo.EXPECT().GetAssignedProblemID(gomock.Any(), req.ManagerID, req.ChatID).
+	s.problemRepo.EXPECT().GetAssignedProblem(gomock.Any(), req.ManagerID, req.ChatID).
 		Return(&problemsrepo.Problem{ID: problemID}, nil)
 	s.txtor.EXPECT().RunInTx(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, f func(ctx context.Context) error) error {
@@ -228,7 +228,7 @@ func (s *UseCaseSuite) TestSuccess() {
 		MessageBody: msgBody,
 	}
 
-	s.problemRepo.EXPECT().GetAssignedProblemID(gomock.Any(), req.ManagerID, req.ChatID).
+	s.problemRepo.EXPECT().GetAssignedProblem(gomock.Any(), req.ManagerID, req.ChatID).
 		Return(&problemsrepo.Problem{ID: problemID}, nil)
 	s.txtor.EXPECT().RunInTx(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, f func(ctx context.Context) error) error {

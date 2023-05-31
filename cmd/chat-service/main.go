@@ -35,6 +35,7 @@ import (
 	clientmessagesentjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-sent"
 	managerassignedtoproblemjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/manager-assigned-to-problem"
 	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
+	sendmanagermessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-manager-message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/migrate"
 )
@@ -252,11 +253,22 @@ func run() (errReturned error) {
 		return fmt.Errorf("create manager assigned to problem job: %v", err)
 	}
 
+	sendManagerMessageJob, err := sendmanagermessagejob.New(sendmanagermessagejob.NewOptions(
+		msgProducer,
+		msgRepo,
+		eventStream,
+		chatsRepo,
+	))
+	if err != nil {
+		return fmt.Errorf("create send manager message job: %v", err)
+	}
+
 	// Register jobs
 	outboxService.MustRegisterJob(sendClientMessageJob)
 	outboxService.MustRegisterJob(clientMessageSentJob)
 	outboxService.MustRegisterJob(clientMessageBlockedJob)
 	outboxService.MustRegisterJob(managerAssignedToProblem)
+	outboxService.MustRegisterJob(sendManagerMessageJob)
 
 	// Clients.
 	keycloakClient, err := keycloakclient.New(keycloakclient.NewOptions(
@@ -313,6 +325,8 @@ func run() (errReturned error) {
 		chatsRepo,
 		msgRepo,
 		problemsRepo,
+		outboxService,
+		database,
 
 		cfg.Global.IsProduction(),
 	)

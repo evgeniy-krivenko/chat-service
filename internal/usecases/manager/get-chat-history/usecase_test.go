@@ -93,7 +93,7 @@ func (s *UseCaseSuite) TestOpenProblemForChat_AnyError() {
 		PageSize:  10,
 	}
 
-	s.problemsRepo.EXPECT().GetOpenProblemForChat(gomock.Any(), req.ChatID, req.ManagerID).
+	s.problemsRepo.EXPECT().GetAssignedProblem(gomock.Any(), req.ManagerID, req.ChatID).
 		Return(nil, errExpected)
 
 	// Action.
@@ -126,7 +126,7 @@ func (s *UseCaseSuite) TestGetProblemMessages_InvalidCursor() {
 		ID: problemID,
 	}
 
-	s.problemsRepo.EXPECT().GetOpenProblemForChat(gomock.Any(), req.ChatID, req.ManagerID).
+	s.problemsRepo.EXPECT().GetAssignedProblem(gomock.Any(), req.ManagerID, req.ChatID).
 		Return(&p, nil)
 	s.msgRepo.EXPECT().GetProblemMessages(s.Ctx, p.ID, 0, messagesrepo.NewCursorMatcher(c)).
 		Return(nil, nil, messagesrepo.ErrInvalidCursor)
@@ -158,7 +158,7 @@ func (s *UseCaseSuite) TestGetProblemMessages_Error() {
 		ID: problemID,
 	}
 
-	s.problemsRepo.EXPECT().GetOpenProblemForChat(gomock.Any(), req.ChatID, req.ManagerID).
+	s.problemsRepo.EXPECT().GetAssignedProblem(gomock.Any(), req.ManagerID, req.ChatID).
 		Return(&p, nil)
 	s.msgRepo.EXPECT().GetProblemMessages(s.Ctx, p.ID, 10, (*messagesrepo.Cursor)(nil)).
 		Return(nil, nil, errExpected)
@@ -194,7 +194,7 @@ func (s *UseCaseSuite) TestGetProblemMessages_Success_SinglePage() {
 		ID: problemID,
 	}
 
-	s.problemsRepo.EXPECT().GetOpenProblemForChat(gomock.Any(), req.ChatID, req.ManagerID).
+	s.problemsRepo.EXPECT().GetAssignedProblem(gomock.Any(), req.ManagerID, req.ChatID).
 		Return(&p, nil)
 	s.msgRepo.EXPECT().GetProblemMessages(s.Ctx, p.ID, pageSize, (*messagesrepo.Cursor)(nil)).
 		Return(expectedMsgs, nil, nil)
@@ -238,7 +238,7 @@ func (s *UseCaseSuite) TestGetProblemMessages_Success_FirstPage() {
 		ID: problemID,
 	}
 
-	s.problemsRepo.EXPECT().GetOpenProblemForChat(gomock.Any(), req.ChatID, req.ManagerID).
+	s.problemsRepo.EXPECT().GetAssignedProblem(gomock.Any(), req.ManagerID, req.ChatID).
 		Return(&p, nil)
 
 	nextCursor := &messagesrepo.Cursor{PageSize: pageSize, LastCreatedAt: lastMsg.CreatedAt}
@@ -280,7 +280,7 @@ func (s *UseCaseSuite) TestGetProblemMessages_Success_LastPage() {
 		ID: problemID,
 	}
 
-	s.problemsRepo.EXPECT().GetOpenProblemForChat(gomock.Any(), req.ChatID, req.ManagerID).
+	s.problemsRepo.EXPECT().GetAssignedProblem(gomock.Any(), req.ManagerID, req.ChatID).
 		Return(&p, nil)
 	s.msgRepo.EXPECT().GetProblemMessages(s.Ctx, p.ID, 0, messagesrepo.NewCursorMatcher(c)).
 		Return(expectedMsgs, nil, nil)

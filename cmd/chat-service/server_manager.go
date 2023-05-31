@@ -18,10 +18,13 @@ import (
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	managerload "github.com/evgeniy-krivenko/chat-service/internal/services/manager-load"
 	inmemmanagerpool "github.com/evgeniy-krivenko/chat-service/internal/services/manager-pool/in-mem"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
+	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	canreceiveproblems "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/can-receive-problems"
 	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
 	getchathistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chat-history"
 	getchats "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chats"
+	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/send-message"
 	websocketstream "github.com/evgeniy-krivenko/chat-service/internal/websocket-stream"
 )
 
@@ -44,6 +47,8 @@ func initServerManager(
 	chatsRepo *chatsrepo.Repo,
 	msgRepo *messagesrepo.Repo,
 	problemsRepo *problemsrepo.Repo,
+	outboxSvc *outbox.Service,
+	db *store.Database,
 
 	isProduction bool,
 ) (*server.Server, error) {
@@ -69,11 +74,14 @@ func initServerManager(
 		return nil, fmt.Errorf("create get chat history use case: %v", err)
 	}
 
+	sendMessageUseCase, err := sendmessage.New(sendmessage.NewOptions(msgRepo, problemsRepo, outboxSvc, db))
+
 	v1Handlers, err := managerv1.NewHandlers(managerv1.NewOptions(
 		canReceiveProblemUseCase,
 		freeHandsUseCase,
 		getChatsUseCase,
 		getChatHistoryUseCase,
+		sendMessageUseCase,
 	))
 	if err != nil {
 		return nil, fmt.Errorf("create v1 manager handlers: %v", err)

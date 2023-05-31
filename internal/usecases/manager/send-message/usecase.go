@@ -36,7 +36,7 @@ type outboxService interface {
 }
 
 type problemsRepository interface {
-	GetAssignedProblemID(ctx context.Context, managerID types.UserID, chatID types.ChatID) (*problemsrepo.Problem, error)
+	GetAssignedProblem(ctx context.Context, managerID types.UserID, chatID types.ChatID) (*problemsrepo.Problem, error)
 }
 
 type transactor interface {
@@ -64,7 +64,7 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 		return Response{}, fmt.Errorf("%w: %v", ErrInvalidRequest, err)
 	}
 
-	problem, err := u.problemsRepo.GetAssignedProblemID(ctx, req.ManagerID, req.ChatID)
+	problem, err := u.problemsRepo.GetAssignedProblem(ctx, req.ManagerID, req.ChatID)
 	if err != nil {
 		if errors.Is(err, problemsrepo.ErrProblemNotFound) {
 			return Response{}, fmt.Errorf("%w: %v", ErrProblemNotFound, err)

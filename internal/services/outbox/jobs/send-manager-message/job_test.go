@@ -9,6 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
@@ -28,11 +29,12 @@ func TestJob_Handle(t *testing.T) {
 	msgProducer := sendmanagermessagejobmocks.NewMockmessageProducer(ctrl)
 	msgRepo := sendmanagermessagejobmocks.NewMockmessageRepository(ctrl)
 	eventStream := sendmanagermessagejobmocks.NewMockeventStream(ctrl)
-	job, err := sendmanagermessagejob.New(sendmanagermessagejob.NewOptions(msgProducer, msgRepo, eventStream))
+	chatsRepo := sendmanagermessagejobmocks.NewMockchatRepository(ctrl)
+	job, err := sendmanagermessagejob.New(sendmanagermessagejob.NewOptions(msgProducer, msgRepo, eventStream, chatsRepo))
 	require.NoError(t, err)
 
 	managerID := types.NewUserID()
-	authorID := types.NewUserID()
+	clientID := types.NewUserID()
 	msgID := types.NewMessageID()
 	chatID := types.NewChatID()
 	reqID := types.NewRequestID()
@@ -42,17 +44,24 @@ func TestJob_Handle(t *testing.T) {
 	msg := messagesrepo.Message{
 		ID:                  msgID,
 		ChatID:              chatID,
-		AuthorID:            authorID,
+		AuthorID:            managerID,
 		InitialRequestID:    reqID,
 		Body:                body,
 		CreatedAt:           createdAt,
-		ManagerID:           managerID,
+		ManagerID:           types.UserIDNil,
 		IsVisibleForClient:  true,
 		IsVisibleForManager: true,
 		IsBlocked:           false,
 		IsService:           false,
 	}
+	chat := chatsrepo.Chat{
+		ID:       chatID,
+		ClientID: clientID,
+	}
+
 	msgRepo.EXPECT().GetMessageByID(gomock.Any(), msgID).Return(&msg, nil)
+
+	chatsRepo.EXPECT().GetChatByID(gomock.Any(), msg.ChatID).Return(&chat, nil)
 
 	msgProducer.EXPECT().ProduceMessage(gomock.Any(), msgproducer.Message{
 		ID:         msgID,
@@ -61,12 +70,24 @@ func TestJob_Handle(t *testing.T) {
 		FromClient: false,
 	}).Return(nil)
 
-	eventStream.EXPECT().Publish(gomock.Any(), managerID, newMessageEventMatcher(eventstream.NewNewMessageEvent(
+	eventStream.EXPECT().Publish(gomock.Any(), msg.AuthorID, newMessageEventMatcher(eventstream.NewNewMessageEvent(
 		types.NewEventID(),
 		reqID,
 		chatID,
 		msgID,
-		authorID,
+		managerID,
+		createdAt,
+		body,
+		false,
+	),
+	)).Return(nil)
+
+	eventStream.EXPECT().Publish(gomock.Any(), chat.ClientID, newMessageEventMatcher(eventstream.NewNewMessageEvent(
+		types.NewEventID(),
+		reqID,
+		chatID,
+		msgID,
+		managerID,
 		createdAt,
 		body,
 		false,

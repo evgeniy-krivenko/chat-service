@@ -2,10 +2,13 @@ package sendmanagermessagejob
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
+	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
@@ -22,6 +25,10 @@ type messageRepository interface {
 	GetMessageByID(ctx context.Context, msgID types.MessageID) (*messagesrepo.Message, error)
 }
 
+type chatRepository interface {
+	GetChatByID(ctx context.Context, chatID types.ChatID) (*chatsrepo.Chat, error)
+}
+
 type eventStream interface {
 	Publish(ctx context.Context, userID types.UserID, event eventstream.Event) error
 }
@@ -35,6 +42,7 @@ type Options struct {
 	msgProducer messageProducer   `option:"mandatory" validate:"required"`
 	msgRepo     messageRepository `option:"mandatory" validate:"required"`
 	eventStream eventStream       `option:"mandatory" validate:"required"`
+	chatsRepo   chatRepository    `option:"mandatory" validate:"required"`
 }
 
 type Job struct {
@@ -63,14 +71,17 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 
 	msgID, err := simpleid.Unmarshal[types.MessageID](payload)
 	if err != nil {
-		j.lg.Warn("unmarshal payload", zap.Error(err))
 		return fmt.Errorf("unmarshal payload: %v", err)
 	}
 
 	msg, err := j.msgRepo.GetMessageByID(ctx, msgID)
 	if err != nil {
-		j.lg.Warn("get msg from repo", zap.Error(err))
 		return fmt.Errorf("get msg from repo: %v", err)
+	}
+
+	chat, err := j.chatsRepo.GetChatByID(ctx, msg.ChatID)
+	if err != nil {
+		return fmt.Errorf("get chat %v: %v", msg.ChatID, err)
 	}
 
 	if err := j.msgProducer.ProduceMessage(ctx, msgproducer.Message{
@@ -79,22 +90,48 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		Body:       msg.Body,
 		FromClient: false,
 	}); err != nil {
-		j.lg.Warn("produce message to queue", zap.Error(err))
 		return fmt.Errorf("produce msg to queue: %v", err)
 	}
 
-	if err := j.eventStream.Publish(ctx, msg.ManagerID, eventstream.NewNewMessageEvent(
-		types.NewEventID(),
-		msg.InitialRequestID,
-		msg.ChatID,
-		msg.ID,
-		msg.AuthorID,
-		msg.CreatedAt,
-		msg.Body,
-		msg.IsService,
-	)); err != nil {
-		j.lg.Warn("publish message", zap.Stringer("message_id", msgID))
-		return fmt.Errorf("publish NewMesaggeEvent to manager stream: %v", err)
+	eg, ctx := errgroup.WithContext(ctx)
+
+	eg.Go(func() error {
+		if err := j.eventStream.Publish(ctx, msg.AuthorID, eventstream.NewNewMessageEvent(
+			types.NewEventID(),
+			msg.InitialRequestID,
+			msg.ChatID,
+			msg.ID,
+			msg.AuthorID,
+			msg.CreatedAt,
+			msg.Body,
+			msg.IsService,
+		)); err != nil {
+			return fmt.Errorf("publish NewMesaggeEvent to manager stream: %v", err)
+		}
+
+		return nil
+	})
+
+	eg.Go(func() error {
+		if err := j.eventStream.Publish(ctx, chat.ClientID, eventstream.NewNewMessageEvent(
+			types.NewEventID(),
+			msg.InitialRequestID,
+			msg.ChatID,
+			msg.ID,
+			msg.AuthorID,
+			msg.CreatedAt,
+			msg.Body,
+			msg.IsService,
+		)); err != nil {
+			return fmt.Errorf("publish NewMesaggeEvent to client stream: %v", err)
+		}
+
+		return nil
+	})
+
+	if err := eg.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+		j.lg.Error("error to handle job", zap.Error(err))
+		return err
 	}
 
 	j.lg.Info("success to process job", zap.String("payload", payload))

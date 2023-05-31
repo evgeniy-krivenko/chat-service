@@ -76,17 +76,17 @@ func (m *MockproblemsRepository) EXPECT() *MockproblemsRepositoryMockRecorder {
 	return m.recorder
 }
 
-// GetOpenProblemForChat mocks base method.
-func (m *MockproblemsRepository) GetAssignedProblem(ctx context.Context, managerID types.UserID, chatID types.ChatID, ) (*problemsrepo.Problem, error) {
+// GetAssignedProblem mocks base method.
+func (m *MockproblemsRepository) GetAssignedProblem(ctx context.Context, managerID types.UserID, chatID types.ChatID) (*problemsrepo.Problem, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOpenProblemForChat", ctx, chatID, managerID)
+	ret := m.ctrl.Call(m, "GetAssignedProblem", ctx, managerID, chatID)
 	ret0, _ := ret[0].(*problemsrepo.Problem)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetOpenProblemForChat indicates an expected call of GetOpenProblemForChat.
-func (mr *MockproblemsRepositoryMockRecorder) GetOpenProblemForChat(ctx, chatID, managerID interface{}) *gomock.Call {
+// GetAssignedProblem indicates an expected call of GetAssignedProblem.
+func (mr *MockproblemsRepositoryMockRecorder) GetAssignedProblem(ctx, managerID, chatID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOpenProblemForChat", reflect.TypeOf((*MockproblemsRepository)(nil).GetAssignedProblem), ctx, chatID, managerID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAssignedProblem", reflect.TypeOf((*MockproblemsRepository)(nil).GetAssignedProblem), ctx, managerID, chatID)
 }

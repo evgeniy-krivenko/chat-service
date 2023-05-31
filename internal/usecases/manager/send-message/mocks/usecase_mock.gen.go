@@ -114,19 +114,19 @@ func (m *MockproblemsRepository) EXPECT() *MockproblemsRepositoryMockRecorder {
 	return m.recorder
 }
 
-// GetAssignedProblemID mocks base method.
-func (m *MockproblemsRepository) GetAssignedProblemID(ctx context.Context, managerID types.UserID, chatID types.ChatID) (*problemsrepo.Problem, error) {
+// GetAssignedProblem mocks base method.
+func (m *MockproblemsRepository) GetAssignedProblem(ctx context.Context, managerID types.UserID, chatID types.ChatID) (*problemsrepo.Problem, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAssignedProblemID", ctx, managerID, chatID)
+	ret := m.ctrl.Call(m, "GetAssignedProblem", ctx, managerID, chatID)
 	ret0, _ := ret[0].(*problemsrepo.Problem)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetAssignedProblemID indicates an expected call of GetAssignedProblemID.
-func (mr *MockproblemsRepositoryMockRecorder) GetAssignedProblemID(ctx, managerID, chatID interface{}) *gomock.Call {
+// GetAssignedProblem indicates an expected call of GetAssignedProblem.
+func (mr *MockproblemsRepositoryMockRecorder) GetAssignedProblem(ctx, managerID, chatID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAssignedProblemID", reflect.TypeOf((*MockproblemsRepository)(nil).GetAssignedProblemID), ctx, managerID, chatID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAssignedProblem", reflect.TypeOf((*MockproblemsRepository)(nil).GetAssignedProblem), ctx, managerID, chatID)
 }
 
 // Mocktransactor is a mock of transactor interface.
