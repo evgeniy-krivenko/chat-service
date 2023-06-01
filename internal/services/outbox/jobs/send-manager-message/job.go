@@ -67,7 +67,7 @@ func (j *Job) Name() string {
 }
 
 func (j *Job) Handle(ctx context.Context, payload string) error {
-	j.lg.Info("start processing", zap.String("job", j.Name()), zap.String("payload", payload))
+	j.lg.Info("start processing", zap.String("payload", payload))
 
 	msgID, err := simpleid.Unmarshal[types.MessageID](payload)
 	if err != nil {

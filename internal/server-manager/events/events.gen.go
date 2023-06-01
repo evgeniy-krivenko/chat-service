@@ -22,9 +22,21 @@ import (
 
 // Defines values for EventType.
 const (
+	EventTypeChatClosedEvent EventType = "ChatClosedEvent"
 	EventTypeNewChatEvent    EventType = "NewChatEvent"
 	EventTypeNewMessageEvent EventType = "NewMessageEvent"
 )
+
+// ChatClosedEvent defines model for ChatClosedEvent.
+type ChatClosedEvent struct {
+	CanTakeMoreProblems bool         `json:"canTakeMoreProblems"`
+	ChatId              types.ChatID `json:"chatId"`
+}
+
+// ChatId defines model for ChatId.
+type ChatId struct {
+	ChatId types.ChatID `json:"chatId"`
+}
 
 // Event defines model for Event.
 type Event struct {
@@ -118,6 +130,36 @@ func (t *Event) MergeNewMessageEvent(v NewMessageEvent) error {
 	return err
 }
 
+// AsChatClosedEvent returns the union data inside the Event as a ChatClosedEvent
+func (t Event) AsChatClosedEvent() (ChatClosedEvent, error) {
+	var body ChatClosedEvent
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromChatClosedEvent overwrites any union data inside the Event as the provided ChatClosedEvent
+func (t *Event) FromChatClosedEvent(v ChatClosedEvent) error {
+	t.EventType = "ChatClosedEvent"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeChatClosedEvent performs a merge with any union data inside the Event, using the provided ChatClosedEvent
+func (t *Event) MergeChatClosedEvent(v ChatClosedEvent) error {
+	t.EventType = "ChatClosedEvent"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t Event) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"eventType"`
@@ -132,6 +174,8 @@ func (t Event) ValueByDiscriminator() (interface{}, error) {
 		return nil, err
 	}
 	switch discriminator {
+	case "ChatClosedEvent":
+		return t.AsChatClosedEvent()
 	case "NewChatEvent":
 		return t.AsNewChatEvent()
 	case "NewMessageEvent":
@@ -211,16 +255,17 @@ func (t *Event) UnmarshalJSON(b []byte) error {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8xWTXPTMBD9K5mFoxy3w6WjG9AeekhhoJw6OSj2xhbRF5LskMn4vzOrmNhuGVLKtNNT",
-	"NNLu5r23TyvvobDaWYMmBuB7CEWNWqTlVYsm0qKUofBSSyOi9bShhXPSVLS8we3HWsQ+Ft7kQ7m8r5VP",
-	"YhilLDAEUeGprElYx8B569DH3Y3QCByQ9m93DunMGvy0Bn63h7ce14+C0rGTwVMEyyMEiUmihOC6pOXa",
-	"ei2ITNPIEhhEwsUhRE9KMfiZVTbrN+knzFPR68vxWSa1sz6J7kSsgUMlY92s5oXVObYVGrnLNl62aDY2",
-	"L2oRs4C+lQXm0kT0Rqg8FYeuYyN9+N+JXo2F9PijwfBkVl/69Gfj1UOUHkvgdyOS7NiOMYllx+BqLASa",
-	"RlPiCVcu75PtGPQBB2mmTtDjo39X7Xfll1JtgEv6TC/xfWqFMLdigwvr8bO3K4U6bff4V9YqFIbkIQRP",
-	"FYD+/znvQqHkf1zVbwH9i/Wml3GEmf2xB33nprN0D0KpRwzCwco0BacNF02srX+dWjFY2XI38t9wO1+1",
-	"/TyKiOX7OIFXiohZlBofYHzgiWN+LwAbunRkPowsu/qOBT1YyVzSrG1STEZFpx+E2cy+No74zYj5bCGM",
-	"qNDPkokCMGjRB2kNcGjP0+vq0AgngcO7+fn8DFgSJQA3jVIMiDn6kFxXIn0tuHhIv8QWlXUaTZwdooBB",
-	"4xVw2Aae58oWQtU2RH5xdnGebwOB/hUAAP//3zY8IJUIAAA=",
+	"H4sIAAAAAAAC/8xWPW/bMBD9K8a1I2Ul6BJwa5MMHZIWbToFHmjpLLHmV0lKrmHovxekZUm23DhJUSOT",
+	"jSPf8d67x6M2kGlptELlHdANuKxEyeLf65L5a6Ed5rc1Kh9CTIgvC6CPG3hvcQEU3qU9PG2xaQB+zqEh",
+	"GzBWG7SeY8yYMfXAlninLX61ei5QxrBfGwQKc60FMgVNQ8Dir4pbzIE+HkXNyA6l5z8x89DMGgLtwXR0",
+	"bhdfaCuZBwpVxXPokjhvuSqAwO+k0EkbDD9uGnPeDJcSLo22UQ/DfAkUCu7Laj7NtEyxLlDxdbK0vEa1",
+	"1Gk4O3Foa55hypVHq5hIY25oRlS3hQYuneY5d5nlkivmtQ0ByYwJ1R5r0d8bMtxG4B5XIfgkam9PhNyh",
+	"c6zAU6i9bQ3ZNWN9z2TQFUP8IWjcENAKn+GovVKCr05sPqjgtF2H6jQzcuCfWPFrDRST/j8HkYGe9Gmi",
+	"t0Phg+3QvZrVtxZ+rpvRkyRdO4YkuiuzEwJVJQPwhIvJ6A7NDuk3BFrIsdkih0sv13GX+Vw69uUGxfbH",
+	"wLnmO4FM8H+4UT8c2vON5F2p5AUP0WhWPlfa3mhjdVnlS23fpmgE5jpfD5rd3523+/gSyCwyj/lHv1de",
+	"zjwmnksc1TgyR4dvBSB9lzrmxywSEnG10FEx7kVY/cTUcvK9MoHfJDCf3DHFCrSTaCIHBGq0jmsFFOrL",
+	"+HoaVMxwoPBhejm9ABJFcUBVJQSBwByti67LMXxGGL+F32CNQhuJyk+2u4BAZQVQWDmapkJnTJTaeXp1",
+	"cXWZrlwo+k8AAAD//4mEBdssCgAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

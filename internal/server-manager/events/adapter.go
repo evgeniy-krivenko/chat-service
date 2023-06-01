@@ -40,6 +40,14 @@ func (Adapter) Adapt(ev eventstream.Event) (any, error) {
 			Body:      e.MessageBody,
 			MessageId: e.MessageID,
 		})
+	case *eventstream.ChatClosedEvent:
+		event.EventId = e.EventID
+		event.RequestId = e.RequestID
+
+		err = event.FromChatClosedEvent(ChatClosedEvent{
+			ChatId:              e.ChatID,
+			CanTakeMoreProblems: e.CanTakeMoreProblem,
+		})
 	default:
 		return nil, fmt.Errorf("unknown manager event: %v (%T)", e, e)
 	}

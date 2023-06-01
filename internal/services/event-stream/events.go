@@ -7,7 +7,7 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/validator"
 )
 
-//go:generate gonstructor --output=events.gen.go --type=NewMessageEvent --type=MessageSentEvent --type=MessageBlockedEvent --type=NewChatEvent
+//go:generate gonstructor --output=events.gen.go --type=NewMessageEvent --type=MessageSentEvent --type=MessageBlockedEvent --type=NewChatEvent --type=ChatClosedEvent
 
 type Event interface {
 	eventMarker()
@@ -70,5 +70,18 @@ type NewChatEvent struct {
 }
 
 func (e NewChatEvent) Validate() error {
+	return validator.Validator.Struct(e)
+}
+
+type ChatClosedEvent struct {
+	event `gonstructor:"-"`
+
+	EventID            types.EventID   `validate:"required"`
+	RequestID          types.RequestID `validate:"required"`
+	ChatID             types.ChatID    `validate:"required"`
+	CanTakeMoreProblem bool
+}
+
+func (e ChatClosedEvent) Validate() error {
 	return validator.Validator.Struct(e)
 }
