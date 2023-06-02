@@ -42,6 +42,7 @@ var (
 	wsClientEndpoint    string
 	wsClientOrigin      string
 	wsClientSecProtocol string
+	userAgent           string
 
 	apiManagerV1Endpoint string
 	wsManagerEndpoint    string
@@ -65,6 +66,7 @@ var _ = BeforeSuite(func() {
 	wsManagerEndpoint = expectEnv("E2E_MANAGER_WS_ENDPOINT")
 	wsManagerSecProtocol = expectEnv("E2E_MANAGER_WS_SEC_PROTOCOL")
 	wsManagerOrigin = expectEnv("E2E_MANAGER_WS_ORIGIN")
+	userAgent = expectEnv("E2E_USER_AGENT")
 
 	kcBasePath := expectEnv("E2E_KEYCLOAK_BASE_PATH")
 	kcRealm := expectEnv("E2E_KEYCLOAK_REALM")
@@ -146,6 +148,7 @@ func newClientAPI(ctx context.Context, client user) (*apiclientv1.ClientWithResp
 
 	authorizator := func(ctx context.Context, req *http.Request) error {
 		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+		req.Header.Set("User-Agent", userAgent)
 		return nil
 	}
 	apiClientV1, err := apiclientv1.NewClientWithResponses(
@@ -180,6 +183,7 @@ func newManagerAPI(ctx context.Context, manager user) (*apimanagerv1.ClientWithR
 
 	authorizator := func(ctx context.Context, req *http.Request) error {
 		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+		req.Header.Set("User-Agent", userAgent)
 		return nil
 	}
 	apiManagerV1, err := apimanagerv1.NewClientWithResponses(

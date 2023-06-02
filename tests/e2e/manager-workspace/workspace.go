@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	"go.uber.org/atomic"
@@ -201,6 +202,87 @@ func (ws *Workspace) GetChatHistory(ctx context.Context, chatID types.ChatID) er
 	return nil
 }
 
+type SendMessageOption func(opts *sendMessageOpts)
+
+type sendMessageOpts struct {
+	reqID types.RequestID
+}
+
+func (ws *Workspace) SendMessage(
+	ctx context.Context,
+	chatID types.ChatID,
+	body string,
+	opts ...SendMessageOption,
+) error {
+	options := sendMessageOpts{
+		reqID: types.NewRequestID(),
+	}
+	for _, o := range opts {
+		o(&options)
+	}
+
+	resp, err := ws.api.PostSendMessageWithResponse(ctx,
+		&apimanagerv1.PostSendMessageParams{XRequestID: options.reqID},
+		apimanagerv1.PostSendMessageJSONRequestBody{ChatId: chatID, MessageBody: body},
+	)
+	if err != nil {
+		return fmt.Errorf("post request: %v", err)
+	}
+	if resp.JSON200 == nil {
+		return errNoResponseBody
+	}
+	if err := resp.JSON200.Error; err != nil {
+		return fmt.Errorf("%v: %v", err.Code, err.Message)
+	}
+
+	data := resp.JSON200.Data
+	if data == nil {
+		return errNoDataInResponse
+	}
+
+	ws.pushMessageToBack(NewMessage(
+		data.Id,
+		chatID,
+		ws.id,
+		body,
+		data.CreatedAt,
+	))
+
+	time.Sleep(10 * time.Millisecond)
+	return nil
+}
+
+type CloseChatOption func(opts *closeChatOpts)
+
+type closeChatOpts struct {
+	reqID types.RequestID
+}
+
+func (ws *Workspace) CloseChat(ctx context.Context, chatID types.ChatID, opts ...CloseChatOption) error {
+	options := closeChatOpts{
+		reqID: types.NewRequestID(),
+	}
+
+	for _, o := range opts {
+		o(&options)
+	}
+	resp, err := ws.api.PostCloseChatWithResponse(ctx,
+		&apimanagerv1.PostCloseChatParams{XRequestID: options.reqID},
+		apimanagerv1.PostCloseChatJSONRequestBody{ChatId: chatID},
+	)
+	if err != nil {
+		return fmt.Errorf("post request: %v", err)
+	}
+	if resp.JSON200 == nil {
+		return errNoResponseBody
+	}
+	if err := resp.JSON200.Error; err != nil {
+		return fmt.Errorf("%v: %v", err.Code, err.Message)
+	}
+
+	return nil
+}
+
 func (ws *Workspace) ReceiveNewProblemsAvailability(ctx context.Context) error {
 	resp, err := ws.api.PostGetFreeHandsBtnAvailabilityWithResponse(ctx,
 		&apimanagerv1.PostGetFreeHandsBtnAvailabilityParams{XRequestID: types.NewRequestID()},
@@ -273,6 +355,11 @@ func (ws *Workspace) HandleEvent(_ context.Context, data []byte) error {
 			vv.Body,
 			vv.CreatedAt,
 		))
+	case apimanagerevents.ChatClosedEvent:
+		if err := ws.removeChat(vv.ChatId); err != nil {
+			return fmt.Errorf("remove chat when chat close event: %v", err)
+		}
+		ws.setCanTakeMoreProblemsFlag(vv.CanTakeMoreProblems)
 	}
 
 	return nil

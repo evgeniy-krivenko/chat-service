@@ -143,9 +143,13 @@ tasks:
     sources:
       - "{{.CLIENT_V1_SRC}}"
       - "{{.CLIENT_EVENTS_SRC}}"
+      - "{{.MANAGER_V1_SRC}}"
+      - "{{.MANAGER_EVENTS_SRC}}"
     generates:
       - "{{.E2E_CLIENT_V1_DST}}"
       - "{{.E2E_CLIENT_EVENTS_DST}}"
+      - "{{.E2E_MANAGER_EVENTS_DST}}"
+      - "{{.E2E_MANAGER_V1_DST}}"
 
   gen:types:
     cmds:
