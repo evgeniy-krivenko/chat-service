@@ -176,8 +176,10 @@ components:
       description: contains HTTP error codes and specific business logic error codes (the last must be >= 1000).
       enum:
         - 5000
+        - 5001
       x-enum-varnames:
         - ErrorCodeManagerOverloaded
+        - ErrorCodeNoFoundProblem
       minimum: 400
 
     GetChatsResponse:

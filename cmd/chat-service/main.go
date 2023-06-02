@@ -33,6 +33,7 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
 	clientmessageblockedjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-blocked"
 	clientmessagesentjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/client-message-sent"
+	closechatjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/close-chat"
 	managerassignedtoproblemjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/manager-assigned-to-problem"
 	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
 	sendmanagermessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-manager-message"
@@ -263,12 +264,18 @@ func run() (errReturned error) {
 		return fmt.Errorf("create send manager message job: %v", err)
 	}
 
+	closeChatJob, err := closechatjob.New(closechatjob.NewOptions(managerLoadService, eventStream, chatsRepo))
+	if err != nil {
+		return fmt.Errorf("create close chat job: %v", err)
+	}
+
 	// Register jobs
 	outboxService.MustRegisterJob(sendClientMessageJob)
 	outboxService.MustRegisterJob(clientMessageSentJob)
 	outboxService.MustRegisterJob(clientMessageBlockedJob)
 	outboxService.MustRegisterJob(managerAssignedToProblem)
 	outboxService.MustRegisterJob(sendManagerMessageJob)
+	outboxService.MustRegisterJob(closeChatJob)
 
 	// Clients.
 	keycloakClient, err := keycloakclient.New(keycloakclient.NewOptions(

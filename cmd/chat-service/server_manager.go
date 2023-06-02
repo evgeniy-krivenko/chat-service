@@ -21,6 +21,7 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	canreceiveproblems "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/can-receive-problems"
+	closechat "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/close-chat"
 	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
 	getchathistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chat-history"
 	getchats "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chats"
@@ -76,12 +77,18 @@ func initServerManager(
 
 	sendMessageUseCase, err := sendmessage.New(sendmessage.NewOptions(msgRepo, problemsRepo, outboxSvc, db))
 
+	closeChatUseCase, err := closechat.New(closechat.NewOptions(problemsRepo, outboxSvc, db))
+	if err != nil {
+		return nil, fmt.Errorf("create close chat use case: %v", err)
+	}
+
 	v1Handlers, err := managerv1.NewHandlers(managerv1.NewOptions(
 		canReceiveProblemUseCase,
 		freeHandsUseCase,
 		getChatsUseCase,
 		getChatHistoryUseCase,
 		sendMessageUseCase,
+		closeChatUseCase,
 	))
 	if err != nil {
 		return nil, fmt.Errorf("create v1 manager handlers: %v", err)

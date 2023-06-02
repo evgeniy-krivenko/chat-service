@@ -1,3 +1,5 @@
+//go:build integration
+
 package problemsrepo_test
 
 import (
