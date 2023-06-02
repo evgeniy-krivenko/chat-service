@@ -76,8 +76,11 @@ func initServerManager(
 	}
 
 	sendMessageUseCase, err := sendmessage.New(sendmessage.NewOptions(msgRepo, problemsRepo, outboxSvc, db))
+	if err != nil {
+		return nil, fmt.Errorf("create send message usecase: %v", err)
+	}
 
-	closeChatUseCase, err := closechat.New(closechat.NewOptions(problemsRepo, outboxSvc, db))
+	closeChatUseCase, err := closechat.New(closechat.NewOptions(problemsRepo, msgRepo, outboxSvc, db))
 	if err != nil {
 		return nil, fmt.Errorf("create close chat use case: %v", err)
 	}

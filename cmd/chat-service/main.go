@@ -264,7 +264,7 @@ func run() (errReturned error) {
 		return fmt.Errorf("create send manager message job: %v", err)
 	}
 
-	closeChatJob, err := closechatjob.New(closechatjob.NewOptions(managerLoadService, eventStream, chatsRepo))
+	closeChatJob, err := closechatjob.New(closechatjob.NewOptions(managerLoadService, eventStream, chatsRepo, msgRepo))
 	if err != nil {
 		return fmt.Errorf("create close chat job: %v", err)
 	}

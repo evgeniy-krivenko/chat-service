@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	"time"
 
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
@@ -19,7 +20,17 @@ var (
 //go:generate mockgen -source=$GOFILE -destination=mocks/usecase_mock.gen.go -package=closechatmocks
 
 type problemsRepository interface {
+	GetAssignedProblem(ctx context.Context, managerID types.UserID, chatID types.ChatID) (*problemsrepo.Problem, error)
 	Resolve(ctx context.Context, managerID types.UserID, chatID types.ChatID) error
+}
+
+type messageRepository interface {
+	CreateClientService(
+		ctx context.Context,
+		problemID types.ProblemID,
+		chatID types.ChatID,
+		msgBody string,
+	) (*messagesrepo.Message, error)
 }
 
 type outboxService interface {
@@ -33,6 +44,7 @@ type transactor interface {
 //go:generate options-gen -out-filename=usecase_options.gen.go -from-struct=Options
 type Options struct {
 	problemsRepo problemsRepository `option:"mandatory" validate:"required"`
+	msgRepo      messageRepository  `option:"mandatory" validate:"required"`
 	outboxSvc    outboxService      `option:"mandatory" validate:"required"`
 	txtor        transactor         `option:"mandatory" validate:"required"`
 }
@@ -50,17 +62,32 @@ func (u UseCase) Handle(ctx context.Context, req Request) error {
 		return fmt.Errorf("%w: %v", ErrInvalidRequest, err)
 	}
 
-	payload, err := closechatjob.MarshalPayload(req.ID, req.ManagerID, req.ChatID)
-	if err != nil {
-		return fmt.Errorf("marshal payload: %v", err)
-	}
-
 	return u.txtor.RunInTx(ctx, func(ctx context.Context) error {
-		if err := u.problemsRepo.Resolve(ctx, req.ManagerID, req.ChatID); err != nil {
+		problem, err := u.problemsRepo.GetAssignedProblem(ctx, req.ManagerID, req.ChatID)
+		if err != nil {
 			if errors.Is(err, problemsrepo.ErrProblemNotFound) {
 				return ErrProblemNotFound
 			}
+			return fmt.Errorf("get assigned problem: %v", err)
+		}
+
+		if err := u.problemsRepo.Resolve(ctx, req.ManagerID, req.ChatID); err != nil {
 			return fmt.Errorf("resolve problem: %v", err)
+		}
+
+		msg, err := u.msgRepo.CreateClientService(
+			ctx,
+			problem.ID,
+			req.ChatID,
+			"Your question has been marked as resolved.\nThank you for being with us!",
+		)
+		if err != nil {
+			return fmt.Errorf("create client service problem")
+		}
+
+		payload, err := closechatjob.MarshalPayload(req.ID, req.ManagerID, req.ChatID, msg.ID)
+		if err != nil {
+			return fmt.Errorf("marshal payload: %v", err)
 		}
 
 		_, err = u.outboxSvc.Put(ctx, closechatjob.Name, payload, time.Now())

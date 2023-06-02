@@ -3,6 +3,7 @@ package closechatjob_test
 import (
 	"errors"
 	"fmt"
+	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	"testing"
 	"time"
 
@@ -22,6 +23,7 @@ type JobHandleSuite struct {
 
 	ctrl        *gomock.Controller
 	chatsRepo   *closechatjobmocks.MockchatsRepository
+	msgRepo     *closechatjobmocks.MockmessageRepository
 	eventStream *closechatjobmocks.MockeventStream
 	mngrLoad    *closechatjobmocks.MockmanagerLoadService
 	job         *closechatjob.Job
@@ -30,6 +32,7 @@ type JobHandleSuite struct {
 	chatID    types.ChatID
 	managerID types.UserID
 	clientID  types.UserID
+	msgID     types.MessageID
 }
 
 func TestJobHandleSuite(t *testing.T) {
@@ -40,6 +43,7 @@ func TestJobHandleSuite(t *testing.T) {
 func (s *JobHandleSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.chatsRepo = closechatjobmocks.NewMockchatsRepository(s.ctrl)
+	s.msgRepo = closechatjobmocks.NewMockmessageRepository(s.ctrl)
 	s.eventStream = closechatjobmocks.NewMockeventStream(s.ctrl)
 	s.mngrLoad = closechatjobmocks.NewMockmanagerLoadService(s.ctrl)
 
@@ -47,9 +51,10 @@ func (s *JobHandleSuite) SetupTest() {
 	s.chatID = types.NewChatID()
 	s.managerID = types.NewUserID()
 	s.clientID = types.NewUserID()
+	s.msgID = types.NewMessageID()
 
 	var err error
-	s.job, err = closechatjob.New(closechatjob.NewOptions(s.mngrLoad, s.eventStream, s.chatsRepo))
+	s.job, err = closechatjob.New(closechatjob.NewOptions(s.mngrLoad, s.eventStream, s.chatsRepo, s.msgRepo))
 	s.Require().NoError(err)
 
 	s.ContextSuite.SetupTest()
@@ -63,9 +68,18 @@ func (s *JobHandleSuite) TearDownTest() {
 
 func (s *JobHandleSuite) TestHandle_Success() {
 	// Arrange.
-	payload, err := closechatjob.MarshalPayload(s.reqID, s.managerID, s.chatID)
+	msg := messagesrepo.Message{
+		ID:        s.msgID,
+		ChatID:    s.chatID,
+		Body:      "some service msg",
+		IsService: true,
+		CreatedAt: time.Now(),
+	}
+
+	payload, err := closechatjob.MarshalPayload(s.reqID, s.managerID, s.chatID, s.msgID)
 	s.Require().NoError(err)
 	s.mngrLoad.EXPECT().CanManagerTakeProblem(gomock.Any(), s.managerID).Return(true, nil)
+	s.msgRepo.EXPECT().GetMessageByID(gomock.Any(), s.msgID).Return(&msg, nil)
 	s.chatsRepo.EXPECT().GetChatByID(gomock.Any(), s.chatID).Return(&chatsrepo.Chat{
 		ClientID: s.clientID,
 	}, nil)
@@ -74,12 +88,12 @@ func (s *JobHandleSuite) TestHandle_Success() {
 		NewMessageEvent: &eventstream.NewMessageEvent{
 			EventID:     types.EventIDNil,
 			RequestID:   s.reqID,
-			ChatID:      s.chatID,
-			MessageID:   types.MessageIDNil, // No possible to check
-			AuthorID:    types.UserIDNil,    // no possible to check
-			CreatedAt:   time.Now(),         // no possible to check
-			MessageBody: closechatjob.CloseMsgBody,
-			IsService:   true,
+			ChatID:      msg.ChatID,
+			MessageID:   msg.ID,
+			AuthorID:    types.UserIDNil, // no possible to check
+			CreatedAt:   msg.CreatedAt,
+			MessageBody: "some service msg",
+			IsService:   msg.IsService,
 		},
 	})
 
@@ -112,7 +126,7 @@ func (s *JobHandleSuite) TestHandle_UnmarshalError() {
 
 func (s *JobHandleSuite) TestHandle_CanManagerTakeProblemError() {
 	// Arrange.
-	payload, err := closechatjob.MarshalPayload(s.reqID, s.managerID, s.chatID)
+	payload, err := closechatjob.MarshalPayload(s.reqID, s.managerID, s.chatID, s.msgID)
 	s.Require().NoError(err)
 	s.mngrLoad.EXPECT().CanManagerTakeProblem(gomock.Any(), s.managerID).
 		Return(false, errors.New("unexpected"))
@@ -124,11 +138,34 @@ func (s *JobHandleSuite) TestHandle_CanManagerTakeProblemError() {
 	s.Require().Error(err)
 }
 
-func (s *JobHandleSuite) TestHandle_GetChatByIDError() {
+func (s *JobHandleSuite) TestHandle_GetMessageByIDError() {
 	// Arrange.
-	payload, err := closechatjob.MarshalPayload(s.reqID, s.managerID, s.chatID)
+	payload, err := closechatjob.MarshalPayload(s.reqID, s.managerID, s.chatID, s.msgID)
 	s.Require().NoError(err)
 	s.mngrLoad.EXPECT().CanManagerTakeProblem(gomock.Any(), s.managerID).Return(true, nil)
+	s.msgRepo.EXPECT().GetMessageByID(gomock.Any(), s.msgID).Return(nil, errors.New("unexpected"))
+
+	// Action.
+	err = s.job.Handle(s.Ctx, payload)
+
+	// Assert.
+	s.Require().Error(err)
+}
+
+func (s *JobHandleSuite) TestHandle_GetChatByIDError() {
+	// Arrange.
+	msg := messagesrepo.Message{
+		ID:        s.msgID,
+		ChatID:    s.chatID,
+		Body:      "some service msg",
+		IsService: true,
+		CreatedAt: time.Now(),
+	}
+
+	payload, err := closechatjob.MarshalPayload(s.reqID, s.managerID, s.chatID, s.msgID)
+	s.Require().NoError(err)
+	s.mngrLoad.EXPECT().CanManagerTakeProblem(gomock.Any(), s.managerID).Return(true, nil)
+	s.msgRepo.EXPECT().GetMessageByID(gomock.Any(), s.msgID).Return(&msg, nil)
 	s.chatsRepo.EXPECT().GetChatByID(gomock.Any(), s.chatID).Return(nil, errors.New("unexpected"))
 
 	// Action.
@@ -140,9 +177,17 @@ func (s *JobHandleSuite) TestHandle_GetChatByIDError() {
 
 func (s *JobHandleSuite) TestHandle_ClientPublishError() {
 	// Arrange.
-	payload, err := closechatjob.MarshalPayload(s.reqID, s.managerID, s.chatID)
+	msg := messagesrepo.Message{
+		ID:        s.msgID,
+		ChatID:    s.chatID,
+		Body:      "some service msg",
+		IsService: true,
+		CreatedAt: time.Now(),
+	}
+	payload, err := closechatjob.MarshalPayload(s.reqID, s.managerID, s.chatID, s.msgID)
 	s.Require().NoError(err)
 	s.mngrLoad.EXPECT().CanManagerTakeProblem(gomock.Any(), s.managerID).Return(true, nil)
+	s.msgRepo.EXPECT().GetMessageByID(gomock.Any(), s.msgID).Return(&msg, nil)
 	s.chatsRepo.EXPECT().GetChatByID(gomock.Any(), s.chatID).Return(&chatsrepo.Chat{
 		ClientID: s.clientID,
 	}, nil)
@@ -151,12 +196,12 @@ func (s *JobHandleSuite) TestHandle_ClientPublishError() {
 		NewMessageEvent: &eventstream.NewMessageEvent{
 			EventID:     types.EventIDNil,
 			RequestID:   s.reqID,
-			ChatID:      s.chatID,
-			MessageID:   types.MessageIDNil, // No possible to check
-			AuthorID:    types.UserIDNil,    // no possible to check
-			CreatedAt:   time.Now(),         // no possible to check
-			MessageBody: closechatjob.CloseMsgBody,
-			IsService:   true,
+			ChatID:      msg.ChatID,
+			MessageID:   msg.ID,
+			AuthorID:    types.UserIDNil, // no possible to check
+			CreatedAt:   msg.CreatedAt,
+			MessageBody: "some service msg",
+			IsService:   msg.IsService,
 		},
 	}).Return(errors.New("unexpected"))
 
@@ -178,9 +223,18 @@ func (s *JobHandleSuite) TestHandle_ClientPublishError() {
 
 func (s *JobHandleSuite) TestHandle_ManagerPublishError() {
 	// Arrange.
-	payload, err := closechatjob.MarshalPayload(s.reqID, s.managerID, s.chatID)
+	msg := messagesrepo.Message{
+		ID:        s.msgID,
+		ChatID:    s.chatID,
+		Body:      "some service msg",
+		IsService: true,
+		CreatedAt: time.Now(),
+	}
+
+	payload, err := closechatjob.MarshalPayload(s.reqID, s.managerID, s.chatID, s.msgID)
 	s.Require().NoError(err)
 	s.mngrLoad.EXPECT().CanManagerTakeProblem(gomock.Any(), s.managerID).Return(true, nil)
+	s.msgRepo.EXPECT().GetMessageByID(gomock.Any(), s.msgID).Return(&msg, nil)
 	s.chatsRepo.EXPECT().GetChatByID(gomock.Any(), s.chatID).Return(&chatsrepo.Chat{
 		ClientID: s.clientID,
 	}, nil)
@@ -189,12 +243,12 @@ func (s *JobHandleSuite) TestHandle_ManagerPublishError() {
 		NewMessageEvent: &eventstream.NewMessageEvent{
 			EventID:     types.EventIDNil,
 			RequestID:   s.reqID,
-			ChatID:      s.chatID,
-			MessageID:   types.MessageIDNil, // No possible to check
-			AuthorID:    types.UserIDNil,    // no possible to check
-			CreatedAt:   time.Now(),         // no possible to check
-			MessageBody: closechatjob.CloseMsgBody,
-			IsService:   true,
+			ChatID:      msg.ChatID,
+			MessageID:   msg.ID,
+			AuthorID:    types.UserIDNil, // no possible to check
+			CreatedAt:   msg.CreatedAt,
+			MessageBody: "some service msg",
+			IsService:   msg.IsService,
 		},
 	}).AnyTimes()
 
@@ -234,8 +288,8 @@ func (m newMessageEventMatcher) Matches(x interface{}) bool {
 	return !ev.EventID.IsZero() &&
 		ev.RequestID == m.RequestID &&
 		ev.ChatID == m.ChatID &&
-		!ev.MessageID.IsZero() &&
-		!ev.CreatedAt.IsZero() &&
+		ev.MessageID == m.MessageID &&
+		ev.CreatedAt.Equal(m.CreatedAt) &&
 		ev.MessageBody == m.MessageBody &&
 		ev.IsService == m.IsService
 }

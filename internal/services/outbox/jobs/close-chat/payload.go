@@ -9,20 +9,27 @@ import (
 )
 
 type payload struct {
-	RequestID types.RequestID `validate:"required"`
-	ManagerID types.UserID    `validate:"required"`
-	ChatID    types.ChatID    `validate:"required"`
+	RequestID   types.RequestID `validate:"required"`
+	ManagerID   types.UserID    `validate:"required"`
+	ChatID      types.ChatID    `validate:"required"`
+	ClientMsgID types.MessageID `validate:"required"`
 }
 
 func (p payload) Validate() error {
 	return validator.Validator.Struct(p)
 }
 
-func MarshalPayload(reqID types.RequestID, managerID types.UserID, chatID types.ChatID) (string, error) {
+func MarshalPayload(
+	reqID types.RequestID,
+	managerID types.UserID,
+	chatID types.ChatID,
+	clientMsgID types.MessageID,
+) (string, error) {
 	p := payload{
-		RequestID: reqID,
-		ManagerID: managerID,
-		ChatID:    chatID,
+		RequestID:   reqID,
+		ManagerID:   managerID,
+		ChatID:      chatID,
+		ClientMsgID: clientMsgID,
 	}
 
 	if err := p.Validate(); err != nil {

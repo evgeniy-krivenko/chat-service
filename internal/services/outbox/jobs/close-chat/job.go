@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
-
+	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
@@ -33,11 +32,16 @@ type chatsRepository interface {
 	GetChatByID(ctx context.Context, chatID types.ChatID) (*chatsrepo.Chat, error)
 }
 
+type messageRepository interface {
+	GetMessageByID(ctx context.Context, msgID types.MessageID) (*messagesrepo.Message, error)
+}
+
 //go:generate options-gen -out-filename=job_options.gen.go -from-struct=Options
 type Options struct {
 	mngrLoadSvc managerLoadService `option:"mandatory" validate:"required"`
 	eventStream eventStream        `option:"mandatory" validate:"required"`
 	chatsRepo   chatsRepository    `option:"mandatory" validate:"required"`
+	msgRepo     messageRepository  `option:"mandatory" validate:"required"`
 }
 
 type Job struct {
@@ -74,7 +78,12 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		return fmt.Errorf("can manager take problem: %v", err)
 	}
 
-	chat, err := j.chatsRepo.GetChatByID(ctx, p.ChatID)
+	msg, err := j.msgRepo.GetMessageByID(ctx, p.ClientMsgID)
+	if err != nil {
+		return fmt.Errorf("get msg: %v", err)
+	}
+
+	chat, err := j.chatsRepo.GetChatByID(ctx, msg.ChatID)
 	if err != nil {
 		return fmt.Errorf("get chat: %v", err)
 	}
@@ -85,12 +94,12 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		if err := j.eventStream.Publish(ctx, chat.ClientID, eventstream.NewNewMessageEvent(
 			types.NewEventID(),
 			p.RequestID,
-			p.ChatID,
-			types.NewMessageID(),
-			types.UserIDNil,
-			time.Now(),
-			CloseMsgBody,
-			true,
+			msg.ChatID,
+			msg.ID,
+			msg.AuthorID,
+			msg.CreatedAt,
+			msg.Body,
+			msg.IsService,
 		)); err != nil {
 			return fmt.Errorf("publish NewMesaggeEvent to client stream: %v", err)
 		}
