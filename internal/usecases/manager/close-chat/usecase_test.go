@@ -115,7 +115,7 @@ func (s *UseCaseSuite) TestUseCase_ResolveError() {
 		})
 	s.problemsRepo.EXPECT().GetAssignedProblem(gomock.Any(), managerID, chatID).
 		Return(&p, nil)
-	s.problemsRepo.EXPECT().Resolve(gomock.Any(), managerID, chatID).
+	s.problemsRepo.EXPECT().Resolve(gomock.Any(), req.ID, managerID, chatID).
 		Return(errors.New("unexpected"))
 
 	// Action
@@ -148,7 +148,7 @@ func (s *UseCaseSuite) TestUseCase_CreateClientMessageError() {
 		})
 	s.problemsRepo.EXPECT().GetAssignedProblem(gomock.Any(), managerID, chatID).
 		Return(&p, nil)
-	s.problemsRepo.EXPECT().Resolve(gomock.Any(), managerID, chatID).
+	s.problemsRepo.EXPECT().Resolve(gomock.Any(), req.ID, managerID, chatID).
 		Return(nil)
 	s.msgRepo.EXPECT().CreateClientService(gomock.Any(), p.ID, req.ChatID, gomock.Any()).
 		Return(nil, errors.New("unexpected"))
@@ -188,7 +188,7 @@ func (s *UseCaseSuite) TestUseCase_OutboxError() {
 		})
 	s.problemsRepo.EXPECT().GetAssignedProblem(gomock.Any(), managerID, chatID).
 		Return(&p, nil)
-	s.problemsRepo.EXPECT().Resolve(gomock.Any(), managerID, chatID).
+	s.problemsRepo.EXPECT().Resolve(gomock.Any(), req.ID, managerID, chatID).
 		Return(nil)
 	s.msgRepo.EXPECT().CreateClientService(gomock.Any(), p.ID, req.ChatID, gomock.Any()).
 		Return(&m, nil)
@@ -235,7 +235,7 @@ func (s *UseCaseSuite) TestUseCaseTransactionError() {
 		})
 	s.problemsRepo.EXPECT().GetAssignedProblem(gomock.Any(), managerID, chatID).
 		Return(&p, nil)
-	s.problemsRepo.EXPECT().Resolve(gomock.Any(), managerID, chatID).
+	s.problemsRepo.EXPECT().Resolve(gomock.Any(), req.ID, managerID, chatID).
 		Return(nil)
 	s.msgRepo.EXPECT().CreateClientService(gomock.Any(), p.ID, req.ChatID, gomock.Any()).
 		Return(&m, nil)
@@ -284,7 +284,7 @@ func (s *UseCaseSuite) TestUseCaseSuccess() {
 		})
 	s.problemsRepo.EXPECT().GetAssignedProblem(gomock.Any(), managerID, chatID).
 		Return(&p, nil)
-	s.problemsRepo.EXPECT().Resolve(gomock.Any(), managerID, chatID).
+	s.problemsRepo.EXPECT().Resolve(gomock.Any(), req.ID, managerID, chatID).
 		Return(nil)
 	s.msgRepo.EXPECT().CreateClientService(gomock.Any(), p.ID, req.ChatID, gomock.Any()).
 		Return(&m, nil)

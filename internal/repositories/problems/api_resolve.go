@@ -9,7 +9,12 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
-func (r *Repo) Resolve(ctx context.Context, managerID types.UserID, chatID types.ChatID) error {
+func (r *Repo) Resolve(
+	ctx context.Context,
+	reqID types.RequestID,
+	managerID types.UserID,
+	chatID types.ChatID,
+) error {
 	c, err := r.db.Problem(ctx).Update().
 		Where(
 			storeproblem.ManagerID(managerID),
@@ -17,6 +22,7 @@ func (r *Repo) Resolve(ctx context.Context, managerID types.UserID, chatID types
 			storeproblem.ResolvedAtIsNil(),
 		).
 		SetResolvedAt(time.Now()).
+		SetResolveRequestID(reqID).
 		Save(ctx)
 	if err != nil {
 		return fmt.Errorf("resolve problem: %v", err)

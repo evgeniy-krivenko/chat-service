@@ -27,6 +27,8 @@ func (Problem) Fields() []ent.Field {
 			Optional(),
 		field.Time("resolved_at").
 			Optional(),
+		field.UUID("resolve_request_id", types.RequestID{}).
+			Optional(),
 		field.Time("created_at").
 			Default(time.Now),
 	}

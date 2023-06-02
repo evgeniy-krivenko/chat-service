@@ -77,6 +77,26 @@ func (pu *ProblemUpdate) ClearResolvedAt() *ProblemUpdate {
 	return pu
 }
 
+// SetResolveRequestID sets the "resolve_request_id" field.
+func (pu *ProblemUpdate) SetResolveRequestID(ti types.RequestID) *ProblemUpdate {
+	pu.mutation.SetResolveRequestID(ti)
+	return pu
+}
+
+// SetNillableResolveRequestID sets the "resolve_request_id" field if the given value is not nil.
+func (pu *ProblemUpdate) SetNillableResolveRequestID(ti *types.RequestID) *ProblemUpdate {
+	if ti != nil {
+		pu.SetResolveRequestID(*ti)
+	}
+	return pu
+}
+
+// ClearResolveRequestID clears the value of the "resolve_request_id" field.
+func (pu *ProblemUpdate) ClearResolveRequestID() *ProblemUpdate {
+	pu.mutation.ClearResolveRequestID()
+	return pu
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (pu *ProblemUpdate) SetCreatedAt(t time.Time) *ProblemUpdate {
 	pu.mutation.SetCreatedAt(t)
@@ -182,6 +202,11 @@ func (pu *ProblemUpdate) check() error {
 			return &ValidationError{Name: "manager_id", err: fmt.Errorf(`store: validator failed for field "Problem.manager_id": %w`, err)}
 		}
 	}
+	if v, ok := pu.mutation.ResolveRequestID(); ok {
+		if err := v.Validate(); err != nil {
+			return &ValidationError{Name: "resolve_request_id", err: fmt.Errorf(`store: validator failed for field "Problem.resolve_request_id": %w`, err)}
+		}
+	}
 	if _, ok := pu.mutation.ChatID(); pu.mutation.ChatCleared() && !ok {
 		return errors.New(`store: clearing a required unique edge "Problem.chat"`)
 	}
@@ -211,6 +236,12 @@ func (pu *ProblemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if pu.mutation.ResolvedAtCleared() {
 		_spec.ClearField(problem.FieldResolvedAt, field.TypeTime)
+	}
+	if value, ok := pu.mutation.ResolveRequestID(); ok {
+		_spec.SetField(problem.FieldResolveRequestID, field.TypeUUID, value)
+	}
+	if pu.mutation.ResolveRequestIDCleared() {
+		_spec.ClearField(problem.FieldResolveRequestID, field.TypeUUID)
 	}
 	if value, ok := pu.mutation.CreatedAt(); ok {
 		_spec.SetField(problem.FieldCreatedAt, field.TypeTime, value)
@@ -355,6 +386,26 @@ func (puo *ProblemUpdateOne) ClearResolvedAt() *ProblemUpdateOne {
 	return puo
 }
 
+// SetResolveRequestID sets the "resolve_request_id" field.
+func (puo *ProblemUpdateOne) SetResolveRequestID(ti types.RequestID) *ProblemUpdateOne {
+	puo.mutation.SetResolveRequestID(ti)
+	return puo
+}
+
+// SetNillableResolveRequestID sets the "resolve_request_id" field if the given value is not nil.
+func (puo *ProblemUpdateOne) SetNillableResolveRequestID(ti *types.RequestID) *ProblemUpdateOne {
+	if ti != nil {
+		puo.SetResolveRequestID(*ti)
+	}
+	return puo
+}
+
+// ClearResolveRequestID clears the value of the "resolve_request_id" field.
+func (puo *ProblemUpdateOne) ClearResolveRequestID() *ProblemUpdateOne {
+	puo.mutation.ClearResolveRequestID()
+	return puo
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (puo *ProblemUpdateOne) SetCreatedAt(t time.Time) *ProblemUpdateOne {
 	puo.mutation.SetCreatedAt(t)
@@ -473,6 +524,11 @@ func (puo *ProblemUpdateOne) check() error {
 			return &ValidationError{Name: "manager_id", err: fmt.Errorf(`store: validator failed for field "Problem.manager_id": %w`, err)}
 		}
 	}
+	if v, ok := puo.mutation.ResolveRequestID(); ok {
+		if err := v.Validate(); err != nil {
+			return &ValidationError{Name: "resolve_request_id", err: fmt.Errorf(`store: validator failed for field "Problem.resolve_request_id": %w`, err)}
+		}
+	}
 	if _, ok := puo.mutation.ChatID(); puo.mutation.ChatCleared() && !ok {
 		return errors.New(`store: clearing a required unique edge "Problem.chat"`)
 	}
@@ -519,6 +575,12 @@ func (puo *ProblemUpdateOne) sqlSave(ctx context.Context) (_node *Problem, err e
 	}
 	if puo.mutation.ResolvedAtCleared() {
 		_spec.ClearField(problem.FieldResolvedAt, field.TypeTime)
+	}
+	if value, ok := puo.mutation.ResolveRequestID(); ok {
+		_spec.SetField(problem.FieldResolveRequestID, field.TypeUUID, value)
+	}
+	if puo.mutation.ResolveRequestIDCleared() {
+		_spec.ClearField(problem.FieldResolveRequestID, field.TypeUUID)
 	}
 	if value, ok := puo.mutation.CreatedAt(); ok {
 		_spec.SetField(problem.FieldCreatedAt, field.TypeTime, value)

@@ -19,6 +19,8 @@ const (
 	FieldManagerID = "manager_id"
 	// FieldResolvedAt holds the string denoting the resolved_at field in the database.
 	FieldResolvedAt = "resolved_at"
+	// FieldResolveRequestID holds the string denoting the resolve_request_id field in the database.
+	FieldResolveRequestID = "resolve_request_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// EdgeMessages holds the string denoting the messages edge name in mutations.
@@ -49,6 +51,7 @@ var Columns = []string{
 	FieldChatID,
 	FieldManagerID,
 	FieldResolvedAt,
+	FieldResolveRequestID,
 	FieldCreatedAt,
 }
 

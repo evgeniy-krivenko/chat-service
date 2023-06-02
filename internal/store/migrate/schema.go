@@ -109,6 +109,7 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "manager_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "resolved_at", Type: field.TypeTime, Nullable: true},
+		{Name: "resolve_request_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "chat_id", Type: field.TypeUUID},
 	}
@@ -120,7 +121,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "problems_chats_problems",
-				Columns:    []*schema.Column{ProblemsColumns[4]},
+				Columns:    []*schema.Column{ProblemsColumns[5]},
 				RefColumns: []*schema.Column{ChatsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

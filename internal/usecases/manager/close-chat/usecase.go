@@ -20,8 +20,17 @@ var (
 //go:generate mockgen -source=$GOFILE -destination=mocks/usecase_mock.gen.go -package=closechatmocks
 
 type problemsRepository interface {
-	GetAssignedProblem(ctx context.Context, managerID types.UserID, chatID types.ChatID) (*problemsrepo.Problem, error)
-	Resolve(ctx context.Context, managerID types.UserID, chatID types.ChatID) error
+	GetAssignedProblem(
+		ctx context.Context,
+		managerID types.UserID,
+		chatID types.ChatID,
+	) (*problemsrepo.Problem, error)
+	Resolve(
+		ctx context.Context,
+		reqID types.RequestID,
+		managerID types.UserID,
+		chatID types.ChatID,
+	) error
 }
 
 type messageRepository interface {
@@ -71,7 +80,7 @@ func (u UseCase) Handle(ctx context.Context, req Request) error {
 			return fmt.Errorf("get assigned problem: %v", err)
 		}
 
-		if err := u.problemsRepo.Resolve(ctx, req.ManagerID, req.ChatID); err != nil {
+		if err := u.problemsRepo.Resolve(ctx, req.ID, req.ManagerID, req.ChatID); err != nil {
 			return fmt.Errorf("resolve problem: %v", err)
 		}
 

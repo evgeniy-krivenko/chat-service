@@ -54,17 +54,17 @@ func (mr *MockproblemsRepositoryMockRecorder) GetAssignedProblem(ctx, managerID,
 }
 
 // Resolve mocks base method.
-func (m *MockproblemsRepository) Resolve(ctx context.Context, managerID types.UserID, chatID types.ChatID) error {
+func (m *MockproblemsRepository) Resolve(ctx context.Context, reqID types.RequestID, managerID types.UserID, chatID types.ChatID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Resolve", ctx, managerID, chatID)
+	ret := m.ctrl.Call(m, "Resolve", ctx, reqID, managerID, chatID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Resolve indicates an expected call of Resolve.
-func (mr *MockproblemsRepositoryMockRecorder) Resolve(ctx, managerID, chatID interface{}) *gomock.Call {
+func (mr *MockproblemsRepositoryMockRecorder) Resolve(ctx, reqID, managerID, chatID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockproblemsRepository)(nil).Resolve), ctx, managerID, chatID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockproblemsRepository)(nil).Resolve), ctx, reqID, managerID, chatID)
 }
 
 // MockmessageRepository is a mock of messageRepository interface.
