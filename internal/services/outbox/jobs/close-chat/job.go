@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
+
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
+	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"

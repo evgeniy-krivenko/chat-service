@@ -5,7 +5,6 @@ package e2e_test
 import (
 	"context"
 	"encoding/json"
-	apimanagerv1 "github.com/evgeniy-krivenko/chat-service/tests/e2e/api/manager/v1"
 	"net/http"
 	"strings"
 
@@ -14,6 +13,7 @@ import (
 
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 	apiclientv1 "github.com/evgeniy-krivenko/chat-service/tests/e2e/api/client/v1"
+	apimanagerv1 "github.com/evgeniy-krivenko/chat-service/tests/e2e/api/manager/v1"
 )
 
 var _ = Describe("Error Responses", Ordered, func() {

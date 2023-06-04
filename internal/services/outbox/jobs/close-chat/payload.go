@@ -9,10 +9,10 @@ import (
 )
 
 type payload struct {
-	RequestID   types.RequestID `validate:"required"`
-	ManagerID   types.UserID    `validate:"required"`
-	ChatID      types.ChatID    `validate:"required"`
-	ClientMsgID types.MessageID `validate:"required"`
+	RequestID   types.RequestID `json:"requestId" validate:"required"`
+	ManagerID   types.UserID    `json:"managerId" validate:"required"`
+	ChatID      types.ChatID    `json:"chatId" validate:"required"`
+	ClientMsgID types.MessageID `json:"clientMsgId" validate:"required"`
 }
 
 func (p payload) Validate() error {

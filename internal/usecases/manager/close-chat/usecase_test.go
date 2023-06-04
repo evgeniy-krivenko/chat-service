@@ -4,12 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 
+	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
 	closechatjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/close-chat"
 	"github.com/evgeniy-krivenko/chat-service/internal/testingh"

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	"time"
 
+	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
 	closechatjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/close-chat"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"

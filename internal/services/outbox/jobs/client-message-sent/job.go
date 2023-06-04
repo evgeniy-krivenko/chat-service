@@ -2,6 +2,7 @@ package clientmessagesentjob
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -97,8 +98,8 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		return nil
 	})
 
-	if err := eg.Wait(); err != nil {
-		return err
+	if err := eg.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+		return fmt.Errorf("wait for publish to event stream: %v", err)
 	}
 
 	return nil

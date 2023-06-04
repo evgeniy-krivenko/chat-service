@@ -3,7 +3,6 @@ package closechatjob_test
 import (
 	"errors"
 	"fmt"
-	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	"testing"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
+	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	closechatjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/close-chat"
 	closechatjobmocks "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/close-chat/mocks"

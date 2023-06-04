@@ -229,11 +229,10 @@ func (c *Chat) HandleEvent(_ context.Context, data []byte) error {
 			return fmt.Errorf("unknown message: %v", vv.MessageId)
 		}
 
-		switch event.EventType {
-		case "MessageSentEvent":
+		switch event.EventType { //nolint:exhaustive
+		case apiclientevents.EventTypeMessageSentEvent:
 			msg.IsReceived = true
-
-		case "MessageBlockedEvent":
+		case apiclientevents.EventTypeMessageBlockedEvent:
 			msg.IsBlocked = true
 		}
 	}
