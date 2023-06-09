@@ -108,3 +108,8 @@ func (db *Database) Message(ctx context.Context) *MessageClient {
 func (db *Database) Problem(ctx context.Context) *ProblemClient {
 	return db.loadClient(ctx).Problem
 }
+
+// Profile is the client for interacting with the Profile builders.
+func (db *Database) Profile(ctx context.Context) *ProfileClient {
+	return db.loadClient(ctx).Profile
+}

@@ -11,6 +11,7 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/store/chat"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/problem"
+	"github.com/evgeniy-krivenko/chat-service/internal/store/profile"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -52,9 +53,11 @@ type MessageEdges struct {
 	Chat *Chat `json:"chat,omitempty"`
 	// Problem holds the value of the problem edge.
 	Problem *Problem `json:"problem,omitempty"`
+	// Profile holds the value of the profile edge.
+	Profile *Profile `json:"profile,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // ChatOrErr returns the Chat value or an error if the edge
@@ -81,6 +84,19 @@ func (e MessageEdges) ProblemOrErr() (*Problem, error) {
 		return e.Problem, nil
 	}
 	return nil, &NotLoadedError{edge: "problem"}
+}
+
+// ProfileOrErr returns the Profile value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MessageEdges) ProfileOrErr() (*Profile, error) {
+	if e.loadedTypes[2] {
+		if e.Profile == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: profile.Label}
+		}
+		return e.Profile, nil
+	}
+	return nil, &NotLoadedError{edge: "profile"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -204,6 +220,11 @@ func (m *Message) QueryChat() *ChatQuery {
 // QueryProblem queries the "problem" edge of the Message entity.
 func (m *Message) QueryProblem() *ProblemQuery {
 	return NewMessageClient(m.config).QueryProblem(m)
+}
+
+// QueryProfile queries the "profile" edge of the Message entity.
+func (m *Message) QueryProfile() *ProfileQuery {
+	return NewMessageClient(m.config).QueryProfile(m)
 }
 
 // Update returns a builder for updating this Message.
