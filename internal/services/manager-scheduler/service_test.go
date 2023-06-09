@@ -78,6 +78,7 @@ func (s *ManagerSchedulerSuite) TestScheduling() {
 	clientID := types.NewUserID()
 
 	chat := s.Store.Chat.Create().SetClientID(clientID).SaveX(s.Ctx)
+	s.Store.Profile.Create().SetID(clientID).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
 	s.createExpectingManagerProblem(chat.ID, clientID)
 	s.createExpectingManagerProblem(chat.ID, clientID)
 
@@ -113,6 +114,7 @@ func (s *ManagerSchedulerSuite) TestLessManagersThanProblems() {
 	clientID := types.NewUserID()
 
 	chat := s.Store.Chat.Create().SetClientID(clientID).SaveX(s.Ctx)
+	s.Store.Profile.Create().SetID(clientID).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
 	for i := 0; i < problems; i++ {
 		s.createExpectingManagerProblem(chat.ID, clientID)
 	}
@@ -134,6 +136,7 @@ func (s *ManagerSchedulerSuite) TestMoreManagersThanProblems() {
 	clientID := types.NewUserID()
 
 	chat := s.Store.Chat.Create().SetClientID(clientID).SaveX(s.Ctx)
+	s.Store.Profile.Create().SetID(clientID).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
 	s.createExpectingManagerProblem(chat.ID, clientID)
 
 	for i := 0; i < managers; i++ {

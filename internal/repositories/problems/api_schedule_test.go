@@ -4,6 +4,7 @@ package problemsrepo_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -72,6 +73,12 @@ func (s *ProblemsRepoScheduleAPISuite) Test_GetAvailableProblems() {
 
 		// Create one more problem with msg chat and manager
 		clientID := types.NewUserID()
+
+		s.Database.Profile(s.Ctx).Create().
+			SetID(clientID).
+			SetUpdatedAt(time.Now()).
+			SaveX(s.Ctx)
+
 		problemID, chatID := s.createProblemAndChatWithManager(clientID)
 		_ = s.Database.Message(s.Ctx).Create().
 			SetID(types.NewMessageID()).
@@ -97,6 +104,11 @@ func (s *ProblemsRepoScheduleAPISuite) Test_SetManagerForProblem() {
 		// Arrange.
 		authorID := types.NewUserID()
 		managerID := types.NewUserID()
+
+		s.Database.Profile(s.Ctx).Create().
+			SetID(authorID).
+			SetUpdatedAt(time.Now()).
+			SaveX(s.Ctx)
 
 		problemID, chatID := s.createProblemAndChat(authorID)
 		_ = s.Database.Message(s.Ctx).Create().
@@ -131,6 +143,11 @@ func (s *ProblemsRepoScheduleAPISuite) Test_SetManagerForProblem() {
 
 		problemID, chatID := s.createProblemAndChatWithManager(managerID)
 
+		s.Database.Profile(s.Ctx).Create().
+			SetID(authorID).
+			SetUpdatedAt(time.Now()).
+			SaveX(s.Ctx)
+
 		_ = s.Database.Message(s.Ctx).Create().
 			SetID(types.NewMessageID()).
 			SetChatID(chatID).
@@ -157,6 +174,11 @@ func (s *ProblemsRepoScheduleAPISuite) Test_GetProblemReqID() {
 		// Arrange.
 		authorID := types.NewUserID()
 		requestID := types.NewRequestID()
+
+		s.Database.Profile(s.Ctx).Create().
+			SetID(authorID).
+			SetUpdatedAt(time.Now()).
+			SaveX(s.Ctx)
 
 		problemID, chatID := s.createProblemAndChat(authorID)
 		firstMsg := s.Database.Message(s.Ctx).Create().
@@ -199,6 +221,11 @@ func (s *ProblemsRepoScheduleAPISuite) Test_GetProblemReqID() {
 		authorID := types.NewUserID()
 		requestID := types.NewRequestID()
 
+		s.Database.Profile(s.Ctx).Create().
+			SetID(authorID).
+			SetUpdatedAt(time.Now()).
+			SaveX(s.Ctx)
+
 		problemID, chatID := s.createProblemAndChatWithManager(authorID)
 		firstMsg := s.Database.Message(s.Ctx).Create().
 			SetID(types.NewMessageID()).
@@ -225,6 +252,11 @@ func (s *ProblemsRepoScheduleAPISuite) Test_GetProblemReqID() {
 		// Arrange.
 		authorID := types.NewUserID()
 		requestID := types.NewRequestID()
+
+		s.Database.Profile(s.Ctx).Create().
+			SetID(authorID).
+			SetUpdatedAt(time.Now()).
+			SaveX(s.Ctx)
 
 		problemID, chatID := s.createProblemAndChat(authorID)
 		firstMsg := s.Database.Message(s.Ctx).Create().
@@ -268,6 +300,11 @@ func (s *ProblemsRepoScheduleAPISuite) createMessage(isVisibleForManager bool) t
 	authorID := types.NewUserID()
 	problemID, chatID := s.createProblemAndChat(authorID)
 	msgID := types.NewMessageID()
+
+	s.Database.Profile(s.Ctx).Create().
+		SetID(authorID).
+		SetUpdatedAt(time.Now()).
+		SaveX(s.Ctx)
 
 	_, err := s.Database.Message(s.Ctx).Create().
 		SetID(msgID).

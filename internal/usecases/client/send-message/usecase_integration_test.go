@@ -95,6 +95,8 @@ func (s *UseCaseIntegrationSuite) TestPositiveScenario() {
 	clientID := types.NewUserID()
 	const messages = 3
 
+	s.Database.Profile(s.Ctx).Create().SetID(clientID).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
+
 	// Action.
 	for i := 0; i < messages; i++ {
 		resp, err := s.uCase.Handle(s.Ctx, sendmessage.Request{
@@ -121,6 +123,8 @@ func (s *UseCaseIntegrationSuite) TestIdempotency() {
 	reqID := types.NewRequestID()
 	clientID := types.NewUserID()
 	const messages = 3
+
+	s.Database.Profile(s.Ctx).Create().SetID(clientID).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
 
 	// Action.
 	for i := 0; i < messages; i++ {

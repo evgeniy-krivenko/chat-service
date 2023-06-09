@@ -89,12 +89,15 @@ func (s *MsgRepoHistoryAPISuite) Test_GetClientChatMessages() {
 		const messagesCount = 30
 		client1 := types.NewUserID()
 
+		s.createProfile(client1)
+
 		problem1, chat1 := s.createProblemAndChat(client1)
 		preparedMsgs := s.createMessages(messagesCount, chat1, problem1, client1, true, true, false)
 		s.Require().Len(preparedMsgs, messagesCount)
 
 		// Messages from other chat must be ignored.
 		client2 := types.NewUserID()
+		s.createProfile(client2)
 		problem2, chat2 := s.createProblemAndChat(client2)
 		s.createMessages(3, chat2, problem2, client2, true, true, false)
 
@@ -130,6 +133,7 @@ func (s *MsgRepoHistoryAPISuite) Test_GetClientChatMessages() {
 	s.Run("adapt logic", func() {
 		client := types.NewUserID()
 		problem, chat := s.createProblemAndChat(client)
+		s.createProfile(client)
 
 		s.createMessages(1, chat, problem, types.UserIDNil, true, false, true)
 		lastMsg := s.createMessages(1, chat, problem, client, true, false, false)[0]
@@ -219,11 +223,13 @@ func (s *MsgRepoHistoryAPISuite) Test_GetProblemMessages() {
 		client1 := types.NewUserID()
 
 		problem1, chat1 := s.createProblemAndChat(client1)
+		s.createProfile(client1)
 		preparedMsgs := s.createMessages(messagesCount, chat1, problem1, client1, true, true, false)
 		s.Require().Len(preparedMsgs, messagesCount)
 
 		// Messages from other chat must be ignored.
 		client2 := types.NewUserID()
+		s.createProfile(client2)
 		problem2, chat2 := s.createProblemAndChat(client2)
 		s.createMessages(3, chat2, problem2, client2, true, true, false)
 
@@ -268,6 +274,7 @@ func (s *MsgRepoHistoryAPISuite) Test_GetProblemMessages() {
 		client := types.NewUserID()
 		problem, chat := s.createProblemAndChat(client)
 
+		s.createProfile(client)
 		s.createMessages(1, chat, problem, types.UserIDNil, true, true, true)
 		lastMsg := s.createMessages(1, chat, problem, client, true, true, false)[0]
 
@@ -307,6 +314,13 @@ func (s *MsgRepoHistoryAPISuite) createProblemAndChat(clientID types.UserID) (ty
 	s.Require().NoError(err)
 
 	return problem.ID, chat.ID
+}
+
+func (s *MsgRepoHistoryAPISuite) createProfile(clientID types.UserID) {
+	s.Database.Profile(s.Ctx).Create().
+		SetID(clientID).
+		SetUpdatedAt(time.Now()).
+		SaveX(s.Ctx)
 }
 
 // createMessages creates messages and returns it in order from newest to oldest.
