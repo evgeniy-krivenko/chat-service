@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 	"log"
 	"os/signal"
 	"syscall"
@@ -153,6 +154,11 @@ func run() (errReturned error) {
 		return fmt.Errorf("init jobs repo: %v", err)
 	}
 
+	profilesRepo, err := profilesrepo.New(profilesrepo.NewOptions(database))
+	if err != nil {
+		return fmt.Errorf("init profiles repo: %v", err)
+	}
+
 	// In-memory storages.
 	eventStream := inmemeventstream.New()
 	defer eventStream.Close()
@@ -172,6 +178,7 @@ func run() (errReturned error) {
 	if err != nil {
 		return fmt.Errorf("init msg producer: %v", err)
 	}
+	defer msgProducer.Close()
 
 	outboxService, err := outbox.New(outbox.NewOptions(
 		cfg.Services.Outbox.Workers,
@@ -305,6 +312,7 @@ func run() (errReturned error) {
 		msgRepo,
 		chatsRepo,
 		problemsRepo,
+		profilesRepo,
 		outboxService,
 		database,
 		eventStream,

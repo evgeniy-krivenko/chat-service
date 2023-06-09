@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
+	getuserprofile "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-user-profile"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
@@ -39,6 +41,7 @@ func initServerClient(
 	msgRepo *messagesrepo.Repo,
 	chatRepo *chatsrepo.Repo,
 	problemRepo *problemsrepo.Repo,
+	profilesRepo *profilesrepo.Repo,
 	outboxSrv *outbox.Service,
 	db *store.Database,
 	stream eventstream.EventStream,
@@ -56,8 +59,12 @@ func initServerClient(
 	if err != nil {
 		return nil, fmt.Errorf("create send message usecase: %v", err)
 	}
+	getUserProfileUseCase, err := getuserprofile.New(getuserprofile.NewOptions(profilesRepo))
+	if err != nil {
+		return nil, fmt.Errorf("get user profile: %v", err)
+	}
 
-	v1Handlers, err := clientv1.NewHandlers(clientv1.NewOptions(getHistoryUseCase, sendMsgUseCase))
+	v1Handlers, err := clientv1.NewHandlers(clientv1.NewOptions(getHistoryUseCase, sendMsgUseCase, getUserProfileUseCase))
 	if err != nil {
 		return nil, fmt.Errorf("create v1 handlers: %v", err)
 	}

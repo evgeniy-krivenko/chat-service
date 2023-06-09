@@ -13,6 +13,7 @@ type OptOptionsSetter func(o *Options)
 func NewOptions(
 	getHistory getHistoryUseCase,
 	sendMsgUseCase sendMessageUseCase,
+	getUserProfile getUserProfile,
 	options ...OptOptionsSetter,
 ) Options {
 	o := Options{}
@@ -21,6 +22,7 @@ func NewOptions(
 
 	o.getHistory = getHistory
 	o.sendMsgUseCase = sendMsgUseCase
+	o.getUserProfile = getUserProfile
 
 	for _, opt := range options {
 		opt(&o)
@@ -32,6 +34,7 @@ func (o *Options) Validate() error {
 	errs := new(errors461e464ebed9.ValidationErrors)
 	errs.Add(errors461e464ebed9.NewValidationError("getHistory", _validate_Options_getHistory(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("sendMsgUseCase", _validate_Options_sendMsgUseCase(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("getUserProfile", _validate_Options_getUserProfile(o)))
 	return errs.AsError()
 }
 
@@ -45,6 +48,13 @@ func _validate_Options_getHistory(o *Options) error {
 func _validate_Options_sendMsgUseCase(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.sendMsgUseCase, "required"); err != nil {
 		return fmt461e464ebed9.Errorf("field `sendMsgUseCase` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_getUserProfile(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.getUserProfile, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `getUserProfile` did not pass the test: %w", err)
 	}
 	return nil
 }

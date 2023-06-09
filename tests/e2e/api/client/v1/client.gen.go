@@ -51,6 +51,12 @@ type GetHistoryResponse struct {
 	Error *Error        `json:"error,omitempty"`
 }
 
+// GetUserProfileResponse defines model for GetUserProfileResponse.
+type GetUserProfileResponse struct {
+	Data  *UserProfile `json:"data,omitempty"`
+	Error *Error       `json:"error,omitempty"`
+}
+
 // Message defines model for Message.
 type Message struct {
 	AuthorId   *types.UserID   `json:"authorId,omitempty"`
@@ -86,11 +92,23 @@ type SendMessageResponse struct {
 	Error *Error         `json:"error,omitempty"`
 }
 
+// UserProfile defines model for UserProfile.
+type UserProfile struct {
+	FirstName string       `json:"firstName"`
+	Id        types.UserID `json:"id"`
+	LastName  string       `json:"lastName"`
+}
+
 // XRequestIDHeader defines model for XRequestIDHeader.
 type XRequestIDHeader = types.RequestID
 
 // PostGetHistoryParams defines parameters for PostGetHistory.
 type PostGetHistoryParams struct {
+	XRequestID XRequestIDHeader `json:"X-Request-ID"`
+}
+
+// PostGetUserProfileParams defines parameters for PostGetUserProfile.
+type PostGetUserProfileParams struct {
 	XRequestID XRequestIDHeader `json:"X-Request-ID"`
 }
 
@@ -183,6 +201,9 @@ type ClientInterface interface {
 
 	PostGetHistory(ctx context.Context, params *PostGetHistoryParams, body PostGetHistoryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostGetUserProfile request
+	PostGetUserProfile(ctx context.Context, params *PostGetUserProfileParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// PostSendMessage request with any body
 	PostSendMessageWithBody(ctx context.Context, params *PostSendMessageParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -203,6 +224,18 @@ func (c *Client) PostGetHistoryWithBody(ctx context.Context, params *PostGetHist
 
 func (c *Client) PostGetHistory(ctx context.Context, params *PostGetHistoryParams, body PostGetHistoryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostGetHistoryRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostGetUserProfile(ctx context.Context, params *PostGetUserProfileParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostGetUserProfileRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -273,6 +306,42 @@ func NewPostGetHistoryRequestWithBody(server string, params *PostGetHistoryParam
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	var headerParam0 string
+
+	headerParam0, err = runtime.StyleParamWithLocation("simple", false, "X-Request-ID", runtime.ParamLocationHeader, params.XRequestID)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("X-Request-ID", headerParam0)
+
+	return req, nil
+}
+
+// NewPostGetUserProfileRequest generates requests for PostGetUserProfile
+func NewPostGetUserProfileRequest(server string, params *PostGetUserProfileParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/getUserProfile")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	var headerParam0 string
 
@@ -383,6 +452,9 @@ type ClientWithResponsesInterface interface {
 
 	PostGetHistoryWithResponse(ctx context.Context, params *PostGetHistoryParams, body PostGetHistoryJSONRequestBody, reqEditors ...RequestEditorFn) (*PostGetHistoryResponse, error)
 
+	// PostGetUserProfile request
+	PostGetUserProfileWithResponse(ctx context.Context, params *PostGetUserProfileParams, reqEditors ...RequestEditorFn) (*PostGetUserProfileResponse, error)
+
 	// PostSendMessage request with any body
 	PostSendMessageWithBodyWithResponse(ctx context.Context, params *PostSendMessageParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostSendMessageResponse, error)
 
@@ -405,6 +477,28 @@ func (r PostGetHistoryResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostGetHistoryResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostGetUserProfileResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GetUserProfileResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PostGetUserProfileResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostGetUserProfileResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -450,6 +544,15 @@ func (c *ClientWithResponses) PostGetHistoryWithResponse(ctx context.Context, pa
 	return ParsePostGetHistoryResponse(rsp)
 }
 
+// PostGetUserProfileWithResponse request returning *PostGetUserProfileResponse
+func (c *ClientWithResponses) PostGetUserProfileWithResponse(ctx context.Context, params *PostGetUserProfileParams, reqEditors ...RequestEditorFn) (*PostGetUserProfileResponse, error) {
+	rsp, err := c.PostGetUserProfile(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostGetUserProfileResponse(rsp)
+}
+
 // PostSendMessageWithBodyWithResponse request with arbitrary body returning *PostSendMessageResponse
 func (c *ClientWithResponses) PostSendMessageWithBodyWithResponse(ctx context.Context, params *PostSendMessageParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostSendMessageResponse, error) {
 	rsp, err := c.PostSendMessageWithBody(ctx, params, contentType, body, reqEditors...)
@@ -483,6 +586,32 @@ func ParsePostGetHistoryResponse(rsp *http.Response) (*PostGetHistoryResponse, e
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest GetHistoryResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostGetUserProfileResponse parses an HTTP response from a PostGetUserProfileWithResponse call
+func ParsePostGetUserProfileResponse(rsp *http.Response) (*PostGetUserProfileResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostGetUserProfileResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GetUserProfileResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

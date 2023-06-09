@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	gethistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-history"
+	getuserprofile "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-user-profile"
 	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/send-message"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -87,4 +88,42 @@ func (m *MocksendMessageUseCase) Handle(ctx context.Context, req sendmessage.Req
 func (mr *MocksendMessageUseCaseMockRecorder) Handle(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Handle", reflect.TypeOf((*MocksendMessageUseCase)(nil).Handle), ctx, req)
+}
+
+// MockgetUserProfile is a mock of getUserProfile interface.
+type MockgetUserProfile struct {
+	ctrl     *gomock.Controller
+	recorder *MockgetUserProfileMockRecorder
+}
+
+// MockgetUserProfileMockRecorder is the mock recorder for MockgetUserProfile.
+type MockgetUserProfileMockRecorder struct {
+	mock *MockgetUserProfile
+}
+
+// NewMockgetUserProfile creates a new mock instance.
+func NewMockgetUserProfile(ctrl *gomock.Controller) *MockgetUserProfile {
+	mock := &MockgetUserProfile{ctrl: ctrl}
+	mock.recorder = &MockgetUserProfileMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockgetUserProfile) EXPECT() *MockgetUserProfileMockRecorder {
+	return m.recorder
+}
+
+// Handle mocks base method.
+func (m *MockgetUserProfile) Handle(ctx context.Context, req getuserprofile.Request) (getuserprofile.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Handle", ctx, req)
+	ret0, _ := ret[0].(getuserprofile.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Handle indicates an expected call of Handle.
+func (mr *MockgetUserProfileMockRecorder) Handle(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Handle", reflect.TypeOf((*MockgetUserProfile)(nil).Handle), ctx, req)
 }
