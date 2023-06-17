@@ -1,5 +1,3 @@
-//go:build integration || e2e
-
 package keycloakclient
 
 import (
@@ -8,6 +6,7 @@ import (
 	"net/http"
 )
 
+//nolint:tagliatelle
 type RPT struct {
 	AccessToken      string `json:"access_token"`
 	ExpiresIn        int    `json:"expires_in"`
