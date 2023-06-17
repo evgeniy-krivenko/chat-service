@@ -1,7 +1,9 @@
-import React, { FC, createContext, useState, JSX } from 'react';
+import React, {FC, createContext, useState, JSX, useEffect} from 'react';
+import {IUserProfile} from "../../types/user";
+import {APIClient} from "../../api";
 
 export interface IAuthProvider {
-  user?: IUser;
+  user?: IUserProfile;
   signIn: ISignIn;
   signOut: ISignOut;
 }
@@ -12,13 +14,10 @@ const initialValue: IAuthProvider = {
   signIn: () => null,
 }
 
-export type ISignIn = (user: IUser, cb: () => void) => void
+export type ISignIn = (payload: IUserProfile, cb: () => void) => void
 
 export type ISignOut = (cb: () => void) => void
 
-export interface IUser {
-  username: string;
-}
 
 export const AuthContext = createContext<IAuthProvider>(initialValue);
 
@@ -27,9 +26,15 @@ export interface AuthProviderProps {
 }
 
 const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<IUser>(null);
+  const [user, setUser] = useState<IUserProfile>(null);
 
-  const signIn = (newUser: IUser, cb) => {
+  useEffect(() => {
+    APIClient.getUserProfile()
+      .then((user) => setUser(user))
+      .catch(() => setUser(null))
+  }, [])
+
+  const signIn = (newUser: IUserProfile, cb) => {
     setUser(newUser);
     cb();
   }

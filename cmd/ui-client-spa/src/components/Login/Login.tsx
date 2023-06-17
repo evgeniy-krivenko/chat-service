@@ -1,20 +1,33 @@
-import {FC, FormEvent} from 'react';
-import {useNavigate, useLocation} from "react-router-dom";
+import React, {FC, FormEvent, useState} from 'react';
+import {useNavigate, useLocation, Navigate} from "react-router-dom";
 import useAuth from "../../hook/useAuth";
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface LoginProps {
-
-}
+import {green} from '@mui/material/colors';
+import {Alert, Box, Button, CircularProgress, Container, Grid, TextField} from "@mui/material";
+import {APIClient} from "../../api";
 
 export interface LoginForm {
-  username: { value: string };
+  login: { value: string };
+  password: { value: string };
 }
 
-const Login: FC<LoginProps> = () => {
+const Login: FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn } = useAuth();
+  const {user, signIn} = useAuth();
+  const [err, setErr] = useState<string>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const buttonSx = {
+    ...(user && {
+      bgcolor: green[500],
+      '&:hover': {
+        bgcolor: green[700],
+      },
+    }),
+    marginTop: '8px',
+    width: '160px',
+    height: '48px',
+  };
 
   const fromPage = location.state?.from?.pathname || '/';
 
@@ -22,21 +35,100 @@ const Login: FC<LoginProps> = () => {
     event.preventDefault();
     const form = event.target as LoginForm;
 
-    const username = form.username.value;
+    const login = form.login?.value;
+    const password = form.password?.value;
 
-    signIn({ username }, () => navigate(fromPage, { replace: true } ));
+    setIsLoading(true);
+
+    APIClient.login({login, password})
+      .then((res) => {
+        signIn(res.user, () => navigate(fromPage, {replace: true}));
+
+        localStorage.setItem('token', res.token);
+      })
+      .catch((e) => setErr(e.message))
+      .finally(() => setIsLoading(false));
+  }
+
+  if (user) {
+    return <Navigate to={fromPage} state={location} />
   }
 
   return (
     <div>
-      <h1>Login</h1>
-      <form onSubmit={handleSubmit}>
-        <label >
-          Name:
-          <input name="username" />
-        </label>
-        <button type="submit">Login</button>
-      </form>
+      <Container>
+        <Grid
+          container
+          style={{marginTop: '15vh'}}
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Grid
+            container
+            alignItems="center"
+            justifyContent="center"
+            direction="column"
+          >
+            <h1>Login</h1>
+            <Box
+              p={4}
+              onSubmit={handleSubmit}
+              flexDirection="column"
+              component="form"
+              sx={{
+                '& .MuiTextField-root': {m: 2, width: '250px'},
+                display: 'block',
+              }}
+              noValidate
+              autoComplete="off"
+            >
+              <Grid xs={12}>
+                <TextField
+                  onChange={() => setErr(null)}
+                  name="login"
+                  required
+                  id="login"
+                  label="Login"
+                  disabled={isLoading}
+                />
+              </Grid>
+              <Grid xs={12}>
+                <TextField
+                  onChange={() => setErr(null)}
+                  name="password"
+                  required
+                  type="password"
+                  id="password"
+                  label="Password"
+                  disabled={isLoading}
+                />
+              </Grid>
+              <Button
+                sx={buttonSx}
+                type="submit"
+                variant="contained"
+                disabled={isLoading}
+              >
+                Login
+                {isLoading && (
+                  <CircularProgress
+                    size={24}
+                    sx={{
+                      color: green[500],
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      marginTop: '-12px',
+                      marginLeft: '-12px',
+                    }}
+                  />
+                )}
+              </Button>
+              {err && <Alert style={{margin: '24px 0'}} severity="error">{err}</Alert>}
+            </Box>
+          </Grid>
+        </Grid>
+      </Container>
     </div>
   );
 };
