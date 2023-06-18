@@ -6,6 +6,7 @@ import (
 
 	gethistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-history"
 	getuserprofile "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-user-profile"
+	"github.com/evgeniy-krivenko/chat-service/internal/usecases/client/login"
 	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/send-message"
 )
 
@@ -25,11 +26,16 @@ type getUserProfile interface {
 	Handle(ctx context.Context, req getuserprofile.Request) (getuserprofile.Response, error)
 }
 
+type loginUseCase interface {
+	Handle(ctx context.Context, req login.Request) (login.Response, error)
+}
+
 //go:generate options-gen -out-filename=handler_options.gen.go -from-struct=Options
 type Options struct {
 	getHistory     getHistoryUseCase  `option:"mandatory" validate:"required"`
 	sendMsgUseCase sendMessageUseCase `option:"mandatory" validate:"required"`
 	getUserProfile getUserProfile     `option:"mandatory" validate:"required"`
+	loginUseCase   loginUseCase       `option:"mandatory" validate:"required"`
 }
 
 type Handlers struct {

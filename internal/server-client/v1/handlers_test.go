@@ -24,6 +24,7 @@ type HandlersSuite struct {
 	getHistoryUseCase     *clientv1mocks.MockgetHistoryUseCase
 	sendMsgUseCase        *clientv1mocks.MocksendMessageUseCase
 	getUserProfileUseCase *clientv1mocks.MockgetUserProfile
+	loginUseCase          *clientv1mocks.MockloginUseCase
 	handlers              clientv1.Handlers
 
 	clientID types.UserID
@@ -39,12 +40,14 @@ func (s *HandlersSuite) SetupTest() {
 	s.getHistoryUseCase = clientv1mocks.NewMockgetHistoryUseCase(s.ctrl)
 	s.sendMsgUseCase = clientv1mocks.NewMocksendMessageUseCase(s.ctrl)
 	s.getUserProfileUseCase = clientv1mocks.NewMockgetUserProfile(s.ctrl)
+	s.loginUseCase = clientv1mocks.NewMockloginUseCase(s.ctrl)
 	{
 		var err error
 		s.handlers, err = clientv1.NewHandlers(clientv1.NewOptions(
 			s.getHistoryUseCase,
 			s.sendMsgUseCase,
 			s.getUserProfileUseCase,
+			s.loginUseCase,
 		))
 		s.Require().NoError(err)
 	}

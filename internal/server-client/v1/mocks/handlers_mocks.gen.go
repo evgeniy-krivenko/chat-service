@@ -10,6 +10,7 @@ import (
 
 	gethistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-history"
 	getuserprofile "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-user-profile"
+	login "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/login"
 	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/send-message"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -126,4 +127,42 @@ func (m *MockgetUserProfile) Handle(ctx context.Context, req getuserprofile.Requ
 func (mr *MockgetUserProfileMockRecorder) Handle(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Handle", reflect.TypeOf((*MockgetUserProfile)(nil).Handle), ctx, req)
+}
+
+// MockloginUseCase is a mock of loginUseCase interface.
+type MockloginUseCase struct {
+	ctrl     *gomock.Controller
+	recorder *MockloginUseCaseMockRecorder
+}
+
+// MockloginUseCaseMockRecorder is the mock recorder for MockloginUseCase.
+type MockloginUseCaseMockRecorder struct {
+	mock *MockloginUseCase
+}
+
+// NewMockloginUseCase creates a new mock instance.
+func NewMockloginUseCase(ctrl *gomock.Controller) *MockloginUseCase {
+	mock := &MockloginUseCase{ctrl: ctrl}
+	mock.recorder = &MockloginUseCaseMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockloginUseCase) EXPECT() *MockloginUseCaseMockRecorder {
+	return m.recorder
+}
+
+// Handle mocks base method.
+func (m *MockloginUseCase) Handle(ctx context.Context, req login.Request) (login.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Handle", ctx, req)
+	ret0, _ := ret[0].(login.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Handle indicates an expected call of Handle.
+func (mr *MockloginUseCaseMockRecorder) Handle(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Handle", reflect.TypeOf((*MockloginUseCase)(nil).Handle), ctx, req)
 }
