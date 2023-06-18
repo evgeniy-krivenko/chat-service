@@ -11,6 +11,7 @@ import (
 
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
+	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 	types "github.com/evgeniy-krivenko/chat-service/internal/types"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -80,6 +81,44 @@ func (m *MockproblemsRepo) SetManagerForProblem(ctx context.Context, problemID t
 func (mr *MockproblemsRepoMockRecorder) SetManagerForProblem(ctx, problemID, managerID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetManagerForProblem", reflect.TypeOf((*MockproblemsRepo)(nil).SetManagerForProblem), ctx, problemID, managerID)
+}
+
+// MockprofilesRepository is a mock of profilesRepository interface.
+type MockprofilesRepository struct {
+	ctrl     *gomock.Controller
+	recorder *MockprofilesRepositoryMockRecorder
+}
+
+// MockprofilesRepositoryMockRecorder is the mock recorder for MockprofilesRepository.
+type MockprofilesRepositoryMockRecorder struct {
+	mock *MockprofilesRepository
+}
+
+// NewMockprofilesRepository creates a new mock instance.
+func NewMockprofilesRepository(ctrl *gomock.Controller) *MockprofilesRepository {
+	mock := &MockprofilesRepository{ctrl: ctrl}
+	mock.recorder = &MockprofilesRepositoryMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockprofilesRepository) EXPECT() *MockprofilesRepositoryMockRecorder {
+	return m.recorder
+}
+
+// GetProfileByID mocks base method.
+func (m *MockprofilesRepository) GetProfileByID(ctx context.Context, id types.UserID) (*profilesrepo.Profile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProfileByID", ctx, id)
+	ret0, _ := ret[0].(*profilesrepo.Profile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProfileByID indicates an expected call of GetProfileByID.
+func (mr *MockprofilesRepositoryMockRecorder) GetProfileByID(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileByID", reflect.TypeOf((*MockprofilesRepository)(nil).GetProfileByID), ctx, id)
 }
 
 // MockmessageRepo is a mock of messageRepo interface.
