@@ -11,6 +11,8 @@ type Message struct {
 	ID                  types.MessageID
 	ChatID              types.ChatID
 	AuthorID            types.UserID
+	AuthorFirstName     string
+	AuthorLastName      string
 	InitialRequestID    types.RequestID
 	Body                string
 	CreatedAt           time.Time
@@ -28,10 +30,19 @@ func adaptStoreMessage(m *store.Message) Message {
 		managerID = p.ManagerID
 	}
 
+	var authorFirstName, authorLastName string
+	profile := m.Edges.Profile
+	if profile != nil {
+		authorFirstName = profile.FirstName
+		authorLastName = profile.LastName
+	}
+
 	return Message{
 		ID:                  m.ID,
 		ChatID:              m.ChatID,
 		AuthorID:            m.AuthorID,
+		AuthorFirstName:     authorFirstName,
+		AuthorLastName:      authorLastName,
 		InitialRequestID:    m.InitialRequestID,
 		Body:                m.Body,
 		CreatedAt:           m.CreatedAt,

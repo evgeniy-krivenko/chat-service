@@ -98,6 +98,7 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		types.UserIDNil,
 		msg.CreatedAt,
 		msg.Body,
+		"",
 		msg.IsService,
 	)); err != nil {
 		j.lg.Warn(

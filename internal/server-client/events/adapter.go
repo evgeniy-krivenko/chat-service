@@ -26,11 +26,12 @@ func (Adapter) Adapt(ev eventstream.Event) (any, error) {
 		event.RequestId = e.RequestID
 
 		err = event.FromNewMessageEvent(NewMessageEvent{
-			AuthorId:  pointer.PtrWithZeroAsNil(e.AuthorID),
-			CreatedAt: e.CreatedAt,
-			IsService: e.IsService,
-			Body:      e.MessageBody,
-			MessageId: e.MessageID,
+			AuthorId:   pointer.PtrWithZeroAsNil(e.AuthorID),
+			CreatedAt:  e.CreatedAt,
+			IsService:  e.IsService,
+			Body:       e.MessageBody,
+			MessageId:  e.MessageID,
+			AuthorName: pointer.PtrWithZeroAsNil(e.AuthorName),
 		})
 	case *eventstream.MessageSentEvent:
 		event.EventId = e.EventID

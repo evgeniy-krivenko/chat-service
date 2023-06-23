@@ -19,6 +19,7 @@ func TestNewMessageEvent_Validate(t *testing.T) {
 		types.UserIDNil,
 		time.Unix(1, 1).UTC(),
 		"Manager will coming soon",
+		"",
 		true,
 	)
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	storeprofile "github.com/evgeniy-krivenko/chat-service/internal/store/profile"
 	"time"
 
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
@@ -33,6 +34,9 @@ func (r *Repo) GetClientChatMessages(
 ) ([]Message, *Cursor, error) {
 	query := r.db.Message(ctx).Query().
 		Unique(false).
+		WithProfile(func(query *store.ProfileQuery) {
+			query.Where(storeprofile.IDNEQ(clientID))
+		}).
 		Where(storemessage.IsVisibleForClient(true)).
 		Where(storemessage.HasChatWith(storechat.ClientID(clientID))).
 		Order(store.Desc(storemessage.FieldCreatedAt))

@@ -28,6 +28,7 @@ type NewMessageEvent struct {
 	AuthorID    types.UserID    `validate:"omitempty"`
 	CreatedAt   time.Time       `validate:"required"`
 	MessageBody string          `validate:"required,max=3000"`
+	AuthorName  string          `validate:"omitempty"`
 	IsService   bool
 }
 

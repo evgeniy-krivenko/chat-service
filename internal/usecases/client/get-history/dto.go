@@ -35,6 +35,7 @@ type Response struct {
 type Message struct {
 	ID                  types.MessageID
 	AuthorID            types.UserID
+	AuthorName          string
 	Body                string
 	CreatedAt           time.Time
 	IsBlocked           bool
@@ -47,6 +48,7 @@ func adaptMessage(m messagesrepo.Message) Message {
 	return Message{
 		ID:                  m.ID,
 		AuthorID:            m.AuthorID,
+		AuthorName:          m.AuthorFirstName,
 		Body:                m.Body,
 		CreatedAt:           m.CreatedAt,
 		IsBlocked:           m.IsBlocked,

@@ -109,6 +109,7 @@ func (j *JobSuite) TestHandle_Success() {
 		types.UserIDNil,
 		j.message.CreatedAt,
 		j.message.Body,
+		"",
 		j.message.IsService,
 	))).Return(nil)
 	j.eventStream.EXPECT().Publish(gomock.Any(), j.managerID, newChatEventMatcher(eventstream.NewNewChatEvent(
@@ -182,6 +183,7 @@ func (j *JobSuite) TestHandle_Error() {
 			types.UserIDNil,
 			j.message.CreatedAt,
 			j.message.Body,
+			"",
 			j.message.IsService,
 		))).Return(err)
 
@@ -206,6 +208,7 @@ func (j *JobSuite) TestHandle_Error() {
 			types.UserIDNil,
 			j.message.CreatedAt,
 			j.message.Body,
+			"",
 			j.message.IsService,
 		))).Return(nil)
 		j.eventStream.EXPECT().Publish(gomock.Any(), j.managerID, newChatEventMatcher(eventstream.NewNewChatEvent(

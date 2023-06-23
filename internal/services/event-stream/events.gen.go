@@ -16,6 +16,7 @@ func NewNewMessageEvent(
 	authorID types.UserID,
 	createdAt time.Time,
 	messageBody string,
+	authorName string,
 	isService bool,
 ) *NewMessageEvent {
 	return &NewMessageEvent{
@@ -26,6 +27,7 @@ func NewNewMessageEvent(
 		AuthorID:    authorID,
 		CreatedAt:   createdAt,
 		MessageBody: messageBody,
+		AuthorName:  authorName,
 		IsService:   isService,
 	}
 }

@@ -96,6 +96,7 @@ func (s *HandlersSuite) TestGetHistory_Usecase_Success() {
 			Body:       "hello!",
 			CreatedAt:  time.Unix(1, 1).UTC(),
 			IsReceived: true,
+			AuthorName: firstName,
 			IsBlocked:  false,
 			IsService:  false,
 		},
@@ -137,7 +138,8 @@ func (s *HandlersSuite) TestGetHistory_Usecase_Success() {
                 "id": %q,
                 "isBlocked": false,
                 "isReceived": true,
-                "isService": false
+                "isService": false,
+				"authorName": %q
             },
             {
                 "body": "service message",
@@ -150,5 +152,5 @@ func (s *HandlersSuite) TestGetHistory_Usecase_Success() {
         ],
         "next": ""
     }
-}`, msgs[0].AuthorID, msgs[0].ID, msgs[1].ID), resp.Body.String())
+}`, msgs[0].AuthorID, msgs[0].ID, firstName, msgs[1].ID), resp.Body.String())
 }

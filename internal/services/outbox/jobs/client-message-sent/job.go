@@ -90,7 +90,8 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 			msg.AuthorID,
 			msg.CreatedAt,
 			msg.Body,
-			msg.IsService,
+			"",
+			false,
 		)); err != nil {
 			return fmt.Errorf("publish new message for manager: %v", err)
 		}

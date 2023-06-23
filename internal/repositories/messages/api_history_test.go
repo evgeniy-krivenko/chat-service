@@ -89,7 +89,7 @@ func (s *MsgRepoHistoryAPISuite) Test_GetClientChatMessages() {
 		const messagesCount = 30
 		client1 := types.NewUserID()
 
-		s.createProfile(client1)
+		s.createProfile(client1, "", "")
 
 		problem1, chat1 := s.createProblemAndChat(client1)
 		preparedMsgs := s.createMessages(messagesCount, chat1, problem1, client1, true, true, false)
@@ -97,7 +97,7 @@ func (s *MsgRepoHistoryAPISuite) Test_GetClientChatMessages() {
 
 		// Messages from other chat must be ignored.
 		client2 := types.NewUserID()
-		s.createProfile(client2)
+		s.createProfile(client2, "", "")
 		problem2, chat2 := s.createProblemAndChat(client2)
 		s.createMessages(3, chat2, problem2, client2, true, true, false)
 
@@ -132,15 +132,27 @@ func (s *MsgRepoHistoryAPISuite) Test_GetClientChatMessages() {
 
 	s.Run("adapt logic", func() {
 		client := types.NewUserID()
+		manager := types.NewUserID()
 		problem, chat := s.createProblemAndChat(client)
-		s.createProfile(client)
+
+		fName, sName := "Eric", "Cartman"
+		mName, mSName := "Stan", "Marsh"
+
+		// client profile
+		s.createProfile(client, fName, sName)
+
+		// manager profile
+		s.createProfile(manager, mName, mSName)
 
 		s.createMessages(1, chat, problem, types.UserIDNil, true, false, true)
+		// manager message
+		s.createMessages(1, chat, problem, manager, true, true, false)
+		// client message
 		lastMsg := s.createMessages(1, chat, problem, client, true, false, false)[0]
 
 		msgs, _, err := s.repo.GetClientChatMessages(s.Ctx, client, 11, nil)
 		s.Require().NoError(err)
-		s.Require().Len(msgs, 2)
+		s.Require().Len(msgs, 3)
 
 		msg := msgs[0]
 		s.Equal(lastMsg.ID, msg.ID)
@@ -153,8 +165,19 @@ func (s *MsgRepoHistoryAPISuite) Test_GetClientChatMessages() {
 		s.False(msg.IsBlocked)
 		s.False(msg.IsService)
 
+		s.Run("client message must without name", func() {
+			s.Empty(msg.AuthorFirstName)
+			s.Empty(msg.AuthorLastName)
+		})
+
+		s.Run("manager message must with name", func() {
+			managerMsg := msgs[1]
+			s.Equal(mName, managerMsg.AuthorFirstName)
+			s.Equal(mSName, managerMsg.AuthorLastName)
+		})
+
 		s.Run("service message", func() {
-			svcMsg := msgs[1]
+			svcMsg := msgs[2]
 			s.True(svcMsg.AuthorID.IsZero())
 			s.True(svcMsg.IsVisibleForClient)
 			s.False(svcMsg.IsVisibleForManager)
@@ -223,13 +246,13 @@ func (s *MsgRepoHistoryAPISuite) Test_GetProblemMessages() {
 		client1 := types.NewUserID()
 
 		problem1, chat1 := s.createProblemAndChat(client1)
-		s.createProfile(client1)
+		s.createProfile(client1, "", "")
 		preparedMsgs := s.createMessages(messagesCount, chat1, problem1, client1, true, true, false)
 		s.Require().Len(preparedMsgs, messagesCount)
 
 		// Messages from other chat must be ignored.
 		client2 := types.NewUserID()
-		s.createProfile(client2)
+		s.createProfile(client2, "", "")
 		problem2, chat2 := s.createProblemAndChat(client2)
 		s.createMessages(3, chat2, problem2, client2, true, true, false)
 
@@ -274,7 +297,7 @@ func (s *MsgRepoHistoryAPISuite) Test_GetProblemMessages() {
 		client := types.NewUserID()
 		problem, chat := s.createProblemAndChat(client)
 
-		s.createProfile(client)
+		s.createProfile(client, "", "")
 		s.createMessages(1, chat, problem, types.UserIDNil, true, true, true)
 		lastMsg := s.createMessages(1, chat, problem, client, true, true, false)[0]
 
@@ -316,10 +339,12 @@ func (s *MsgRepoHistoryAPISuite) createProblemAndChat(clientID types.UserID) (ty
 	return problem.ID, chat.ID
 }
 
-func (s *MsgRepoHistoryAPISuite) createProfile(clientID types.UserID) {
+func (s *MsgRepoHistoryAPISuite) createProfile(clientID types.UserID, firstName, lastName string) {
 	s.Database.Profile(s.Ctx).Create().
 		SetID(clientID).
 		SetUpdatedAt(time.Now()).
+		SetFirstName(firstName).
+		SetLastName(lastName).
 		SaveX(s.Ctx)
 }
 

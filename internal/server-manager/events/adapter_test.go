@@ -47,6 +47,7 @@ func TestAdapter_Adapt(t *testing.T) {
 				types.MustParse[types.UserID]("d0ffbd36-bc30-11ed-8286-461e464ebed8"),
 				time.Unix(1, 1).UTC(),
 				"I need help!",
+				"Eric Cartman",
 				false,
 			),
 			expJSON: `{
