@@ -12,6 +12,7 @@ export interface IMessage {
   readonly isService: boolean;
   readonly authorId?: string;
   userIsAuthor?: boolean;
+  readonly authorName?: string;
 }
 
 export interface ISendMessage {

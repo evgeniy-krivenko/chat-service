@@ -131,6 +131,7 @@ export const useMessages = (ref?: MutableRefObject<HTMLDivElement>): TUseMessage
             isReceived: false,
             userIsAuthor: msg.authorId === user?.id,
             createdAt: msg.createdAt,
+            authorName: msg.authorName,
           } as IMessage)
           return;
         case "MessageSentEvent":

@@ -28,6 +28,7 @@ const Message: FC<MessageProps> = ({message}) => {
               'left': !message.userIsAuthor,
             })}
           >
+            {message.authorName && <p className="message__author-name">{message.authorName}</p>}
             {message.body}
             {message.userIsAuthor && (message.isReceived
               ? <DoneAllIcon className="message__icon" style={{ width: '14px', height: '14px' }} />

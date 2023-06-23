@@ -1,16 +1,21 @@
 .message {
-    font-size: 16px;
+    font-size: 15px;
     padding: 8px 16px;
     transform-origin: 0 100%;
     margin: 8px 0 4px;
-    line-height: 24px;
+    line-height: 22px;
     max-width: 320px;
     position: relative;
     transform: scale(0);
-    /*max-height: 0;*/
     overflow: hidden;
     animation: message .05s ease-out 0s forwards;
-    /*animation-delay: var(--timeline);*/
+}
+
+.message__author-name {
+    margin: 0;
+    font-weight: bold;
+    text-align: left;
+    line-height: 16px;
 }
 
 .service {
@@ -54,6 +59,7 @@
     right: 0;
     bottom: -22px;
     color: #707C97;
+    white-space: nowrap
 }
 
 .message__container {
