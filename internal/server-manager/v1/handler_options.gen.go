@@ -18,6 +18,7 @@ func NewOptions(
 	sendMessageUseCase sendMessageUseCase,
 	closeChatUseCase closeChatUseCase,
 	loginUseCase loginUseCase,
+	getManagerProfile getManagerProfile,
 	options ...OptOptionsSetter,
 ) Options {
 	o := Options{}
@@ -31,6 +32,7 @@ func NewOptions(
 	o.sendMessageUseCase = sendMessageUseCase
 	o.closeChatUseCase = closeChatUseCase
 	o.loginUseCase = loginUseCase
+	o.getManagerProfile = getManagerProfile
 
 	for _, opt := range options {
 		opt(&o)
@@ -47,6 +49,7 @@ func (o *Options) Validate() error {
 	errs.Add(errors461e464ebed9.NewValidationError("sendMessageUseCase", _validate_Options_sendMessageUseCase(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("closeChatUseCase", _validate_Options_closeChatUseCase(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("loginUseCase", _validate_Options_loginUseCase(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("getManagerProfile", _validate_Options_getManagerProfile(o)))
 	return errs.AsError()
 }
 
@@ -95,6 +98,13 @@ func _validate_Options_closeChatUseCase(o *Options) error {
 func _validate_Options_loginUseCase(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.loginUseCase, "required"); err != nil {
 		return fmt461e464ebed9.Errorf("field `loginUseCase` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_getManagerProfile(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.getManagerProfile, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `getManagerProfile` did not pass the test: %w", err)
 	}
 	return nil
 }

@@ -100,10 +100,16 @@ type GetFreeHandsBtnAvailabilityResponse struct {
 	Error *Error                       `json:"error,omitempty"`
 }
 
+// GetManagerProfileResponse defines model for GetManagerProfileResponse.
+type GetManagerProfileResponse struct {
+	Data  *ManagerProfile `json:"data,omitempty"`
+	Error *Error          `json:"error,omitempty"`
+}
+
 // LoginInfo defines model for LoginInfo.
 type LoginInfo struct {
-	Token string      `json:"token"`
-	User  UserProfile `json:"user"`
+	Token string         `json:"token"`
+	User  ManagerProfile `json:"user"`
 }
 
 // LoginRequest defines model for LoginRequest.
@@ -116,6 +122,13 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Data  *LoginInfo `json:"data,omitempty"`
 	Error *Error     `json:"error,omitempty"`
+}
+
+// ManagerProfile defines model for ManagerProfile.
+type ManagerProfile struct {
+	FirstName string       `json:"firstName"`
+	Id        types.UserID `json:"id"`
+	LastName  string       `json:"lastName"`
 }
 
 // Message defines model for Message.
@@ -158,13 +171,6 @@ type SendMessageResponse struct {
 	Error *Error              `json:"error,omitempty"`
 }
 
-// UserProfile defines model for UserProfile.
-type UserProfile struct {
-	FirstName string       `json:"firstName"`
-	Id        types.UserID `json:"id"`
-	LastName  string       `json:"lastName"`
-}
-
 // XRequestIDHeader defines model for XRequestIDHeader.
 type XRequestIDHeader = types.RequestID
 
@@ -190,6 +196,11 @@ type PostGetChatsParams struct {
 
 // PostGetFreeHandsBtnAvailabilityParams defines parameters for PostGetFreeHandsBtnAvailability.
 type PostGetFreeHandsBtnAvailabilityParams struct {
+	XRequestID XRequestIDHeader `json:"X-Request-ID"`
+}
+
+// PostGetManagerProfileParams defines parameters for PostGetManagerProfile.
+type PostGetManagerProfileParams struct {
 	XRequestID XRequestIDHeader `json:"X-Request-ID"`
 }
 
@@ -227,6 +238,9 @@ type ServerInterface interface {
 
 	// (POST /getFreeHandsBtnAvailability)
 	PostGetFreeHandsBtnAvailability(ctx echo.Context, params PostGetFreeHandsBtnAvailabilityParams) error
+
+	// (POST /getManagerProfile)
+	PostGetManagerProfile(ctx echo.Context, params PostGetManagerProfileParams) error
 
 	// (POST /login)
 	PostLogin(ctx echo.Context) error
@@ -405,6 +419,39 @@ func (w *ServerInterfaceWrapper) PostGetFreeHandsBtnAvailability(ctx echo.Contex
 	return err
 }
 
+// PostGetManagerProfile converts echo context to params.
+func (w *ServerInterfaceWrapper) PostGetManagerProfile(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PostGetManagerProfileParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "X-Request-ID" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Request-ID")]; found {
+		var XRequestID XRequestIDHeader
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for X-Request-ID, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithLocation("simple", false, "X-Request-ID", runtime.ParamLocationHeader, valueList[0], &XRequestID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter X-Request-ID: %s", err))
+		}
+
+		params.XRequestID = XRequestID
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter X-Request-ID is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PostGetManagerProfile(ctx, params)
+	return err
+}
+
 // PostLogin converts echo context to params.
 func (w *ServerInterfaceWrapper) PostLogin(ctx echo.Context) error {
 	var err error
@@ -480,6 +527,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/getChatHistory", wrapper.PostGetChatHistory)
 	router.POST(baseURL+"/getChats", wrapper.PostGetChats)
 	router.POST(baseURL+"/getFreeHandsBtnAvailability", wrapper.PostGetFreeHandsBtnAvailability)
+	router.POST(baseURL+"/getManagerProfile", wrapper.PostGetManagerProfile)
 	router.POST(baseURL+"/login", wrapper.PostLogin)
 	router.POST(baseURL+"/sendMessage", wrapper.PostSendMessage)
 
@@ -488,32 +536,32 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"AA==",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

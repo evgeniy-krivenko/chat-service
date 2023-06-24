@@ -3,10 +3,11 @@ package managerv1_test
 import (
 	"errors"
 	"fmt"
+	"net/http"
+
 	internalerrors "github.com/evgeniy-krivenko/chat-service/internal/errors"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 	managerlogin "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/manager-login"
-	"net/http"
 )
 
 const (

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -25,6 +26,7 @@ import (
 	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
 	getchathistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chat-history"
 	getchats "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chats"
+	getmanagerprofile "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-manager-profile"
 	managerlogin "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/manager-login"
 	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/send-message"
 	websocketstream "github.com/evgeniy-krivenko/chat-service/internal/websocket-stream"
@@ -99,6 +101,11 @@ func initServerManager(
 		return nil, fmt.Errorf("create manager login use case: %v", err)
 	}
 
+	getManagerProfileUseCase, err := getmanagerprofile.New(getmanagerprofile.NewOptions(profilesRepo))
+	if err != nil {
+		return nil, fmt.Errorf("create get manager profile use case: %v", err)
+	}
+
 	v1Handlers, err := managerv1.NewHandlers(managerv1.NewOptions(
 		canReceiveProblemUseCase,
 		freeHandsUseCase,
@@ -107,6 +114,7 @@ func initServerManager(
 		sendMessageUseCase,
 		closeChatUseCase,
 		loginUseCase,
+		getManagerProfileUseCase,
 	))
 	if err != nil {
 		return nil, fmt.Errorf("create v1 manager handlers: %v", err)

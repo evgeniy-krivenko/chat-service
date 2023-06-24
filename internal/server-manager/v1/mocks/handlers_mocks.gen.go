@@ -13,6 +13,7 @@ import (
 	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
 	getchathistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chat-history"
 	getchats "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chats"
+	getmanagerprofile "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-manager-profile"
 	managerlogin "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/manager-login"
 	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/send-message"
 	gomock "github.com/golang/mock/gomock"
@@ -242,6 +243,44 @@ func (m *MockcloseChatUseCase) Handle(ctx context.Context, req closechat.Request
 func (mr *MockcloseChatUseCaseMockRecorder) Handle(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Handle", reflect.TypeOf((*MockcloseChatUseCase)(nil).Handle), ctx, req)
+}
+
+// MockgetManagerProfile is a mock of getManagerProfile interface.
+type MockgetManagerProfile struct {
+	ctrl     *gomock.Controller
+	recorder *MockgetManagerProfileMockRecorder
+}
+
+// MockgetManagerProfileMockRecorder is the mock recorder for MockgetManagerProfile.
+type MockgetManagerProfileMockRecorder struct {
+	mock *MockgetManagerProfile
+}
+
+// NewMockgetManagerProfile creates a new mock instance.
+func NewMockgetManagerProfile(ctrl *gomock.Controller) *MockgetManagerProfile {
+	mock := &MockgetManagerProfile{ctrl: ctrl}
+	mock.recorder = &MockgetManagerProfileMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockgetManagerProfile) EXPECT() *MockgetManagerProfileMockRecorder {
+	return m.recorder
+}
+
+// Handle mocks base method.
+func (m *MockgetManagerProfile) Handle(ctx context.Context, req getmanagerprofile.Request) (getmanagerprofile.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Handle", ctx, req)
+	ret0, _ := ret[0].(getmanagerprofile.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Handle indicates an expected call of Handle.
+func (mr *MockgetManagerProfileMockRecorder) Handle(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Handle", reflect.TypeOf((*MockgetManagerProfile)(nil).Handle), ctx, req)
 }
 
 // MockloginUseCase is a mock of loginUseCase interface.

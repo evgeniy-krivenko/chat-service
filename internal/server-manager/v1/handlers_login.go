@@ -38,7 +38,7 @@ func (h Handlers) PostLogin(eCtx echo.Context) error {
 	return eCtx.JSON(http.StatusOK, &LoginResponse{
 		Data: &LoginInfo{
 			Token: resp.Token,
-			User: UserProfile{
+			User: ManagerProfile{
 				Id:        resp.ClientID,
 				FirstName: resp.FirstName,
 				LastName:  resp.LastName,
