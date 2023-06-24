@@ -341,6 +341,7 @@ func run() (errReturned error) {
 		chatsRepo,
 		msgRepo,
 		problemsRepo,
+		profilesRepo,
 		outboxService,
 		database,
 

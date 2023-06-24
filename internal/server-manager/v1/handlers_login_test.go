@@ -1,13 +1,12 @@
-package clientv1_test
+package managerv1_test
 
 import (
 	"errors"
 	"fmt"
-	"net/http"
-
 	internalerrors "github.com/evgeniy-krivenko/chat-service/internal/errors"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
-	"github.com/evgeniy-krivenko/chat-service/internal/usecases/client/login"
+	managerlogin "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/manager-login"
+	"net/http"
 )
 
 const (
@@ -24,10 +23,10 @@ func (s *HandlersSuite) TestLoginUseCase_InvalidRequest() {
 	body := fmt.Sprintf(`{"login": %q, "password": %q }`, log, password)
 
 	resp, eCtx := s.newEchoCtx(reqID, "/v1/login", body)
-	s.loginUseCase.EXPECT().Handle(eCtx.Request().Context(), login.Request{
+	s.loginUseCase.EXPECT().Handle(eCtx.Request().Context(), managerlogin.Request{
 		Login:    log,
 		Password: password,
-	}).Return(login.Response{}, login.ErrInvalidRequest)
+	}).Return(managerlogin.Response{}, managerlogin.ErrInvalidRequest)
 
 	// Action.
 	err := s.handlers.PostLogin(eCtx)
@@ -44,10 +43,10 @@ func (s *HandlersSuite) TestLoginUseCase_AuthClientError() {
 	body := fmt.Sprintf(`{"login": %q, "password": %q }`, log, password)
 
 	resp, eCtx := s.newEchoCtx(reqID, "/v1/login", body)
-	s.loginUseCase.EXPECT().Handle(eCtx.Request().Context(), login.Request{
+	s.loginUseCase.EXPECT().Handle(eCtx.Request().Context(), managerlogin.Request{
 		Login:    log,
 		Password: password,
-	}).Return(login.Response{}, login.ErrAuthClient)
+	}).Return(managerlogin.Response{}, managerlogin.ErrAuthClient)
 
 	// Action.
 	err := s.handlers.PostLogin(eCtx)
@@ -64,10 +63,10 @@ func (s *HandlersSuite) TestLoginUseCase_NoAccess() {
 	body := fmt.Sprintf(`{"login": %q, "password": %q }`, log, password)
 
 	resp, eCtx := s.newEchoCtx(reqID, "/v1/login", body)
-	s.loginUseCase.EXPECT().Handle(eCtx.Request().Context(), login.Request{
+	s.loginUseCase.EXPECT().Handle(eCtx.Request().Context(), managerlogin.Request{
 		Login:    log,
 		Password: password,
-	}).Return(login.Response{}, login.ErrNoResourceAccess)
+	}).Return(managerlogin.Response{}, managerlogin.ErrNoResourceAccess)
 
 	// Action.
 	err := s.handlers.PostLogin(eCtx)
@@ -85,10 +84,10 @@ func (s *HandlersSuite) TestLoginUseCase_UnexpectedError() {
 	body := fmt.Sprintf(`{"login": %q, "password": %q }`, log, password)
 
 	resp, eCtx := s.newEchoCtx(reqID, "/v1/login", body)
-	s.loginUseCase.EXPECT().Handle(eCtx.Request().Context(), login.Request{
+	s.loginUseCase.EXPECT().Handle(eCtx.Request().Context(), managerlogin.Request{
 		Login:    log,
 		Password: password,
-	}).Return(login.Response{}, errors.New("unexpected"))
+	}).Return(managerlogin.Response{}, errors.New("unexpected"))
 
 	// Action.
 	err := s.handlers.PostLogin(eCtx)
@@ -107,10 +106,10 @@ func (s *HandlersSuite) TestLoginUseCase_Success() {
 	clientID := types.NewUserID()
 
 	resp, eCtx := s.newEchoCtx(reqID, "/v1/login", body)
-	s.loginUseCase.EXPECT().Handle(eCtx.Request().Context(), login.Request{
+	s.loginUseCase.EXPECT().Handle(eCtx.Request().Context(), managerlogin.Request{
 		Login:    log,
 		Password: password,
-	}).Return(login.Response{
+	}).Return(managerlogin.Response{
 		Token:     token,
 		ClientID:  clientID,
 		FirstName: firstName,

@@ -1,4 +1,4 @@
-package login_test
+package managerlogin_test
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/testingh"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 	"github.com/evgeniy-krivenko/chat-service/internal/usecases/client/login"
-	loginmocks "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/login/mocks"
+	managerloginmocks "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/manager-login/mocks"
 )
 
 const (
@@ -23,9 +23,9 @@ type UseCaseSuite struct {
 	testingh.ContextSuite
 
 	ctrl         *gomock.Controller
-	authClient   *loginmocks.MockauthClient
-	usrGetter    *loginmocks.MockuserGetter
-	problemsRepo *loginmocks.MockprofilesRepository
+	authClient   *managerloginmocks.MockauthClient
+	usrGetter    *managerloginmocks.MockuserGetter
+	problemsRepo *managerloginmocks.MockprofilesRepository
 	uCase        login.UseCase
 
 	login    string
@@ -34,9 +34,9 @@ type UseCaseSuite struct {
 
 func (s *UseCaseSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
-	s.authClient = loginmocks.NewMockauthClient(s.ctrl)
-	s.usrGetter = loginmocks.NewMockuserGetter(s.ctrl)
-	s.problemsRepo = loginmocks.NewMockprofilesRepository(s.ctrl)
+	s.authClient = managerloginmocks.NewMockauthClient(s.ctrl)
+	s.usrGetter = managerloginmocks.NewMockuserGetter(s.ctrl)
+	s.problemsRepo = managerloginmocks.NewMockprofilesRepository(s.ctrl)
 
 	s.login, s.password = "client", "password"
 

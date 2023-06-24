@@ -69,6 +69,9 @@ func initServerClient(
 		keycloakClient,
 		&keycloakclient.UserGetter{},
 		profilesRepo,
+
+		resource,
+		role,
 	))
 	if err != nil {
 		return nil, fmt.Errorf("login usecase: %v", err)

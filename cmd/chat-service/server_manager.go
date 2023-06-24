@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -11,6 +10,7 @@ import (
 	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
+	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 	"github.com/evgeniy-krivenko/chat-service/internal/server"
 	managerevents "github.com/evgeniy-krivenko/chat-service/internal/server-manager/events"
 	managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1"
@@ -25,6 +25,7 @@ import (
 	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
 	getchathistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chat-history"
 	getchats "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chats"
+	managerlogin "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/manager-login"
 	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/send-message"
 	websocketstream "github.com/evgeniy-krivenko/chat-service/internal/websocket-stream"
 )
@@ -48,6 +49,7 @@ func initServerManager(
 	chatsRepo *chatsrepo.Repo,
 	msgRepo *messagesrepo.Repo,
 	problemsRepo *problemsrepo.Repo,
+	profilesRepo *profilesrepo.Repo,
 	outboxSvc *outbox.Service,
 	db *store.Database,
 
@@ -85,6 +87,18 @@ func initServerManager(
 		return nil, fmt.Errorf("create close chat use case: %v", err)
 	}
 
+	loginUseCase, err := managerlogin.New(managerlogin.NewOptions(
+		keycloakClient,
+		&keycloakclient.UserGetter{},
+		profilesRepo,
+
+		resource,
+		role,
+	))
+	if err != nil {
+		return nil, fmt.Errorf("create manager login use case: %v", err)
+	}
+
 	v1Handlers, err := managerv1.NewHandlers(managerv1.NewOptions(
 		canReceiveProblemUseCase,
 		freeHandsUseCase,
@@ -92,6 +106,7 @@ func initServerManager(
 		getChatHistoryUseCase,
 		sendMessageUseCase,
 		closeChatUseCase,
+		loginUseCase,
 	))
 	if err != nil {
 		return nil, fmt.Errorf("create v1 manager handlers: %v", err)

@@ -100,6 +100,24 @@ type GetFreeHandsBtnAvailabilityResponse struct {
 	Error *Error                       `json:"error,omitempty"`
 }
 
+// LoginInfo defines model for LoginInfo.
+type LoginInfo struct {
+	Token string      `json:"token"`
+	User  UserProfile `json:"user"`
+}
+
+// LoginRequest defines model for LoginRequest.
+type LoginRequest struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}
+
+// LoginResponse defines model for LoginResponse.
+type LoginResponse struct {
+	Data  *LoginInfo `json:"data,omitempty"`
+	Error *Error     `json:"error,omitempty"`
+}
+
 // Message defines model for Message.
 type Message struct {
 	AuthorId  types.UserID    `json:"authorId"`
@@ -138,6 +156,13 @@ type SendMessageRequest struct {
 type SendMessageResponse struct {
 	Data  *MessageWithoutBody `json:"data,omitempty"`
 	Error *Error              `json:"error,omitempty"`
+}
+
+// UserProfile defines model for UserProfile.
+type UserProfile struct {
+	FirstName string       `json:"firstName"`
+	Id        types.UserID `json:"id"`
+	LastName  string       `json:"lastName"`
 }
 
 // XRequestIDHeader defines model for XRequestIDHeader.
@@ -179,6 +204,9 @@ type PostCloseChatJSONRequestBody = ChatId
 // PostGetChatHistoryJSONRequestBody defines body for PostGetChatHistory for application/json ContentType.
 type PostGetChatHistoryJSONRequestBody = GetChatHistoryRequest
 
+// PostLoginJSONRequestBody defines body for PostLogin for application/json ContentType.
+type PostLoginJSONRequestBody = LoginRequest
+
 // PostSendMessageJSONRequestBody defines body for PostSendMessage for application/json ContentType.
 type PostSendMessageJSONRequestBody = SendMessageRequest
 
@@ -199,6 +227,9 @@ type ServerInterface interface {
 
 	// (POST /getFreeHandsBtnAvailability)
 	PostGetFreeHandsBtnAvailability(ctx echo.Context, params PostGetFreeHandsBtnAvailabilityParams) error
+
+	// (POST /login)
+	PostLogin(ctx echo.Context) error
 
 	// (POST /sendMessage)
 	PostSendMessage(ctx echo.Context, params PostSendMessageParams) error
@@ -374,6 +405,15 @@ func (w *ServerInterfaceWrapper) PostGetFreeHandsBtnAvailability(ctx echo.Contex
 	return err
 }
 
+// PostLogin converts echo context to params.
+func (w *ServerInterfaceWrapper) PostLogin(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PostLogin(ctx)
+	return err
+}
+
 // PostSendMessage converts echo context to params.
 func (w *ServerInterfaceWrapper) PostSendMessage(ctx echo.Context) error {
 	var err error
@@ -440,6 +480,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/getChatHistory", wrapper.PostGetChatHistory)
 	router.POST(baseURL+"/getChats", wrapper.PostGetChats)
 	router.POST(baseURL+"/getFreeHandsBtnAvailability", wrapper.PostGetFreeHandsBtnAvailability)
+	router.POST(baseURL+"/login", wrapper.PostLogin)
 	router.POST(baseURL+"/sendMessage", wrapper.PostSendMessage)
 
 }
@@ -447,29 +488,32 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"AA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

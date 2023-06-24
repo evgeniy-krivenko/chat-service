@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	storeprofile "github.com/evgeniy-krivenko/chat-service/internal/store/profile"
 	"time"
 
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	storechat "github.com/evgeniy-krivenko/chat-service/internal/store/chat"
 	storemessage "github.com/evgeniy-krivenko/chat-service/internal/store/message"
 	storeproblem "github.com/evgeniy-krivenko/chat-service/internal/store/problem"
+	storeprofile "github.com/evgeniy-krivenko/chat-service/internal/store/profile"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 	"github.com/evgeniy-krivenko/chat-service/pkg/utils"
 )

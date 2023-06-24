@@ -1,10 +1,9 @@
-package login
+package managerlogin
 
 import (
+	"context"
 	"errors"
 	"fmt"
-
-	"golang.org/x/net/context"
 
 	keycloakclient "github.com/evgeniy-krivenko/chat-service/internal/clients/keycloak"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
@@ -16,7 +15,7 @@ var (
 	ErrNoResourceAccess = errors.New("no access to resource")
 )
 
-//go:generate mockgen -source=$GOFILE -destination=mocks/usecase_mock.gen.go -package=loginmocks
+//go:generate mockgen -source=$GOFILE -destination=mocks/usecase_mock.gen.go -package=managerloginmocks
 
 type authClient interface {
 	Auth(ctx context.Context, username, password string) (*keycloakclient.RPT, error)
