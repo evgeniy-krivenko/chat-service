@@ -37,10 +37,10 @@ type Message struct {
 	IsBlocked bool `json:"is_blocked,omitempty"`
 	// IsService holds the value of the "is_service" field.
 	IsService bool `json:"is_service,omitempty"`
-	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
 	// InitialRequestID holds the value of the "initial_request_id" field.
 	InitialRequestID types.RequestID `json:"initial_request_id,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MessageQuery when eager-loading is set.
 	Edges MessageEdges `json:"edges"`
@@ -179,17 +179,17 @@ func (m *Message) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				m.IsService = value.Bool
 			}
-		case message.FieldCreatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field created_at", values[i])
-			} else if value.Valid {
-				m.CreatedAt = value.Time
-			}
 		case message.FieldInitialRequestID:
 			if value, ok := values[i].(*types.RequestID); !ok {
 				return fmt.Errorf("unexpected type %T for field initial_request_id", values[i])
 			} else if value != nil {
 				m.InitialRequestID = *value
+			}
+		case message.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				m.CreatedAt = value.Time
 			}
 		}
 	}
@@ -256,11 +256,11 @@ func (m *Message) String() string {
 	builder.WriteString("is_service=")
 	builder.WriteString(fmt.Sprintf("%v", m.IsService))
 	builder.WriteString(", ")
-	builder.WriteString("created_at=")
-	builder.WriteString(m.CreatedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
 	builder.WriteString("initial_request_id=")
 	builder.WriteString(fmt.Sprintf("%v", m.InitialRequestID))
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(m.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

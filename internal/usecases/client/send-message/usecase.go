@@ -7,8 +7,8 @@ import (
 	"time"
 
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/payload/simpleid"
 	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
-	msgjobpayload "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/msg-job-payload"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -112,7 +112,7 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 }
 
 func (u UseCase) putToOutbox(ctx context.Context, msgID types.MessageID) error {
-	outboxPayload, err := msgjobpayload.MarshalPayload(msgID)
+	outboxPayload, err := simpleid.Marshal(msgID)
 	if err != nil {
 		return fmt.Errorf("marshal when put to outbox: %v", err)
 	}

@@ -72,8 +72,8 @@ var (
 		{Name: "checked_at", Type: field.TypeTime, Nullable: true},
 		{Name: "is_blocked", Type: field.TypeBool, Nullable: true},
 		{Name: "is_service", Type: field.TypeBool, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
 		{Name: "initial_request_id", Type: field.TypeUUID, Unique: true, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
 		{Name: "chat_id", Type: field.TypeUUID},
 		{Name: "problem_id", Type: field.TypeUUID, Nullable: true},
 	}
@@ -100,7 +100,7 @@ var (
 			{
 				Name:    "message_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{MessagesColumns[8]},
+				Columns: []*schema.Column{MessagesColumns[9]},
 			},
 		},
 	}
@@ -109,6 +109,7 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "manager_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "resolved_at", Type: field.TypeTime, Nullable: true},
+		{Name: "resolve_request_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "chat_id", Type: field.TypeUUID},
 	}
@@ -120,16 +121,16 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "problems_chats_problems",
-				Columns:    []*schema.Column{ProblemsColumns[4]},
+				Columns:    []*schema.Column{ProblemsColumns[5]},
 				RefColumns: []*schema.Column{ChatsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "problem_chat_id_resolved_at",
+				Name:    "problem_manager_id_resolved_at",
 				Unique:  true,
-				Columns: []*schema.Column{ProblemsColumns[4], ProblemsColumns[2]},
+				Columns: []*schema.Column{ProblemsColumns[1], ProblemsColumns[2]},
 			},
 		},
 	}

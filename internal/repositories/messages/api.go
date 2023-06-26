@@ -51,7 +51,11 @@ func (r *Repo) CreateClientVisible(
 }
 
 func (r *Repo) GetMessageByID(ctx context.Context, msgID types.MessageID) (*Message, error) {
-	msg, err := r.db.Message(ctx).Get(ctx, msgID)
+	msg, err := r.db.Message(ctx).
+		Query().
+		Where(storemessage.ID(msgID)).
+		WithProblem().
+		Only(ctx)
 	if store.IsNotFound(err) {
 		return nil, ErrMsgNotFound
 	}
@@ -60,4 +64,52 @@ func (r *Repo) GetMessageByID(ctx context.Context, msgID types.MessageID) (*Mess
 	}
 
 	return pointer.Ptr(adaptStoreMessage(msg)), nil
+}
+
+func (r *Repo) CreateClientService(
+	ctx context.Context,
+	problemID types.ProblemID,
+	chatID types.ChatID,
+	msgBody string,
+) (*Message, error) {
+	msg, err := r.db.Message(ctx).Create().
+		SetProblemID(problemID).
+		SetChatID(chatID).
+		SetBody(msgBody).
+		SetIsVisibleForManager(false).
+		SetIsVisibleForClient(true).
+		SetIsService(true).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("create service msg for client: %v", err)
+	}
+
+	am := adaptStoreMessage(msg)
+	return &am, nil
+}
+
+func (r *Repo) CreateFullVisible(
+	ctx context.Context,
+	reqID types.RequestID,
+	problemID types.ProblemID,
+	chatID types.ChatID,
+	authorID types.UserID,
+	msgBody string,
+) (*Message, error) {
+	msg, err := r.db.Message(ctx).Create().
+		SetInitialRequestID(reqID).
+		SetProblemID(problemID).
+		SetChatID(chatID).
+		SetAuthorID(authorID).
+		SetBody(msgBody).
+		SetIsVisibleForManager(true).
+		SetIsVisibleForClient(true).
+		SetIsService(false).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("create full visible msg: %v", err)
+	}
+
+	am := adaptStoreMessage(msg)
+	return &am, nil
 }

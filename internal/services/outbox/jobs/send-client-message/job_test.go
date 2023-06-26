@@ -12,9 +12,9 @@ import (
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/payload/simpleid"
 	sendclientmessagejob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message"
 	sendclientmessagejobmocks "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/send-client-message/mocks"
-	msgjobpayload "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/msg-job-payload"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -72,7 +72,7 @@ func TestJob_Handle(t *testing.T) {
 	)).Return(nil)
 
 	// Action & assert.
-	payload, err := msgjobpayload.MarshalPayload(msgID)
+	payload, err := simpleid.Marshal(msgID)
 	require.NoError(t, err)
 
 	err = job.Handle(ctx, payload)

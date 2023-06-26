@@ -27,18 +27,17 @@ const (
 
 //go:generate options-gen -out-filename=server_options.gen.go -from-struct=Options
 type Options struct {
-	addr      string      `option:"mandatory" validate:"required,hostname_port"`
-	v1Client  *openapi3.T `option:"mandatory" validate:"required"`
-	v1Manager *openapi3.T `option:"mandatory" validate:"required"`
-	events    *openapi3.T `option:"mandatory" validate:"required"`
+	addr          string      `option:"mandatory" validate:"required,hostname_port"`
+	v1Client      *openapi3.T `option:"mandatory" validate:"required"`
+	v1Manager     *openapi3.T `option:"mandatory" validate:"required"`
+	clientEvents  *openapi3.T `option:"mandatory" validate:"required"`
+	managerEvents *openapi3.T `option:"mandatory" validate:"required"`
 }
 
 type Server struct {
-	lg        *zap.Logger
-	srv       *http.Server
-	v1Client  *openapi3.T
-	v1Manager *openapi3.T
-	events    *openapi3.T
+	lg  *zap.Logger
+	srv *http.Server
+	Options
 }
 
 func New(opts Options) (*Server, error) {
@@ -58,9 +57,7 @@ func New(opts Options) (*Server, error) {
 			Handler:           e,
 			ReadHeaderTimeout: readHeaderTimeout,
 		},
-		v1Client:  opts.v1Client,
-		v1Manager: opts.v1Manager,
-		events:    opts.events,
+		Options: opts,
 	}
 	index := newIndexPage()
 
@@ -74,7 +71,8 @@ func New(opts Options) (*Server, error) {
 	e.GET("/debug/error", s.Error)
 	e.GET("/schema/client", s.SchemaClient)
 	e.GET("/schema/manager", s.SchemaManager)
-	e.GET("/schema/events", s.SchemaEvents)
+	e.GET("/schema/client-events", s.SchemaClientEvents)
+	e.GET("/schema/manager-events", s.SchemaManagerEvents)
 
 	index.addPage("/version", "Get build information")
 	index.addPage("/debug/pprof/", "Go to std profiler")
@@ -82,7 +80,8 @@ func New(opts Options) (*Server, error) {
 	index.addPage("/debug/error", "Debug Sentry error event")
 	index.addPage("/schema/client", "Get client OpenAPI specification")
 	index.addPage("/schema/manager", "Get client OpenAPI specification")
-	index.addPage("/schema/events", "Get events OpenAPI specification")
+	index.addPage("/schema/client-events", "Get client events OpenAPI specification")
+	index.addPage("/schema/manager-events", "Get client events OpenAPI specification")
 
 	e.GET("/", index.handler)
 
@@ -152,6 +151,10 @@ func (s *Server) SchemaManager(eCtx echo.Context) error {
 	return eCtx.JSON(http.StatusOK, &s.v1Manager)
 }
 
-func (s *Server) SchemaEvents(eCtx echo.Context) error {
-	return eCtx.JSON(http.StatusOK, &s.events)
+func (s *Server) SchemaClientEvents(eCtx echo.Context) error {
+	return eCtx.JSON(http.StatusOK, &s.clientEvents)
+}
+
+func (s *Server) SchemaManagerEvents(eCtx echo.Context) error {
+	return eCtx.JSON(http.StatusOK, *s.managerEvents)
 }

@@ -40,12 +40,12 @@ func (Message) Fields() []ent.Field {
 			Optional(),
 		field.Bool("is_service").
 			Optional(),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
 		field.UUID("initial_request_id", types.RequestID{}).
 			Optional().
 			Unique(),
+		field.Time("created_at").
+			Default(time.Now).
+			Immutable(),
 	}
 }
 

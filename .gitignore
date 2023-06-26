@@ -6,6 +6,7 @@
 
 *.out
 *.test
+*.sql.tar.gz
 /chat-service
 
 /tools/bin/

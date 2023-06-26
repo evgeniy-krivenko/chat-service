@@ -8,13 +8,24 @@ import (
 	"go.uber.org/zap"
 
 	keycloakclient "github.com/evgeniy-krivenko/chat-service/internal/clients/keycloak"
+	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
+	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
+	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
 	"github.com/evgeniy-krivenko/chat-service/internal/server"
+	managerevents "github.com/evgeniy-krivenko/chat-service/internal/server-manager/events"
 	managerv1 "github.com/evgeniy-krivenko/chat-service/internal/server-manager/v1"
 	"github.com/evgeniy-krivenko/chat-service/internal/server/errhandler"
+	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	managerload "github.com/evgeniy-krivenko/chat-service/internal/services/manager-load"
 	inmemmanagerpool "github.com/evgeniy-krivenko/chat-service/internal/services/manager-pool/in-mem"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
+	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	canreceiveproblems "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/can-receive-problems"
+	closechat "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/close-chat"
 	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
+	getchathistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chat-history"
+	getchats "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chats"
+	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/send-message"
 	websocketstream "github.com/evgeniy-krivenko/chat-service/internal/websocket-stream"
 )
 
@@ -26,18 +37,23 @@ func initServerManager(
 	v1Swagger *openapi3.T,
 
 	keycloakClient *keycloakclient.Client,
-	wsHTTPHandler *websocketstream.HTTPHandler,
 
 	resource string,
 	role string,
+	secWSProtocol string,
 
 	mLoadSrv *managerload.Service,
+	mPool *inmemmanagerpool.Service,
+	stream eventstream.EventStream,
+	chatsRepo *chatsrepo.Repo,
+	msgRepo *messagesrepo.Repo,
+	problemsRepo *problemsrepo.Repo,
+	outboxSvc *outbox.Service,
+	db *store.Database,
 
 	isProduction bool,
 ) (*server.Server, error) {
 	lg := zap.L().Named(nameServerManager)
-
-	mPool := inmemmanagerpool.New()
 
 	canReceiveProblemUseCase, err := canreceiveproblems.New(canreceiveproblems.NewOptions(mLoadSrv, mPool))
 	if err != nil {
@@ -49,7 +65,34 @@ func initServerManager(
 		return nil, fmt.Errorf("create free hands use case: %v", err)
 	}
 
-	v1Handlers, err := managerv1.NewHandlers(managerv1.NewOptions(canReceiveProblemUseCase, freeHandsUseCase))
+	getChatsUseCase, err := getchats.New(getchats.NewOptions(chatsRepo))
+	if err != nil {
+		return nil, fmt.Errorf("create get chats use case: %v", err)
+	}
+
+	getChatHistoryUseCase, err := getchathistory.New(getchathistory.NewOptions(msgRepo, problemsRepo))
+	if err != nil {
+		return nil, fmt.Errorf("create get chat history use case: %v", err)
+	}
+
+	sendMessageUseCase, err := sendmessage.New(sendmessage.NewOptions(msgRepo, problemsRepo, outboxSvc, db))
+	if err != nil {
+		return nil, fmt.Errorf("create send message usecase: %v", err)
+	}
+
+	closeChatUseCase, err := closechat.New(closechat.NewOptions(problemsRepo, msgRepo, outboxSvc, db))
+	if err != nil {
+		return nil, fmt.Errorf("create close chat use case: %v", err)
+	}
+
+	v1Handlers, err := managerv1.NewHandlers(managerv1.NewOptions(
+		canReceiveProblemUseCase,
+		freeHandsUseCase,
+		getChatsUseCase,
+		getChatHistoryUseCase,
+		sendMessageUseCase,
+		closeChatUseCase,
+	))
 	if err != nil {
 		return nil, fmt.Errorf("create v1 manager handlers: %v", err)
 	}
@@ -65,6 +108,20 @@ func initServerManager(
 
 	errHandleFunc := errHandler.Handle
 
+	shutdown := make(chan struct{})
+
+	wsManager, err := websocketstream.NewHTTPHandler(websocketstream.NewOptions(
+		zap.L().Named("websocket-manager"),
+		stream,
+		managerevents.Adapter{},
+		websocketstream.JSONEventWriter{},
+		websocketstream.NewUpgrader(allowOrigins, secWSProtocol),
+		shutdown,
+	))
+	if err != nil {
+		return nil, fmt.Errorf("init websocket manager: %v", err)
+	}
+
 	return server.New(server.NewOptions(
 		lg,
 		addr,
@@ -77,6 +134,9 @@ func initServerManager(
 		func(router *echo.Group) {
 			managerv1.RegisterHandlers(router, v1Handlers)
 		},
-		wsHTTPHandler,
+		func() {
+			close(shutdown)
+		},
+		wsManager,
 	))
 }

@@ -27,6 +27,8 @@ func (Problem) Fields() []ent.Field {
 			Optional(),
 		field.Time("resolved_at").
 			Optional(),
+		field.UUID("resolve_request_id", types.RequestID{}).
+			Optional(),
 		field.Time("created_at").
 			Default(time.Now),
 	}
@@ -47,7 +49,7 @@ func (Problem) Edges() []ent.Edge {
 // Indexes of the Problem.
 func (Problem) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("chat_id", "resolved_at").
+		index.Fields("manager_id", "resolved_at").
 			Unique(),
 	}
 }

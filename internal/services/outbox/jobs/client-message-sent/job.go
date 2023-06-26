@@ -2,14 +2,16 @@ package clientmessagesentjob
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
-	msgjobpayload "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/msg-job-payload"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/payload/simpleid"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -53,7 +55,7 @@ func (j *Job) Name() string {
 }
 
 func (j *Job) Handle(ctx context.Context, payload string) error {
-	msgID, err := msgjobpayload.UnmarshalPayload(payload)
+	msgID, err := simpleid.Unmarshal[types.MessageID](payload)
 	if err != nil {
 		j.lg.Error("unmarshal payload", zap.Error(err))
 		return fmt.Errorf("unmarshal payload: %v", err)
@@ -65,12 +67,40 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		return fmt.Errorf("get msg while hadle job %v: %v", Name, err)
 	}
 
-	if err := j.eventStream.Publish(ctx, msg.AuthorID, eventstream.NewMessageSentEvent(
-		types.NewEventID(),
-		msg.InitialRequestID,
-		msg.ID,
-	)); err != nil {
-		return fmt.Errorf("publish msg sent to event stream: %v", err)
+	eg, ctx := errgroup.WithContext(ctx)
+
+	eg.Go(func() error {
+		if err := j.eventStream.Publish(ctx, msg.AuthorID, eventstream.NewMessageSentEvent(
+			types.NewEventID(),
+			msg.InitialRequestID,
+			msg.ID,
+		)); err != nil {
+			return fmt.Errorf("publish msg sent to event stream: %v", err)
+		}
+
+		return nil
+	})
+
+	eg.Go(func() error {
+		if err := j.eventStream.Publish(ctx, msg.ManagerID, eventstream.NewNewMessageEvent(
+			types.NewEventID(),
+			msg.InitialRequestID,
+			msg.ChatID,
+			msg.ID,
+			msg.AuthorID,
+			msg.CreatedAt,
+			msg.Body,
+			msg.IsService,
+		)); err != nil {
+			return fmt.Errorf("publish new message for manager: %v", err)
+		}
+
+		return nil
+	})
+
+	if err := eg.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+		return fmt.Errorf("wait for publish to event stream: %v", err)
 	}
+
 	return nil
 }

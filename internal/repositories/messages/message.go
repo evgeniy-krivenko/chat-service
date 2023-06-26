@@ -18,9 +18,16 @@ type Message struct {
 	IsVisibleForManager bool
 	IsBlocked           bool
 	IsService           bool
+	ManagerID           types.UserID
 }
 
 func adaptStoreMessage(m *store.Message) Message {
+	managerID := types.UserIDNil
+	p := m.Edges.Problem
+	if p != nil {
+		managerID = p.ManagerID
+	}
+
 	return Message{
 		ID:                  m.ID,
 		ChatID:              m.ChatID,
@@ -32,5 +39,6 @@ func adaptStoreMessage(m *store.Message) Message {
 		IsVisibleForManager: m.IsVisibleForManager,
 		IsBlocked:           m.IsBlocked,
 		IsService:           m.IsService,
+		ManagerID:           managerID,
 	}
 }

@@ -25,7 +25,7 @@ func (k KafkaAdapted) Printf(format string, v ...interface{}) {
 	result := fmt.Sprintf(format, v...)
 	switch k.logType {
 	case infoType:
-		k.lg.Info(result)
+		k.lg.Debug(result) // for prevent more logs
 	case errorType:
 		k.lg.Error(result)
 	}

@@ -43,6 +43,7 @@ type Options struct {
 	role             string                `option:"mandatory" validate:"required"`
 	httpErrorHandler echo.HTTPErrorHandler `option:"mandatory" validate:"required"`
 	registerHandlers func(*echo.Group)     `option:"mandatory" validate:"required"`
+	shutdown         func()                `option:"mandatory" validate:"required"`
 
 	wsHandler wsHTTPHandler `option:"mandatory" validate:"required"`
 }
@@ -88,15 +89,19 @@ func New(opts Options) (*Server, error) {
 		}),
 	)
 
+	srv := &http.Server{
+		Addr:              opts.addr,
+		Handler:           e,
+		ReadHeaderTimeout: readHeaderTimeout,
+	}
+
+	srv.RegisterOnShutdown(opts.shutdown)
+
 	opts.registerHandlers(v1)
 
 	return &Server{
-		lg: opts.logger,
-		srv: &http.Server{
-			Addr:              opts.addr,
-			Handler:           e,
-			ReadHeaderTimeout: readHeaderTimeout,
-		},
+		lg:  opts.logger,
+		srv: srv,
 	}, nil
 }
 

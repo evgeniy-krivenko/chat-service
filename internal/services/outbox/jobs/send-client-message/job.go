@@ -10,7 +10,7 @@ import (
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	msgproducer "github.com/evgeniy-krivenko/chat-service/internal/services/msg-producer"
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
-	msgjobpayload "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/msg-job-payload"
+	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/payload/simpleid"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -59,16 +59,18 @@ func (j *Job) Name() string {
 }
 
 func (j *Job) Handle(ctx context.Context, payload string) error {
-	msgID, err := msgjobpayload.UnmarshalPayload(payload)
+	j.lg.Info("start processing", zap.String("payload", payload))
+
+	msgID, err := simpleid.Unmarshal[types.MessageID](payload)
 	if err != nil {
-		j.lg.Error("unmarshal payload", zap.Error(err))
-		return err
+		j.lg.Warn("unmarshal payload", zap.Error(err))
+		return fmt.Errorf("unmarshal payload: %v", err)
 	}
 
 	msg, err := j.msgRepo.GetMessageByID(ctx, msgID)
 	if err != nil {
-		j.lg.Error("get msg from repo", zap.Error(err))
-		return err
+		j.lg.Warn("get msg from repo", zap.Error(err))
+		return fmt.Errorf("get msg from repo: %v", err)
 	}
 
 	if err := j.msgProducer.ProduceMessage(ctx, msgproducer.Message{
@@ -77,7 +79,8 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		Body:       msg.Body,
 		FromClient: true,
 	}); err != nil {
-		j.lg.Error("produce message", zap.Error(err))
+		j.lg.Warn("produce message", zap.Error(err))
+		return fmt.Errorf("produce msg: %v", err)
 	}
 
 	if err := j.eventStream.Publish(ctx, msg.AuthorID, eventstream.NewNewMessageEvent(
@@ -90,9 +93,10 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		msg.Body,
 		msg.IsService,
 	)); err != nil {
-		return fmt.Errorf("publish new msg to event stream: %v", err)
+		j.lg.Warn("publish message", zap.Stringer("message_id", msgID))
+		return fmt.Errorf("publish NewMesaggeEvent to client stream: %v", err)
 	}
 
-	j.lg.Info("success to produce message. Job done")
+	j.lg.Info("success to process job", zap.String("payload", payload))
 	return nil
 }

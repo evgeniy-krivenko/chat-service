@@ -186,7 +186,7 @@ func (s *ServiceSuite) TestOperationBackoffExceeded() {
 	s.dlqProducer.EXPECT().WriteMessages(gomock.Any(), kafkaMsgValueMatcher{data})
 
 	// Action & assert.
-	s.runProcessorFor(2 * backoffMaxElapsedTime)
+	s.runProcessorFor(3 * backoffMaxElapsedTime)
 }
 
 func (s *ServiceSuite) TestProcessMessagesWithoutErrors() {

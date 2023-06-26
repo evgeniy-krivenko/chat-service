@@ -82,6 +82,7 @@ type ServicesConfig struct {
 	MsgProducer          MsgProducerConfig          `toml:"msg_producer"`
 	ManagerLoad          ManagerLoadConfig          `toml:"manager_load"`
 	AFCVerdictsProcessor AFCVerdictsProcessorConfig `toml:"afc_verdicts_processor"`
+	ManagerScheduler     ManagerSchedulerConfig     `toml:"manager_scheduler"`
 }
 
 type OutboxConfig struct {
@@ -108,4 +109,9 @@ type AFCVerdictsProcessorConfig struct {
 	VerdictsTopic            string   `toml:"verdicts_topic" validate:"required"`
 	VerdictsDLQTopic         string   `toml:"verdicts_dlq_topic" validate:"required"`
 	VerdictsSigningPublicKey string   `toml:"verdicts_signing_public_key" validate:"startswith=-----BEGIN PUBLIC KEY-----"`
+	BatchSize                int      `toml:"batch_size" default:"1"`
+}
+
+type ManagerSchedulerConfig struct {
+	Period time.Duration `toml:"period" validate:"required,min=500ms,max=10s"`
 }
