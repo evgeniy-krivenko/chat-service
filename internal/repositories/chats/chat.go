@@ -11,6 +11,8 @@ type Chat struct {
 	ID        types.ChatID
 	ClientID  types.UserID
 	CreatedAt time.Time
+	FirstName string
+	LastName  string
 }
 
 func adaptChat(c *store.Chat) Chat {

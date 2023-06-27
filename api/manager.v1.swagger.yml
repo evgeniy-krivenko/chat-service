@@ -239,6 +239,10 @@ components:
               x-go-type: types.UserID
               x-go-type-import:
                 path: "github.com/evgeniy-krivenko/chat-service/internal/types"
+            firstName:
+              type: string
+            lastName:
+              type: string
 
     GetChatHistoryRequest:
       required: [ chatId ]

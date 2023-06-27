@@ -85,6 +85,18 @@ func (s *ChatsRepoSuite) Test_GetManagerChatsWithProblems() {
 		clientFirst := types.NewUserID()
 		managerID := types.NewUserID()
 
+		const (
+			firstName = "Eric"
+			lastName  = "Cartman"
+		)
+
+		s.Database.Profile(s.Ctx).Create().
+			SetID(clientFirst).
+			SetUpdatedAt(time.Now()).
+			SetFirstName(firstName).
+			SetLastName(lastName).
+			SaveX(s.Ctx)
+
 		chatOne := s.Database.Chat(s.Ctx).Create().SetClientID(clientFirst).SaveX(s.Ctx)
 		s.Database.Problem(s.Ctx).Create().SetChatID(chatOne.ID).SetManagerID(managerID).SaveX(s.Ctx)
 
@@ -94,8 +106,10 @@ func (s *ChatsRepoSuite) Test_GetManagerChatsWithProblems() {
 		// Assert.
 		s.Require().NoError(err)
 
-		s.Len(chats, 1)
+		s.Require().Len(chats, 1)
 		s.Equal(chatOne.ID, chats[0].ID)
+		s.Equal(firstName, chats[0].FirstName)
+		s.Equal(lastName, chats[0].LastName)
 		s.IsType(chatsrepo.Chat{}, chats[0])
 	})
 

@@ -52,7 +52,9 @@ func (u UseCase) Handle(ctx context.Context, req Request) (Response, error) {
 
 func adaptChat(chat chatsrepo.Chat) Chat {
 	return Chat{
-		ID:       chat.ID,
-		ClientID: chat.ClientID,
+		ID:        chat.ID,
+		ClientID:  chat.ClientID,
+		FirstName: chat.FirstName,
+		LastName:  chat.LastName,
 	}
 }
