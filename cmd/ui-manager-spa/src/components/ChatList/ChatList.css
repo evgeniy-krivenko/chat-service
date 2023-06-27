@@ -1,0 +1,18 @@
+.chat-list__chats {
+    margin-bottom: 16px;
+}
+
+.chat-list__title {
+    margin-bottom: 24px;
+}
+
+.chat-list__subtitle {
+    margin-bottom: 12px;
+}
+
+.chat-list__item {
+    background-color: white;
+    padding: 16px 24px;
+    border-radius: 5px;
+    cursor: pointer;
+}
