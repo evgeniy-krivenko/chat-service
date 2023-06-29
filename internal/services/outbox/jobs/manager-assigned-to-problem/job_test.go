@@ -3,6 +3,7 @@ package managerassignedtoproblemjob_test
 import (
 	"errors"
 	"fmt"
+	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 	"testing"
 	"time"
 
@@ -21,11 +22,12 @@ import (
 type JobSuite struct {
 	testingh.ContextSuite
 
-	ctrl        *gomock.Controller
-	chatRepo    *managerassignedtoproblemjobmocks.MockchatRepo
-	msgRepo     *managerassignedtoproblemjobmocks.MockmessageRepo
-	mngrLoadSvc *managerassignedtoproblemjobmocks.MockmanagerLoadService
-	eventStream *managerassignedtoproblemjobmocks.MockeventStream
+	ctrl         *gomock.Controller
+	chatRepo     *managerassignedtoproblemjobmocks.MockchatRepo
+	msgRepo      *managerassignedtoproblemjobmocks.MockmessageRepo
+	profilesRepo *managerassignedtoproblemjobmocks.MockprofilesRepo
+	mngrLoadSvc  *managerassignedtoproblemjobmocks.MockmanagerLoadService
+	eventStream  *managerassignedtoproblemjobmocks.MockeventStream
 
 	msgID     types.MessageID
 	managerID types.UserID
@@ -51,6 +53,7 @@ func (j *JobSuite) SetupTest() {
 	j.ctrl = gomock.NewController(j.T())
 	j.chatRepo = managerassignedtoproblemjobmocks.NewMockchatRepo(j.ctrl)
 	j.msgRepo = managerassignedtoproblemjobmocks.NewMockmessageRepo(j.ctrl)
+	j.profilesRepo = managerassignedtoproblemjobmocks.NewMockprofilesRepo(j.ctrl)
 	j.mngrLoadSvc = managerassignedtoproblemjobmocks.NewMockmanagerLoadService(j.ctrl)
 	j.eventStream = managerassignedtoproblemjobmocks.NewMockeventStream(j.ctrl)
 
@@ -85,6 +88,7 @@ func (j *JobSuite) SetupTest() {
 	j.job, err = managerassignedtoproblemjob.New(managerassignedtoproblemjob.NewOptions(
 		j.chatRepo,
 		j.msgRepo,
+		j.profilesRepo,
 		j.mngrLoadSvc,
 		j.eventStream,
 	))
@@ -98,8 +102,15 @@ func (j *JobSuite) TearDown() {
 
 func (j *JobSuite) TestHandle_Success() {
 	// Arrange.
+	profile := profilesrepo.Profile{
+		ID:        j.chat.ClientID,
+		FirstName: "Eric",
+		LastName:  "Cartman",
+	}
+
 	j.msgRepo.EXPECT().GetMessageByID(gomock.Any(), j.msgID).Return(&j.message, nil)
 	j.chatRepo.EXPECT().GetChatByID(gomock.Any(), j.message.ChatID).Return(&j.chat, nil)
+	j.profilesRepo.EXPECT().GetProfileByID(gomock.Any(), j.chat.ClientID).Return(&profile, nil)
 	j.mngrLoadSvc.EXPECT().CanManagerTakeProblem(gomock.Any(), j.managerID).Return(true, nil)
 	j.eventStream.EXPECT().Publish(gomock.Any(), j.chat.ClientID, newMessageEventMatcher(eventstream.NewNewMessageEvent(
 		types.NewEventID(),
@@ -117,6 +128,8 @@ func (j *JobSuite) TestHandle_Success() {
 		j.reqID,
 		j.message.ChatID,
 		j.clientID,
+		profile.FirstName,
+		profile.LastName,
 		true,
 	))).Return(nil)
 
@@ -130,6 +143,12 @@ func (j *JobSuite) TestHandle_Success() {
 
 func (j *JobSuite) TestHandle_Error() {
 	err := errors.New("unexpected")
+
+	profile := profilesrepo.Profile{
+		ID:        j.chat.ClientID,
+		FirstName: "Eric",
+		LastName:  "Cartman",
+	}
 
 	j.Run("get message error", func() {
 		// Arrange.
@@ -156,10 +175,25 @@ func (j *JobSuite) TestHandle_Error() {
 		j.Require().Error(err)
 	})
 
+	j.Run("get profile for chat error", func() {
+		// Arrange.
+		j.msgRepo.EXPECT().GetMessageByID(gomock.Any(), j.msgID).Return(&j.message, nil)
+		j.chatRepo.EXPECT().GetChatByID(gomock.Any(), j.message.ChatID).Return(&j.chat, nil)
+		j.profilesRepo.EXPECT().GetProfileByID(gomock.Any(), j.chat.ClientID).Return(nil, err)
+
+		// Action & assert
+		payload, err := managerassignedtoproblemjob.MarshalPayload(j.msgID, j.managerID, j.problemID, j.reqID)
+		j.Require().NoError(err)
+
+		err = j.job.Handle(j.Ctx, payload)
+		j.Require().Error(err)
+	})
+
 	j.Run("get can manager take problem error", func() {
 		// Arrange.
 		j.msgRepo.EXPECT().GetMessageByID(gomock.Any(), j.msgID).Return(&j.message, nil)
 		j.chatRepo.EXPECT().GetChatByID(gomock.Any(), j.message.ChatID).Return(&j.chat, nil)
+		j.profilesRepo.EXPECT().GetProfileByID(gomock.Any(), j.chat.ClientID).Return(&profile, nil)
 		j.mngrLoadSvc.EXPECT().CanManagerTakeProblem(gomock.Any(), j.managerID).Return(false, err)
 
 		// Action & assert
@@ -174,6 +208,7 @@ func (j *JobSuite) TestHandle_Error() {
 		// Arrange.
 		j.msgRepo.EXPECT().GetMessageByID(gomock.Any(), j.msgID).Return(&j.message, nil)
 		j.chatRepo.EXPECT().GetChatByID(gomock.Any(), j.message.ChatID).Return(&j.chat, nil)
+		j.profilesRepo.EXPECT().GetProfileByID(gomock.Any(), j.chat.ClientID).Return(&profile, nil)
 		j.mngrLoadSvc.EXPECT().CanManagerTakeProblem(gomock.Any(), j.managerID).Return(false, nil)
 		j.eventStream.EXPECT().Publish(gomock.Any(), j.chat.ClientID, newMessageEventMatcher(eventstream.NewNewMessageEvent(
 			types.NewEventID(),
@@ -199,6 +234,7 @@ func (j *JobSuite) TestHandle_Error() {
 		// Arrange.
 		j.msgRepo.EXPECT().GetMessageByID(gomock.Any(), j.msgID).Return(&j.message, nil)
 		j.chatRepo.EXPECT().GetChatByID(gomock.Any(), j.message.ChatID).Return(&j.chat, nil)
+		j.profilesRepo.EXPECT().GetProfileByID(gomock.Any(), j.chat.ClientID).Return(&profile, nil)
 		j.mngrLoadSvc.EXPECT().CanManagerTakeProblem(gomock.Any(), j.managerID).Return(false, nil)
 		j.eventStream.EXPECT().Publish(gomock.Any(), j.chat.ClientID, newMessageEventMatcher(eventstream.NewNewMessageEvent(
 			types.NewEventID(),
@@ -216,6 +252,8 @@ func (j *JobSuite) TestHandle_Error() {
 			j.reqID,
 			j.message.ChatID,
 			j.clientID,
+			profile.FirstName,
+			profile.LastName,
 			false,
 		))).Return(err)
 
@@ -286,6 +324,8 @@ func (e *eqNewChatEventParamsMatcher) Matches(x interface{}) bool {
 	case !e.arg.ChatID.Matches(ev.ChatID):
 		return false
 	case !e.arg.ClientID.Matches(ev.ClientID):
+		return false
+	case e.arg.FirstName != ev.FirstName || e.arg.LastName != ev.LastName:
 		return false
 	case e.arg.CanTakeMoreProblem != ev.CanTakeMoreProblem:
 		return false

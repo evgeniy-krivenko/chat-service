@@ -13,7 +13,7 @@ func TestGetUserInfoFromToken(t *testing.T) {
 	var usrGetter keycloakclient.UserGetter
 
 	t.Run("success", func(t *testing.T) {
-		const token = `eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2ODY0MTk5MTUsInN1YiI6ImJjN2UzMDBiLTI5ZTQtNDdkNS1iYzkwLTkwY2EwMDQ2ZjlmNyIsImdpdmVuX25hbWUiOiJFcmljIiwiZmFtaWx5X25hbWUiOiJDYXJ0bWFuIn0.Hjdr_26PAABM6Bnw_p8rMyCgbthdiGngu4OQVsCiwEk` //nolint:lll,gosec
+		const token = `eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2ODgwNjMyNzIsInN1YiI6ImQwZmZiZDM2LWJjMzAtMTFlZC04Mjg2LTQ2MWU0NjRlYmVkOCIsImdpdmVuX25hbWUiOiJFcmljIiwiZmFtaWx5X25hbWUiOiJDYXJ0bWFuIiwicmVzb3VyY2VfYWNjZXNzIjp7ImNoYXQtdWktbWFuYWdlciI6eyJyb2xlcyI6WyJzdXBwb3J0LWNoYXQtbWFuYWdlciJdfX19.zTjjgh6iiZQ-rHnE0kjDVqmdImlfDoE5TbxloM_deT8` //nolint:lll,gosec
 
 		user, err := usrGetter.GetUserInfoFromToken(token)
 		require.NoError(t, err)

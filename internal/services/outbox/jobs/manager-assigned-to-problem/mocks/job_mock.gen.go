@@ -10,6 +10,7 @@ import (
 
 	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
+	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	types "github.com/evgeniy-krivenko/chat-service/internal/types"
 	gomock "github.com/golang/mock/gomock"
@@ -89,6 +90,44 @@ func (m *MockchatRepo) GetChatByID(ctx context.Context, chatID types.ChatID) (*c
 func (mr *MockchatRepoMockRecorder) GetChatByID(ctx, chatID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChatByID", reflect.TypeOf((*MockchatRepo)(nil).GetChatByID), ctx, chatID)
+}
+
+// MockprofilesRepo is a mock of profilesRepo interface.
+type MockprofilesRepo struct {
+	ctrl     *gomock.Controller
+	recorder *MockprofilesRepoMockRecorder
+}
+
+// MockprofilesRepoMockRecorder is the mock recorder for MockprofilesRepo.
+type MockprofilesRepoMockRecorder struct {
+	mock *MockprofilesRepo
+}
+
+// NewMockprofilesRepo creates a new mock instance.
+func NewMockprofilesRepo(ctrl *gomock.Controller) *MockprofilesRepo {
+	mock := &MockprofilesRepo{ctrl: ctrl}
+	mock.recorder = &MockprofilesRepoMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockprofilesRepo) EXPECT() *MockprofilesRepoMockRecorder {
+	return m.recorder
+}
+
+// GetProfileByID mocks base method.
+func (m *MockprofilesRepo) GetProfileByID(ctx context.Context, id types.UserID) (*profilesrepo.Profile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProfileByID", ctx, id)
+	ret0, _ := ret[0].(*profilesrepo.Profile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProfileByID indicates an expected call of GetProfileByID.
+func (mr *MockprofilesRepoMockRecorder) GetProfileByID(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileByID", reflect.TypeOf((*MockprofilesRepo)(nil).GetProfileByID), ctx, id)
 }
 
 // MockmanagerLoadService is a mock of managerLoadService interface.

@@ -2,6 +2,7 @@ package managerevents
 
 import (
 	"fmt"
+	"github.com/evgeniy-krivenko/chat-service/pkg/pointer"
 
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	websocketstream "github.com/evgeniy-krivenko/chat-service/internal/websocket-stream"
@@ -28,6 +29,8 @@ func (Adapter) Adapt(ev eventstream.Event) (any, error) {
 			CanTakeMoreProblems: e.CanTakeMoreProblem,
 			ClientId:            e.ClientID,
 			ChatId:              e.ChatID,
+			FirstName:           pointer.PtrWithZeroAsNil(e.FirstName),
+			LastName:            pointer.PtrWithZeroAsNil(e.LastName),
 		})
 	case *eventstream.NewMessageEvent:
 		event.EventId = e.EventID

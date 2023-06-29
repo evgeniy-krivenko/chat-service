@@ -67,6 +67,8 @@ type NewChatEvent struct {
 	RequestID          types.RequestID `validate:"required"`
 	ChatID             types.ChatID    `validate:"required"`
 	ClientID           types.UserID    `validate:"required"`
+	FirstName          string          `validate:"omitempty"`
+	LastName           string          `validate:"omitempty"`
 	CanTakeMoreProblem bool
 }
 

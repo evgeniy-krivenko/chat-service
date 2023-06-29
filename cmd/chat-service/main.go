@@ -255,6 +255,7 @@ func run() (errReturned error) {
 	managerAssignedToProblem, err := managerassignedtoproblemjob.New(managerassignedtoproblemjob.NewOptions(
 		chatsRepo,
 		msgRepo,
+		profilesRepo,
 		managerLoadService,
 		eventStream,
 	))

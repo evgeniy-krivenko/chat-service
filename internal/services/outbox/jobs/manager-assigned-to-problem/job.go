@@ -3,6 +3,7 @@ package managerassignedtoproblemjob
 import (
 	"context"
 	"fmt"
+	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 
 	"go.uber.org/zap"
 
@@ -25,6 +26,10 @@ type chatRepo interface {
 	GetChatByID(ctx context.Context, chatID types.ChatID) (*chatsrepo.Chat, error)
 }
 
+type profilesRepo interface {
+	GetProfileByID(ctx context.Context, id types.UserID) (profile *profilesrepo.Profile, err error)
+}
+
 type managerLoadService interface {
 	CanManagerTakeProblem(ctx context.Context, managerID types.UserID) (bool, error)
 }
@@ -35,10 +40,11 @@ type eventStream interface {
 
 //go:generate options-gen -out-filename=job_options.gen.go -from-struct=Options
 type Options struct {
-	chatRepo    chatRepo           `option:"mandatory" validate:"required"`
-	msgRepo     messageRepo        `option:"mandatory" validate:"required"`
-	mngrLoadSvc managerLoadService `option:"mandatory" validate:"required"`
-	eventStream eventStream        `option:"mandatory" validate:"required"`
+	chatRepo     chatRepo           `option:"mandatory" validate:"required"`
+	msgRepo      messageRepo        `option:"mandatory" validate:"required"`
+	profilesRepo profilesRepo       `option:"mandatory" validate:"required"`
+	mngrLoadSvc  managerLoadService `option:"mandatory" validate:"required"`
+	eventStream  eventStream        `option:"mandatory" validate:"required"`
 }
 
 type Job struct {
@@ -83,6 +89,13 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		return fmt.Errorf("get chat %v: %v", msg.ChatID, err)
 	}
 
+	profile, err := j.profilesRepo.GetProfileByID(ctx, chat.ClientID)
+	if err != nil {
+		j.lg.Warn("not find profile", zap.Stringer("user_id", chat.ClientID), zap.Error(err))
+
+		return fmt.Errorf("get profile: %v", err)
+	}
+
 	canTakeMoreProblems, err := j.mngrLoadSvc.CanManagerTakeProblem(ctx, p.ManagerID)
 	if err != nil {
 		j.lg.Warn("can take problem", zap.Stringer("manager_id", p.ManagerID), zap.Error(err))
@@ -115,6 +128,8 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		p.RequestID,
 		chat.ID,
 		chat.ClientID,
+		profile.FirstName,
+		profile.LastName,
 		canTakeMoreProblems,
 	)); err != nil {
 		j.lg.Warn("publish new chat event to manager", zap.Stringer("manager_id", p.ManagerID), zap.Error(err))

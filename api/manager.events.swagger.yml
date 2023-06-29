@@ -71,6 +71,10 @@ components:
                 path: "github.com/evgeniy-krivenko/chat-service/internal/types"
             canTakeMoreProblems:
               type: boolean
+            firstName:
+              type: string
+            lastName:
+              type: string
 
     NewMessageEvent:
       allOf:
