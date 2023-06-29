@@ -297,27 +297,3 @@ func (s *Service) backoffTx(f TxFunc) TxFunc {
 		}
 	}
 }
-
-func (s *Service) backoffDLQ(f DLQFunc) DLQFunc {
-	return func(ctx context.Context, msgs ...kafka.Message) error {
-		delay := s.backoffInitialInterval
-
-		for {
-			if err := f(ctx, msgs...); nil == err || delay >= s.backoffMaxElapsedTime {
-				return err
-			}
-
-			select {
-			case <-time.After(delay):
-			case <-ctx.Done():
-				return nil
-			}
-
-			delay = time.Duration(float64(delay) * s.expFactor)
-			if delay > s.backoffMaxElapsedTime {
-				delay = s.backoffMaxElapsedTime
-			}
-			delay += time.Duration(rand.NormFloat64() * s.expJitter * float64(time.Second))
-		}
-	}
-}
