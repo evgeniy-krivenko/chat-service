@@ -3,7 +3,6 @@ package managerassignedtoproblemjob_test
 import (
 	"errors"
 	"fmt"
-	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 	"testing"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 
 	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
+	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	managerassignedtoproblemjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/manager-assigned-to-problem"
 	managerassignedtoproblemjobmocks "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/manager-assigned-to-problem/mocks"

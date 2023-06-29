@@ -3,12 +3,12 @@ package managerassignedtoproblemjob
 import (
 	"context"
 	"fmt"
-	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 
 	"go.uber.org/zap"
 
 	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
+	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"

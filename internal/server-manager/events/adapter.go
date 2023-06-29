@@ -2,10 +2,10 @@ package managerevents
 
 import (
 	"fmt"
-	"github.com/evgeniy-krivenko/chat-service/pkg/pointer"
 
 	eventstream "github.com/evgeniy-krivenko/chat-service/internal/services/event-stream"
 	websocketstream "github.com/evgeniy-krivenko/chat-service/internal/websocket-stream"
+	"github.com/evgeniy-krivenko/chat-service/pkg/pointer"
 )
 
 var _ websocketstream.EventAdapter = Adapter{}

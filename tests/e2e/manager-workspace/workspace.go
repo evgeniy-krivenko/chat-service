@@ -69,7 +69,7 @@ func (ws *Workspace) AccessToken() string {
 	return ws.token
 }
 
-// Name returns login as name
+// Name returns login as name.
 func (ws *Workspace) Name() string {
 	return ws.login
 }

@@ -50,6 +50,7 @@ func main() {
 	}
 }
 
+//nolint:gocyclo
 func run() (errReturned error) {
 	flag.Parse()
 
