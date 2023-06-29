@@ -9,9 +9,10 @@ import './Message.css';
 
 export interface MessageProps {
   message: IMessage;
+  authorName?: string;
 }
 
-const Message: FC<MessageProps> = ({ message }) => (
+const Message: FC<MessageProps> = ({ message, authorName }) => (
   <Grid
     container
     direction="column"
@@ -23,7 +24,7 @@ const Message: FC<MessageProps> = ({ message }) => (
         left: !message.userIsAuthor,
       })}
     >
-      {message.authorName && <p className="message__author-name">{message.authorName}</p>}
+      {authorName && !message.userIsAuthor && <p className="message__author-name">{authorName}</p>}
       {message.body}
       {message.userIsAuthor
           && <DoneAllIcon className="message__icon" style={{ width: '14px', height: '14px' }} />}

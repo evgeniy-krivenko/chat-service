@@ -13,4 +13,5 @@ export const selectChats = (state: IChatState): Omit<IChatState, 'resetError'> =
   freeHands: state.freeHands,
   freeHandsLoading: state.freeHandsLoading,
   freeHandsError: state.freeHandsError,
+  closeChat: state.closeChat,
 });

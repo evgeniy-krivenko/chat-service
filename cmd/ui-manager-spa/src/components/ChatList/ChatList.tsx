@@ -1,11 +1,19 @@
-import { FC, useEffect, useState } from 'react';
+import {
+  FC, SyntheticEvent, useEffect, useState,
+} from 'react';
 import {
   Alert,
-  Button, CircularProgress, Container, Grid,
+  Button,
+  CircularProgress,
+  Container,
+  Grid,
+  Tooltip,
 } from '@mui/material';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import useWebSocket from 'react-use-websocket';
 import { shallow } from 'zustand/shallow';
 import { green } from '@mui/material/colors';
+import cn from 'classnames';
 import { IChat, useChats } from '../../store/chats/index';
 import { selectChats } from '../../store/chats/selectors';
 import Chat from '../Chat';
@@ -24,7 +32,7 @@ const buttonSx = {
 };
 
 const ChatList: FC = () => {
-  const [currentChat, setCurrentChat] = useState<IChat>(null);
+  const [currentChat, setCurrentChat] = useState<IChat | null>(null);
   const {
     chats,
     getChats,
@@ -35,10 +43,13 @@ const ChatList: FC = () => {
     freeHands,
     freeHandsLoading,
     freeHandsError,
+    closeChat,
   } = useChats(selectChats, shallow);
 
   const token = localStorage.getItem('token');
-  const { lastMessage } = useWebSocket(WS_ENDPOINT, { protocols: [WS_PROTOCOL, token] });
+  const { lastMessage } = useWebSocket(WS_ENDPOINT, {
+    protocols: [WS_PROTOCOL, token],
+  });
 
   useEffect(() => {
     getChats();
@@ -46,16 +57,25 @@ const ChatList: FC = () => {
   }, []);
 
   useEffect(() => {
+    if (!chats.find((c) => c.chatId === currentChat?.chatId)) {
+      setCurrentChat(null);
+    }
+  }, [chats]);
+
+  useEffect(() => {
     if (lastMessage) {
       const msg: Events = JSON.parse(lastMessage.data);
 
       if (msg.eventType === 'NewChatEvent') {
-        addChat({
-          chatId: msg.chatId,
-          firstName: msg.firstName,
-          lastName: msg.lastName,
-          clientId: msg.clientId,
-        }, msg.canTakeMoreProblems);
+        addChat(
+          {
+            chatId: msg.chatId,
+            firstName: msg.firstName,
+            lastName: msg.lastName,
+            clientId: msg.clientId,
+          },
+          msg.canTakeMoreProblems,
+        );
       }
 
       if (msg.eventType === 'ChatClosedEvent') {
@@ -63,6 +83,12 @@ const ChatList: FC = () => {
       }
     }
   }, [lastMessage]);
+
+  const closeChatHandler = (chatId: string) => (e: SyntheticEvent) => {
+    e.stopPropagation();
+
+    closeChat(chatId);
+  };
 
   return (
     <Container>
@@ -73,13 +99,23 @@ const ChatList: FC = () => {
           <div className="chat-list__chats">
             {chats.map((chat) => (
               <div
-                className="chat-list__item"
+                className={cn('chat-list__item', {
+                  active: currentChat?.chatId === chat.chatId,
+                })}
                 role="button"
                 tabIndex={0}
                 key={chat.chatId}
                 onClick={() => setCurrentChat(chat)}
               >
-                {`${chat.firstName} ${chat.lastName}`}
+                <span>{`${chat.firstName} ${chat.lastName}`}</span>
+                <Tooltip title="Close Problem">
+                  <HighlightOffIcon
+                    className="chat-list__close"
+                    role="button"
+                    tabIndex={0}
+                    onClick={closeChatHandler(chat.chatId)}
+                  />
+                </Tooltip>
               </div>
             ))}
           </div>
@@ -112,9 +148,15 @@ const ChatList: FC = () => {
           )}
         </Grid>
         <Grid xs={8} item>
-          {currentChat
-            ? <Chat chatId={currentChat.chatId} lastMessage={lastMessage} />
-            : <div>Выберите активный чат 👈</div>}
+          {currentChat ? (
+            <Chat
+              chatId={currentChat.chatId}
+              authorName={`${currentChat.firstName || ''} ${currentChat.lastName || ''}`}
+              lastMessage={lastMessage}
+            />
+          ) : (
+            <div className="chat-list__no-active-text">Select open problem or push on Ready to work 👈</div>
+          )}
         </Grid>
       </Grid>
     </Container>

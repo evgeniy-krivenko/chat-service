@@ -13,39 +13,30 @@ import Message from '../Message';
 import './Chat.css';
 import useMessages from '../../store/messages/messages';
 import { Events } from '../../types/events';
-import { IMessage } from '../../types/messages';
 import useAuth from '../../hook/useAuth';
 import { MessageForm } from './types';
 
 interface ChatProps {
  chatId: string;
- lastMessage: MessageEvent<any>
+ lastMessage: MessageEvent<any>;
+ authorName?: string;
 }
 
-const Chat: FC<ChatProps> = ({ chatId, lastMessage }) => {
+const Chat: FC<ChatProps> = ({ chatId, lastMessage, authorName }) => {
   const listRef = useRef<HTMLDivElement>(null);
   const { manager } = useAuth();
   const {
     messages, getMessages, addMessage, sendMessage, loading, error, resetMessages, cursor,
-  } = useMessages((state) => {
-    const msgs: IMessage[] = [];
-
-    // eslint-disable-next-line no-restricted-syntax
-    for (const msg of state.messages.values()) {
-      msgs.push(msg);
-    }
-
-    return ({
-      loading: state.loading,
-      messages: msgs,
-      getMessages: state.getMessages,
-      addMessage: state.addMessage,
-      sendMessage: state.sendMessage,
-      error: state.error,
-      resetMessages: state.resetMessages,
-      cursor: state.cursor,
-    });
-  }, shallow);
+  } = useMessages((state) => ({
+    loading: state.loading,
+    messages: state.messages,
+    getMessages: state.getMessages,
+    addMessage: state.addMessage,
+    sendMessage: state.sendMessage,
+    error: state.error,
+    resetMessages: state.resetMessages,
+    cursor: state.cursor,
+  }), shallow);
 
   useEffect(() => {
     getMessages(chatId, manager.id);
@@ -88,16 +79,13 @@ const Chat: FC<ChatProps> = ({ chatId, lastMessage }) => {
       const msg: Events = JSON.parse(lastMessage.data);
 
       if (msg.eventType === 'NewMessageEvent' && msg.chatId === chatId) {
-        if (messages.every((m) => msg.messageId !== m.id)) {
-          const newMessage: IMessage = {
-            id: msg.messageId,
-            body: msg.body,
-            authorId: msg.authorId,
-            createdAt: msg.createdAt,
-            userIsAuthor: msg.authorId === manager.id,
-          };
-          addMessage(newMessage);
-        }
+        addMessage({
+          id: msg.messageId,
+          body: msg.body,
+          authorId: msg.authorId,
+          createdAt: msg.createdAt,
+          userIsAuthor: msg.authorId === manager.id,
+        });
       }
     }
   }, [lastMessage]);
@@ -121,7 +109,7 @@ const Chat: FC<ChatProps> = ({ chatId, lastMessage }) => {
           <div className="chat" ref={listRef}>
             <div style={{ flex: '1 1 auto' }} ref={observerTarget} />
             {messages.map((m) => (
-              <Message key={m.id} message={m} />
+              <Message key={m.id} authorName={authorName} message={m} />
             ))}
           </div>
           <Grid

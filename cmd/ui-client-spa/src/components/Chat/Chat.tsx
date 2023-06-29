@@ -59,7 +59,8 @@ const Chat: FC = () => {
           listRef.current?.lastElementChild?.scrollIntoView();
         }, 100)
 
-      }).finally(() => event.target.message.value = '')
+      })
+      .finally(() => event.target.message.value = '')
   }
 
   return (

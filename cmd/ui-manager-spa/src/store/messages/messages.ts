@@ -8,11 +8,11 @@ import {
 import $api from '../../api/index';
 import { GET_CHAT_HISTORY, SEND_MESSAGE } from '../../const/urls';
 
-const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 20;
 
 export interface IMessagesState {
   loading: boolean;
-  messages: Map<string, IMessage>;
+  messages: IMessage[];
   error: string;
   cursor: string;
   getMessages: (chatId: string, authorId: string) => Promise<void>;
@@ -23,15 +23,17 @@ export interface IMessagesState {
 
 const useMessages = create<IMessagesState>()(immer(devtools((set, get) => ({
   loading: false,
-  messages: new Map(),
+  messages: [],
   error: null,
   cursor: null,
   resetMessages: () => {
-    set({ messages: new Map<string, IMessage>() });
+    set({ messages: [] });
   },
   addMessage: (msg: IMessage): void => {
     set((state) => {
-      state.messages.set(msg.id, msg);
+      if (state.messages.findIndex((m) => m.id === msg.id) === -1) {
+        state.messages.push(msg);
+      }
     });
   },
   getMessages: async (chatId: string, authorId: string) => {
@@ -55,13 +57,15 @@ const useMessages = create<IMessagesState>()(immer(devtools((set, get) => ({
 
       const { messages } = get();
 
+      const existingMsgIds = new Set<string>();
+
       // eslint-disable-next-line no-restricted-syntax
-      for (const msg of newMessages) {
-        messages.set(msg.id, msg);
+      for (const msg of messages) {
+        existingMsgIds.add(msg.id);
       }
 
       set((state) => {
-        state.messages = messages;
+        state.messages = [...messages, ...newMessages.filter((m) => !existingMsgIds.has(m.id))];
         state.cursor = data.next;
       });
     } catch (e) {
@@ -79,13 +83,15 @@ const useMessages = create<IMessagesState>()(immer(devtools((set, get) => ({
       );
 
       set((state) => {
-        state.messages.set(data.id, {
-          id: data.id,
-          createdAt: data.createdAt,
-          authorId: data.authorId,
-          userIsAuthor: true,
-          body: messageBody,
-        });
+        if (state.messages.findIndex((m) => m.id === data.id) === -1) {
+          state.messages.push({
+            id: data.id,
+            createdAt: data.createdAt,
+            authorId: data.authorId,
+            userIsAuthor: true,
+            body: messageBody,
+          });
+        }
       });
     } catch (e) {
       set({ error: e.message });

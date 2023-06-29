@@ -55,7 +55,7 @@ const Login: FC = () => {
     // const login = form.login?.value;
     // const password = form.password?.value;
     const login = event.currentTarget.login.value;
-    const password = event.currentTarget.login.value;
+    const password = event.currentTarget.password.value;
 
     signIn(login, password);
   };
@@ -96,7 +96,7 @@ const Login: FC = () => {
               noValidate
               autoComplete="off"
             >
-              <Grid xs={12}>
+              <Grid xs={12} item>
                 <TextField
                   onChange={() => resetError()}
                   name="login"
@@ -106,7 +106,7 @@ const Login: FC = () => {
                   disabled={loading}
                 />
               </Grid>
-              <Grid xs={12}>
+              <Grid xs={12} item>
                 <TextField
                   onChange={() => resetError()}
                   name="password"
