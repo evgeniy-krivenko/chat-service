@@ -32,8 +32,9 @@ var _ = Describe("Client Events Smoke", Ordered, func() {
 
 		// Setup client.
 		clientChat = newClientChat(ctx, clientsPool.Get())
+		err := clientChat.Login(ctx)
+		Expect(err).ShouldNot(HaveOccurred())
 
-		var err error
 		clientStream, err = wsstream.New(wsstream.NewOptions(
 			wsClientEndpoint,
 			wsClientOrigin,
@@ -46,6 +47,10 @@ var _ = Describe("Client Events Smoke", Ordered, func() {
 
 		// Setup manager.
 		managerWs = newManagerWs(ctx, managersPool.Get())
+
+		// because without profile can not use other cases
+		err = managerWs.Login(ctx)
+		Expect(err).ShouldNot(HaveOccurred())
 
 		managerStream, err = wsstream.New(wsstream.NewOptions(
 			wsManagerEndpoint,

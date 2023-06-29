@@ -44,11 +44,12 @@ type MessageSentEvent = MessageId
 
 // NewMessageEvent defines model for NewMessageEvent.
 type NewMessageEvent struct {
-	AuthorId  *types.UserID   `json:"authorId,omitempty"`
-	Body      string          `json:"body"`
-	CreatedAt time.Time       `json:"createdAt"`
-	IsService bool            `json:"isService"`
-	MessageId types.MessageID `json:"messageId"`
+	AuthorId   *types.UserID   `json:"authorId,omitempty"`
+	AuthorName *string         `json:"authorName,omitempty"`
+	Body       string          `json:"body"`
+	CreatedAt  time.Time       `json:"createdAt"`
+	IsService  bool            `json:"isService"`
+	MessageId  types.MessageID `json:"messageId"`
 }
 
 // AsNewMessageEvent returns the union data inside the Event as a NewMessageEvent

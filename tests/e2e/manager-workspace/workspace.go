@@ -23,6 +23,7 @@ const pageSize = 10
 
 var (
 	errUnknownChat = errors.New("unknown chat")
+	errUnathorized = errors.New("unauthorized")
 
 	errNoResponseBody   = errors.New("no response body")
 	errNoDataInResponse = errors.New("no data field in response")
@@ -30,9 +31,11 @@ var (
 
 //go:generate options-gen -out-filename=workspace_options.gen.go -from-struct=Options
 type Options struct {
-	id    types.UserID                      `option:"mandatory" validate:"required"`
-	token string                            `option:"mandatory" validate:"required"`
-	api   *apimanagerv1.ClientWithResponses `option:"mandatory" validate:"required"`
+	id       types.UserID                      `option:"mandatory" validate:"required"`
+	login    string                            `option:"omitempty" validate:"omitempty"`
+	password string                            `option:"omitempty" validate:"omitempty"`
+	token    string                            `option:"mandatory" validate:"required"`
+	api      *apimanagerv1.ClientWithResponses `option:"mandatory" validate:"required"`
 }
 
 type Workspace struct {
@@ -64,6 +67,11 @@ func (ws *Workspace) ManagerID() types.UserID {
 
 func (ws *Workspace) AccessToken() string {
 	return ws.token
+}
+
+// Name returns login as name
+func (ws *Workspace) Name() string {
+	return ws.login
 }
 
 func (ws *Workspace) FirstChat() (Chat, bool) {
@@ -127,6 +135,24 @@ func (ws *Workspace) Refresh(ctx context.Context) error {
 	if first, ok := ws.FirstChat(); ok {
 		return ws.GetChatHistory(ctx, first.ID)
 	}
+	return nil
+}
+
+func (ws *Workspace) Login(ctx context.Context) error {
+	resp, err := ws.api.PostLoginWithResponse(ctx, apimanagerv1.PostLoginJSONRequestBody{
+		Login:    ws.login,
+		Password: ws.password,
+	})
+	if err != nil {
+		return fmt.Errorf("post manager login request: %v", err)
+	}
+	if resp.JSON200 == nil {
+		return errUnathorized
+	}
+	if err := resp.JSON200.Error; err != nil {
+		return fmt.Errorf("%v: %v", err.Code, err.Message)
+	}
+
 	return nil
 }
 

@@ -31,11 +31,14 @@ var _ = Describe("Client History Smoke", Ordered, func() {
 
 		// Setup client.
 		clientChat = newClientChat(ctx, clientsPool.Get())
+		err := clientChat.Login(ctx)
+		Expect(err).ShouldNot(HaveOccurred())
 
 		// Setup manager.
 		managerWs = newManagerWs(ctx, managersPool.Get())
+		err = managerWs.Login(ctx)
+		Expect(err).ShouldNot(HaveOccurred())
 
-		var err error
 		managerStream, err = wsstream.New(wsstream.NewOptions(
 			wsManagerEndpoint,
 			wsManagerOrigin,
@@ -60,8 +63,11 @@ var _ = Describe("Client History Smoke", Ordered, func() {
 		Expect(n).Should(Equal(0))
 	})
 
-	It("client send the 1st message without errors", func() {
-		err := clientChat.SendMessage(ctx, "Hello!")
+	It("client send the 1st message without errors after login", func() {
+		err := clientChat.Login(ctx)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		err = clientChat.SendMessage(ctx, "Hello!")
 		Expect(err).ShouldNot(HaveOccurred())
 
 		msg, ok := clientChat.LastMessage()
@@ -119,6 +125,7 @@ var _ = Describe("Client History Smoke", Ordered, func() {
 		err = managerWs.ReadyToNewProblems(ctx)
 		Expect(err).ShouldNot(HaveOccurred())
 
+		// depends on manager scheduler period
 		waitForEvent(managerStream) // NewChatEvent.
 	})
 })

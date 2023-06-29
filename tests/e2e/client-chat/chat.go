@@ -25,9 +25,11 @@ var (
 
 //go:generate options-gen -out-filename=chat_options.gen.go -from-struct=Options
 type Options struct {
-	id    types.UserID                     `option:"mandatory" validate:"required"`
-	token string                           `option:"mandatory" validate:"required"`
-	api   *apiclientv1.ClientWithResponses `option:"mandatory" validate:"required"`
+	id       types.UserID                     `option:"mandatory" validate:"required"`
+	login    string                           `option:"omitempty" validate:"omitempty"`
+	password string                           `option:"omitempty" validate:"omitempty"`
+	token    string                           `option:"mandatory" validate:"required"`
+	api      *apiclientv1.ClientWithResponses `option:"mandatory" validate:"required"`
 }
 
 type Chat struct {
@@ -192,6 +194,24 @@ func (c *Chat) SendMessage(ctx context.Context, body string, opts ...SendMessage
 	))
 
 	time.Sleep(10 * time.Millisecond)
+	return nil
+}
+
+func (c *Chat) Login(ctx context.Context) error {
+	resp, err := c.api.PostLoginWithResponse(ctx, apiclientv1.PostLoginJSONRequestBody{
+		Login:    c.login,
+		Password: c.password,
+	})
+	if err != nil {
+		return fmt.Errorf("post request: %v", err)
+	}
+	if resp.JSON200 == nil {
+		return errNoResponseBody
+	}
+	if err := resp.JSON200.Error; err != nil {
+		return fmt.Errorf("%v: %v", err.Code, err.Message)
+	}
+
 	return nil
 }
 

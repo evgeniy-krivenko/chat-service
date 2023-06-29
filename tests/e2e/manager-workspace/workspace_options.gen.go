@@ -32,9 +32,23 @@ func NewOptions(
 	return o
 }
 
+func WithLogin(opt string) OptOptionsSetter {
+	return func(o *Options) {
+		o.login = opt
+	}
+}
+
+func WithPassword(opt string) OptOptionsSetter {
+	return func(o *Options) {
+		o.password = opt
+	}
+}
+
 func (o *Options) Validate() error {
 	errs := new(errors461e464ebed9.ValidationErrors)
 	errs.Add(errors461e464ebed9.NewValidationError("id", _validate_Options_id(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("login", _validate_Options_login(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("password", _validate_Options_password(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("token", _validate_Options_token(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("api", _validate_Options_api(o)))
 	return errs.AsError()
@@ -43,6 +57,20 @@ func (o *Options) Validate() error {
 func _validate_Options_id(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.id, "required"); err != nil {
 		return fmt461e464ebed9.Errorf("field `id` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_login(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.login, "omitempty"); err != nil {
+		return fmt461e464ebed9.Errorf("field `login` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_password(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.password, "omitempty"); err != nil {
+		return fmt461e464ebed9.Errorf("field `password` did not pass the test: %w", err)
 	}
 	return nil
 }

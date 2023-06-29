@@ -78,6 +78,7 @@ type LoginResponse struct {
 // Message defines model for Message.
 type Message struct {
 	AuthorId   *types.UserID   `json:"authorId,omitempty"`
+	AuthorName *string         `json:"authorName,omitempty"`
 	Body       string          `json:"body"`
 	CreatedAt  time.Time       `json:"createdAt"`
 	Id         types.MessageID `json:"id"`

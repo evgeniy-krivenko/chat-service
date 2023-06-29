@@ -136,7 +136,13 @@ func newClientChat(ctx context.Context, client user) *clientchat.Chat {
 	Expect(err).ShouldNot(HaveOccurred())
 	GinkgoWriter.Printf("client %v has token sub %v\n", client.Name, clientID)
 
-	clientChat, err := clientchat.New(clientchat.NewOptions(clientID, token, apiClientV1))
+	clientChat, err := clientchat.New(clientchat.NewOptions(
+		clientID,
+		token,
+		apiClientV1,
+		clientchat.WithLogin(client.Name),
+		clientchat.WithPassword(client.Password),
+	))
 	Expect(err).ShouldNot(HaveOccurred())
 
 	return clientChat
@@ -171,7 +177,13 @@ func newManagerWs(ctx context.Context, manager user) *managerworkspace.Workspace
 	Expect(err).ShouldNot(HaveOccurred())
 	GinkgoWriter.Printf("manager %v has token sub %v\n", manager.Name, managerID)
 
-	managerWs, err := managerworkspace.New(managerworkspace.NewOptions(managerID, token, apiManagerV1))
+	managerWs, err := managerworkspace.New(managerworkspace.NewOptions(
+		managerID,
+		token,
+		apiManagerV1,
+		managerworkspace.WithLogin(manager.Name),
+		managerworkspace.WithPassword(manager.Password),
+	))
 	Expect(err).ShouldNot(HaveOccurred())
 
 	return managerWs
