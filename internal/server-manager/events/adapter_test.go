@@ -26,6 +26,30 @@ func TestAdapter_Adapt(t *testing.T) {
 				types.MustParse[types.RequestID]("cee5f290-bc30-11ed-b7fe-461e464ebed8"),
 				types.MustParse[types.ChatID]("cb36a888-bc30-11ed-b843-461e464ebed8"),
 				types.MustParse[types.UserID]("cee5f290-bc30-11ed-b7fe-461e464ebed8"),
+				"Eric",
+				"Cartman",
+				false,
+			),
+			expJSON: `{
+				"eventId": "d0ffbd36-bc30-11ed-8286-461e464ebed8",
+				"requestId": "cee5f290-bc30-11ed-b7fe-461e464ebed8",
+				"chatId": "cb36a888-bc30-11ed-b843-461e464ebed8",
+				"clientId": "cee5f290-bc30-11ed-b7fe-461e464ebed8",
+				"eventType":"NewChatEvent",
+				"firstName": "Eric",
+				"lastName": "Cartman",
+				"canTakeMoreProblems": false
+			}`,
+		},
+		{
+			name: "chat event empty manager info",
+			ev: eventstream.NewNewChatEvent(
+				types.MustParse[types.EventID]("d0ffbd36-bc30-11ed-8286-461e464ebed8"),
+				types.MustParse[types.RequestID]("cee5f290-bc30-11ed-b7fe-461e464ebed8"),
+				types.MustParse[types.ChatID]("cb36a888-bc30-11ed-b843-461e464ebed8"),
+				types.MustParse[types.UserID]("cee5f290-bc30-11ed-b7fe-461e464ebed8"),
+				"",
+				"",
 				false,
 			),
 			expJSON: `{
@@ -47,6 +71,7 @@ func TestAdapter_Adapt(t *testing.T) {
 				types.MustParse[types.UserID]("d0ffbd36-bc30-11ed-8286-461e464ebed8"),
 				time.Unix(1, 1).UTC(),
 				"I need help!",
+				"Eric Cartman",
 				false,
 			),
 			expJSON: `{

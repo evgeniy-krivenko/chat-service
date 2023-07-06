@@ -55,6 +55,7 @@ func (r *Repo) GetMessageByID(ctx context.Context, msgID types.MessageID) (*Mess
 		Query().
 		Where(storemessage.ID(msgID)).
 		WithProblem().
+		WithProfile().
 		Only(ctx)
 	if store.IsNotFound(err) {
 		return nil, ErrMsgNotFound

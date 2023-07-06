@@ -39,6 +39,8 @@ const (
 	EdgeChat = "chat"
 	// EdgeProblem holds the string denoting the problem edge name in mutations.
 	EdgeProblem = "problem"
+	// EdgeProfile holds the string denoting the profile edge name in mutations.
+	EdgeProfile = "profile"
 	// Table holds the table name of the message in the database.
 	Table = "messages"
 	// ChatTable is the table that holds the chat relation/edge.
@@ -55,6 +57,13 @@ const (
 	ProblemInverseTable = "problems"
 	// ProblemColumn is the table column denoting the problem relation/edge.
 	ProblemColumn = "problem_id"
+	// ProfileTable is the table that holds the profile relation/edge.
+	ProfileTable = "messages"
+	// ProfileInverseTable is the table name for the Profile entity.
+	// It exists in this package in order to avoid circular dependency with the "profile" package.
+	ProfileInverseTable = "profiles"
+	// ProfileColumn is the table column denoting the profile relation/edge.
+	ProfileColumn = "author_id"
 )
 
 // Columns holds all SQL columns for message fields.

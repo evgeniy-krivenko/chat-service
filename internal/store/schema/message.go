@@ -11,6 +11,8 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
+const messageBodyMaxLength = 3000
+
 // Message holds the schema definition for the Message entity.
 type Message struct {
 	ent.Schema
@@ -32,8 +34,9 @@ func (Message) Fields() []ent.Field {
 		field.Bool("is_visible_for_manager").
 			Optional(),
 		field.String("body").
-			MaxLen(2000).
-			NotEmpty(),
+			MaxLen(messageBodyMaxLength).
+			NotEmpty().
+			Immutable(),
 		field.Time("checked_at").
 			Optional(),
 		field.Bool("is_blocked").
@@ -61,6 +64,10 @@ func (Message) Edges() []ent.Edge {
 			Ref("messages").
 			Unique().
 			Field("problem_id"),
+		edge.From("profile", Profile.Type).
+			Ref("messages").
+			Unique().
+			Field("author_id"),
 	}
 }
 

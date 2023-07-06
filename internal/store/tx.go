@@ -24,6 +24,8 @@ type Tx struct {
 	Message *MessageClient
 	// Problem is the client for interacting with the Problem builders.
 	Problem *ProblemClient
+	// Profile is the client for interacting with the Profile builders.
+	Profile *ProfileClient
 
 	// lazily loaded.
 	client     *Client
@@ -160,6 +162,7 @@ func (tx *Tx) init() {
 	tx.Job = NewJobClient(tx.config)
 	tx.Message = NewMessageClient(tx.config)
 	tx.Problem = NewProblemClient(tx.config)
+	tx.Profile = NewProfileClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

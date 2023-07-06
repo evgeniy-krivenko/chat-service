@@ -268,6 +268,7 @@ func newMessageEvent(body string) eventstream.Event {
 		types.NewUserID(),
 		time.Now(),
 		body,
+		"",
 		false,
 	)
 }

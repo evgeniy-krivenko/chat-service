@@ -104,6 +104,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/CloseChatResponse"
 
+  /getManagerProfile:
+    post:
+      description: Get manager info
+      parameters:
+        - $ref: "#/components/parameters/XRequestIDHeader"
+      responses:
+        '200':
+          description: manager info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetManagerProfileResponse"
+
+  /login:
+    post:
+      security: [ ]
+      description: login with username and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        '200':
+          description: Success login
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+
 security:
   - bearerAuth: [ ]
 
@@ -208,6 +239,10 @@ components:
               x-go-type: types.UserID
               x-go-type-import:
                 path: "github.com/evgeniy-krivenko/chat-service/internal/types"
+            firstName:
+              type: string
+            lastName:
+              type: string
 
     GetChatHistoryRequest:
       required: [ chatId ]
@@ -312,3 +347,47 @@ components:
           nullable: true
         error:
           $ref: "#/components/schemas/Error"
+
+    GetManagerProfileResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/ManagerProfile"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    ManagerProfile:
+      required: [ id, firstName, lastName ]
+      properties:
+        id:
+          type: string
+          format: uuid
+          x-go-type: types.UserID
+          x-go-type-import:
+            path: "github.com/evgeniy-krivenko/chat-service/internal/types"
+        firstName:
+          type: string
+        lastName:
+          type: string
+
+    LoginRequest:
+      required: [ login, password ]
+      properties:
+        login:
+          type: string
+        password:
+          type: string
+
+    LoginResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/LoginInfo"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    LoginInfo:
+      required: [ token, user ]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/ManagerProfile"

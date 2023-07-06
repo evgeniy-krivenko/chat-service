@@ -10,6 +10,7 @@ import (
 	storechat "github.com/evgeniy-krivenko/chat-service/internal/store/chat"
 	storemessage "github.com/evgeniy-krivenko/chat-service/internal/store/message"
 	storeproblem "github.com/evgeniy-krivenko/chat-service/internal/store/problem"
+	storeprofile "github.com/evgeniy-krivenko/chat-service/internal/store/profile"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 	"github.com/evgeniy-krivenko/chat-service/pkg/utils"
 )
@@ -33,6 +34,9 @@ func (r *Repo) GetClientChatMessages(
 ) ([]Message, *Cursor, error) {
 	query := r.db.Message(ctx).Query().
 		Unique(false).
+		WithProfile(func(query *store.ProfileQuery) {
+			query.Where(storeprofile.IDNEQ(clientID))
+		}).
 		Where(storemessage.IsVisibleForClient(true)).
 		Where(storemessage.HasChatWith(storechat.ClientID(clientID))).
 		Order(store.Desc(storemessage.FieldCreatedAt))

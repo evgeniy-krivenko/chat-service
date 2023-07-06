@@ -85,8 +85,10 @@ func (s *UseCaseSuite) TestGetChatsSuccess() {
 	managerID := types.NewUserID()
 
 	chat := chatsrepo.Chat{
-		ID:       types.NewChatID(),
-		ClientID: types.NewUserID(),
+		ID:        types.NewChatID(),
+		ClientID:  types.NewUserID(),
+		FirstName: "Eric",
+		LastName:  "Cartman",
 	}
 
 	s.chatsRepo.EXPECT().
@@ -104,5 +106,7 @@ func (s *UseCaseSuite) TestGetChatsSuccess() {
 	// Assert.
 	s.Require().NoError(err)
 	s.Len(response.Chats, 1)
+	s.Equal(chat.FirstName, response.Chats[0].FirstName)
+	s.Equal(chat.LastName, response.Chats[0].LastName)
 	s.IsType(getchats.Chat{}, response.Chats[0])
 }

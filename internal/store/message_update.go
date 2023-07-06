@@ -15,6 +15,7 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/store/message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/predicate"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/problem"
+	"github.com/evgeniy-krivenko/chat-service/internal/store/profile"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -117,12 +118,6 @@ func (mu *MessageUpdate) ClearIsVisibleForManager() *MessageUpdate {
 	return mu
 }
 
-// SetBody sets the "body" field.
-func (mu *MessageUpdate) SetBody(s string) *MessageUpdate {
-	mu.mutation.SetBody(s)
-	return mu
-}
-
 // SetCheckedAt sets the "checked_at" field.
 func (mu *MessageUpdate) SetCheckedAt(t time.Time) *MessageUpdate {
 	mu.mutation.SetCheckedAt(t)
@@ -213,6 +208,25 @@ func (mu *MessageUpdate) SetProblem(p *Problem) *MessageUpdate {
 	return mu.SetProblemID(p.ID)
 }
 
+// SetProfileID sets the "profile" edge to the Profile entity by ID.
+func (mu *MessageUpdate) SetProfileID(id types.UserID) *MessageUpdate {
+	mu.mutation.SetProfileID(id)
+	return mu
+}
+
+// SetNillableProfileID sets the "profile" edge to the Profile entity by ID if the given value is not nil.
+func (mu *MessageUpdate) SetNillableProfileID(id *types.UserID) *MessageUpdate {
+	if id != nil {
+		mu = mu.SetProfileID(*id)
+	}
+	return mu
+}
+
+// SetProfile sets the "profile" edge to the Profile entity.
+func (mu *MessageUpdate) SetProfile(p *Profile) *MessageUpdate {
+	return mu.SetProfileID(p.ID)
+}
+
 // Mutation returns the MessageMutation object of the builder.
 func (mu *MessageUpdate) Mutation() *MessageMutation {
 	return mu.mutation
@@ -227,6 +241,12 @@ func (mu *MessageUpdate) ClearChat() *MessageUpdate {
 // ClearProblem clears the "problem" edge to the Problem entity.
 func (mu *MessageUpdate) ClearProblem() *MessageUpdate {
 	mu.mutation.ClearProblem()
+	return mu
+}
+
+// ClearProfile clears the "profile" edge to the Profile entity.
+func (mu *MessageUpdate) ClearProfile() *MessageUpdate {
+	mu.mutation.ClearProfile()
 	return mu
 }
 
@@ -274,11 +294,6 @@ func (mu *MessageUpdate) check() error {
 			return &ValidationError{Name: "problem_id", err: fmt.Errorf(`store: validator failed for field "Message.problem_id": %w`, err)}
 		}
 	}
-	if v, ok := mu.mutation.Body(); ok {
-		if err := message.BodyValidator(v); err != nil {
-			return &ValidationError{Name: "body", err: fmt.Errorf(`store: validator failed for field "Message.body": %w`, err)}
-		}
-	}
 	if v, ok := mu.mutation.InitialRequestID(); ok {
 		if err := v.Validate(); err != nil {
 			return &ValidationError{Name: "initial_request_id", err: fmt.Errorf(`store: validator failed for field "Message.initial_request_id": %w`, err)}
@@ -302,12 +317,6 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := mu.mutation.AuthorID(); ok {
-		_spec.SetField(message.FieldAuthorID, field.TypeUUID, value)
-	}
-	if mu.mutation.AuthorIDCleared() {
-		_spec.ClearField(message.FieldAuthorID, field.TypeUUID)
-	}
 	if value, ok := mu.mutation.IsVisibleForClient(); ok {
 		_spec.SetField(message.FieldIsVisibleForClient, field.TypeBool, value)
 	}
@@ -319,9 +328,6 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if mu.mutation.IsVisibleForManagerCleared() {
 		_spec.ClearField(message.FieldIsVisibleForManager, field.TypeBool)
-	}
-	if value, ok := mu.mutation.Body(); ok {
-		_spec.SetField(message.FieldBody, field.TypeString, value)
 	}
 	if value, ok := mu.mutation.CheckedAt(); ok {
 		_spec.SetField(message.FieldCheckedAt, field.TypeTime, value)
@@ -398,6 +404,35 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(problem.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if mu.mutation.ProfileCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.ProfileTable,
+			Columns: []string{message.ProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(profile.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.ProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.ProfileTable,
+			Columns: []string{message.ProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(profile.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -511,12 +546,6 @@ func (muo *MessageUpdateOne) ClearIsVisibleForManager() *MessageUpdateOne {
 	return muo
 }
 
-// SetBody sets the "body" field.
-func (muo *MessageUpdateOne) SetBody(s string) *MessageUpdateOne {
-	muo.mutation.SetBody(s)
-	return muo
-}
-
 // SetCheckedAt sets the "checked_at" field.
 func (muo *MessageUpdateOne) SetCheckedAt(t time.Time) *MessageUpdateOne {
 	muo.mutation.SetCheckedAt(t)
@@ -607,6 +636,25 @@ func (muo *MessageUpdateOne) SetProblem(p *Problem) *MessageUpdateOne {
 	return muo.SetProblemID(p.ID)
 }
 
+// SetProfileID sets the "profile" edge to the Profile entity by ID.
+func (muo *MessageUpdateOne) SetProfileID(id types.UserID) *MessageUpdateOne {
+	muo.mutation.SetProfileID(id)
+	return muo
+}
+
+// SetNillableProfileID sets the "profile" edge to the Profile entity by ID if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableProfileID(id *types.UserID) *MessageUpdateOne {
+	if id != nil {
+		muo = muo.SetProfileID(*id)
+	}
+	return muo
+}
+
+// SetProfile sets the "profile" edge to the Profile entity.
+func (muo *MessageUpdateOne) SetProfile(p *Profile) *MessageUpdateOne {
+	return muo.SetProfileID(p.ID)
+}
+
 // Mutation returns the MessageMutation object of the builder.
 func (muo *MessageUpdateOne) Mutation() *MessageMutation {
 	return muo.mutation
@@ -621,6 +669,12 @@ func (muo *MessageUpdateOne) ClearChat() *MessageUpdateOne {
 // ClearProblem clears the "problem" edge to the Problem entity.
 func (muo *MessageUpdateOne) ClearProblem() *MessageUpdateOne {
 	muo.mutation.ClearProblem()
+	return muo
+}
+
+// ClearProfile clears the "profile" edge to the Profile entity.
+func (muo *MessageUpdateOne) ClearProfile() *MessageUpdateOne {
+	muo.mutation.ClearProfile()
 	return muo
 }
 
@@ -681,11 +735,6 @@ func (muo *MessageUpdateOne) check() error {
 			return &ValidationError{Name: "problem_id", err: fmt.Errorf(`store: validator failed for field "Message.problem_id": %w`, err)}
 		}
 	}
-	if v, ok := muo.mutation.Body(); ok {
-		if err := message.BodyValidator(v); err != nil {
-			return &ValidationError{Name: "body", err: fmt.Errorf(`store: validator failed for field "Message.body": %w`, err)}
-		}
-	}
 	if v, ok := muo.mutation.InitialRequestID(); ok {
 		if err := v.Validate(); err != nil {
 			return &ValidationError{Name: "initial_request_id", err: fmt.Errorf(`store: validator failed for field "Message.initial_request_id": %w`, err)}
@@ -726,12 +775,6 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 			}
 		}
 	}
-	if value, ok := muo.mutation.AuthorID(); ok {
-		_spec.SetField(message.FieldAuthorID, field.TypeUUID, value)
-	}
-	if muo.mutation.AuthorIDCleared() {
-		_spec.ClearField(message.FieldAuthorID, field.TypeUUID)
-	}
 	if value, ok := muo.mutation.IsVisibleForClient(); ok {
 		_spec.SetField(message.FieldIsVisibleForClient, field.TypeBool, value)
 	}
@@ -743,9 +786,6 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 	}
 	if muo.mutation.IsVisibleForManagerCleared() {
 		_spec.ClearField(message.FieldIsVisibleForManager, field.TypeBool)
-	}
-	if value, ok := muo.mutation.Body(); ok {
-		_spec.SetField(message.FieldBody, field.TypeString, value)
 	}
 	if value, ok := muo.mutation.CheckedAt(); ok {
 		_spec.SetField(message.FieldCheckedAt, field.TypeTime, value)
@@ -822,6 +862,35 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(problem.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if muo.mutation.ProfileCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.ProfileTable,
+			Columns: []string{message.ProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(profile.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.ProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.ProfileTable,
+			Columns: []string{message.ProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(profile.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

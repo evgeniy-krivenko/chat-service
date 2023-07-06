@@ -1,0 +1,42 @@
+.chat-list__chats {
+    margin-bottom: 16px;
+}
+
+.chat-list__title {
+    margin-bottom: 24px;
+}
+
+.chat-list__subtitle {
+    margin-bottom: 12px;
+}
+
+.chat-list__item {
+    background-color: white;
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    text-align: left;
+    position: relative;
+}
+
+.chat-list__item.active::before {
+    content: "";
+    position: absolute;
+    height: 80%;
+    width: 2px;
+    background-color:  rgba(42, 139, 242, 0.90);
+    left: 1px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.chat-list__close:hover {
+    transform: scale(105%);
+}
+
+.chat-list__no-active-text {
+    margin-top: 70px;
+}

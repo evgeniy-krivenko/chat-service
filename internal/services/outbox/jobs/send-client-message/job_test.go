@@ -67,6 +67,7 @@ func TestJob_Handle(t *testing.T) {
 		clientID,
 		createdAt,
 		body,
+		"",
 		false,
 	),
 	)).Return(nil)

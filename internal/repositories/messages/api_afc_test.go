@@ -4,6 +4,7 @@ package messagesrepo_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -71,6 +72,11 @@ func (s *MsgRepoAntiFraudAPISuite) createMessage() types.MessageID {
 	authorID := types.NewUserID()
 	problemID, chatID := s.createProblemAndChat(authorID)
 	msgID := types.NewMessageID()
+
+	s.Database.Profile(s.Ctx).Create().
+		SetID(authorID).
+		SetUpdatedAt(time.Now()).
+		SaveX(s.Ctx)
 
 	_, err := s.Database.Message(s.Ctx).Create().
 		SetID(msgID).

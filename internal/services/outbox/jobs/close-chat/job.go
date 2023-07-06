@@ -100,6 +100,7 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 			msg.AuthorID,
 			msg.CreatedAt,
 			msg.Body,
+			"",
 			msg.IsService,
 		)); err != nil {
 			return fmt.Errorf("publish NewMesaggeEvent to client stream: %v", err)

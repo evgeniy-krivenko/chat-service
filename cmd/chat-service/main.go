@@ -19,6 +19,7 @@ import (
 	jobsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/jobs"
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
+	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 	clientevents "github.com/evgeniy-krivenko/chat-service/internal/server-client/events"
 	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
 	serverdebug "github.com/evgeniy-krivenko/chat-service/internal/server-debug"
@@ -49,6 +50,7 @@ func main() {
 	}
 }
 
+//nolint:gocyclo
 func run() (errReturned error) {
 	flag.Parse()
 
@@ -153,6 +155,11 @@ func run() (errReturned error) {
 		return fmt.Errorf("init jobs repo: %v", err)
 	}
 
+	profilesRepo, err := profilesrepo.New(profilesrepo.NewOptions(database))
+	if err != nil {
+		return fmt.Errorf("init profiles repo: %v", err)
+	}
+
 	// In-memory storages.
 	eventStream := inmemeventstream.New()
 	defer eventStream.Close()
@@ -172,6 +179,7 @@ func run() (errReturned error) {
 	if err != nil {
 		return fmt.Errorf("init msg producer: %v", err)
 	}
+	defer msgProducer.Close()
 
 	outboxService, err := outbox.New(outbox.NewOptions(
 		cfg.Services.Outbox.Workers,
@@ -218,6 +226,7 @@ func run() (errReturned error) {
 		msgRepo,
 		outboxService,
 		problemsRepo,
+		profilesRepo,
 		database,
 	))
 	if err != nil {
@@ -247,6 +256,7 @@ func run() (errReturned error) {
 	managerAssignedToProblem, err := managerassignedtoproblemjob.New(managerassignedtoproblemjob.NewOptions(
 		chatsRepo,
 		msgRepo,
+		profilesRepo,
 		managerLoadService,
 		eventStream,
 	))
@@ -305,6 +315,7 @@ func run() (errReturned error) {
 		msgRepo,
 		chatsRepo,
 		problemsRepo,
+		profilesRepo,
 		outboxService,
 		database,
 		eventStream,
@@ -332,6 +343,7 @@ func run() (errReturned error) {
 		chatsRepo,
 		msgRepo,
 		problemsRepo,
+		profilesRepo,
 		outboxService,
 		database,
 

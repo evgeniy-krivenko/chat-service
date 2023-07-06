@@ -182,6 +182,8 @@ func (h *HTTPHandler) writeEvent(ws Websocket, event eventstream.Event) error {
 		return fmt.Errorf("write event: %v", err)
 	}
 
+	h.logger.Info("event was sent", zap.Any("event", ae))
+
 	if err := w.Close(); err != nil {
 		return fmt.Errorf("flush writer: %v", err)
 	}

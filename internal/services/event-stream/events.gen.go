@@ -16,6 +16,7 @@ func NewNewMessageEvent(
 	authorID types.UserID,
 	createdAt time.Time,
 	messageBody string,
+	authorName string,
 	isService bool,
 ) *NewMessageEvent {
 	return &NewMessageEvent{
@@ -26,6 +27,7 @@ func NewNewMessageEvent(
 		AuthorID:    authorID,
 		CreatedAt:   createdAt,
 		MessageBody: messageBody,
+		AuthorName:  authorName,
 		IsService:   isService,
 	}
 }
@@ -59,6 +61,8 @@ func NewNewChatEvent(
 	requestID types.RequestID,
 	chatID types.ChatID,
 	clientID types.UserID,
+	firstName string,
+	lastName string,
 	canTakeMoreProblem bool,
 ) *NewChatEvent {
 	return &NewChatEvent{
@@ -66,6 +70,8 @@ func NewNewChatEvent(
 		RequestID:          requestID,
 		ChatID:             chatID,
 		ClientID:           clientID,
+		FirstName:          firstName,
+		LastName:           lastName,
 		CanTakeMoreProblem: canTakeMoreProblem,
 	}
 }

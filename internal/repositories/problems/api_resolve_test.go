@@ -36,9 +36,10 @@ func (s *ProblemsResolveAPISuite) TestNoProblemError() {
 		// Arrange.
 		managerID := types.NewUserID()
 		chatID := types.NewChatID()
+		reqID := types.NewRequestID()
 
 		// Action.
-		err := s.repo.Resolve(s.Ctx, managerID, chatID)
+		err := s.repo.Resolve(s.Ctx, reqID, managerID, chatID)
 
 		// Assert.
 		s.Require().Error(err)
@@ -49,12 +50,13 @@ func (s *ProblemsResolveAPISuite) TestNoProblemError() {
 		// Arrange.
 		managerID := types.NewUserID()
 		otherManagerID := types.NewUserID()
+		reqID := types.NewRequestID()
 
 		chatID, _ := s.createChatWithProblemAssignedTo(managerID)
 		_, otherProblemID := s.createChatWithProblemAssignedTo(otherManagerID)
 
 		// Action.
-		err := s.repo.Resolve(s.Ctx, otherManagerID, chatID)
+		err := s.repo.Resolve(s.Ctx, reqID, otherManagerID, chatID)
 
 		// Assert.
 		s.Require().Error(err)
@@ -68,11 +70,12 @@ func (s *ProblemsResolveAPISuite) TestNoProblemError() {
 	s.Run("problem assigned to other chat", func() {
 		// Arrange.
 		managerID := types.NewUserID()
+		reqID := types.NewRequestID()
 
 		_, _ = s.createChatWithProblemAssignedTo(managerID)
 
 		// Action.
-		err := s.repo.Resolve(s.Ctx, managerID, types.NewChatID())
+		err := s.repo.Resolve(s.Ctx, reqID, managerID, types.NewChatID())
 
 		// Assert.
 		s.Require().Error(err)
@@ -82,6 +85,7 @@ func (s *ProblemsResolveAPISuite) TestNoProblemError() {
 	s.Run("problem was resolved", func() {
 		// Arrange.
 		managerID := types.NewUserID()
+		reqID := types.NewRequestID()
 
 		chatID, problemID := s.createChatWithProblemAssignedTo(managerID)
 
@@ -89,7 +93,7 @@ func (s *ProblemsResolveAPISuite) TestNoProblemError() {
 		s.Require().NoError(err)
 
 		// Action.
-		err = s.repo.Resolve(s.Ctx, managerID, chatID)
+		err = s.repo.Resolve(s.Ctx, reqID, managerID, chatID)
 
 		// Assert.
 		s.Require().Error(err)
@@ -100,11 +104,12 @@ func (s *ProblemsResolveAPISuite) TestNoProblemError() {
 func (s *ProblemsResolveAPISuite) TestSuccessResolveProblem() {
 	// Arrange.
 	managerID := types.NewUserID()
+	reqID := types.NewRequestID()
 
 	chatID, problemID := s.createChatWithProblemAssignedTo(managerID)
 
 	// Action.
-	err := s.repo.Resolve(s.Ctx, managerID, chatID)
+	err := s.repo.Resolve(s.Ctx, reqID, managerID, chatID)
 
 	// Assert.
 	s.Require().NoError(err)
@@ -114,6 +119,7 @@ func (s *ProblemsResolveAPISuite) TestSuccessResolveProblem() {
 	s.NotEmpty(dbProblem.ResolvedAt)
 	s.Equal(managerID, dbProblem.ManagerID)
 	s.Equal(chatID, dbProblem.ChatID)
+	s.Equal(reqID, dbProblem.ResolveRequestID)
 }
 
 func (s *ProblemsResolveAPISuite) createChatWithProblemAssignedTo(managerID types.UserID) (types.ChatID, types.ProblemID) {

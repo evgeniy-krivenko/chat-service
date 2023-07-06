@@ -12,6 +12,7 @@ import (
 	jobsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/jobs"
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
+	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 	managerpool "github.com/evgeniy-krivenko/chat-service/internal/services/manager-pool"
 	inmemmanagerpool "github.com/evgeniy-krivenko/chat-service/internal/services/manager-pool/in-mem"
 	managerscheduler "github.com/evgeniy-krivenko/chat-service/internal/services/manager-scheduler"
@@ -45,7 +46,10 @@ func (s *ManagerSchedulerSuite) SetupTest() {
 	jobsRepo, err := jobsrepo.New(jobsrepo.NewOptions(s.Database))
 	s.Require().NoError(err)
 
-	problemRepo, err := problemsrepo.New(problemsrepo.NewOptions(s.Database))
+	problemsRepo, err := problemsrepo.New(problemsrepo.NewOptions(s.Database))
+	s.Require().NoError(err)
+
+	profilesRepo, err := profilesrepo.New(profilesrepo.NewOptions(s.Database))
 	s.Require().NoError(err)
 
 	outboxSvc, err := outbox.New(outbox.NewOptions(1, time.Second, time.Second, jobsRepo, s.Database))
@@ -57,7 +61,8 @@ func (s *ManagerSchedulerSuite) SetupTest() {
 		s.mPool,
 		msgRepo,
 		outboxSvc,
-		problemRepo,
+		problemsRepo,
+		profilesRepo,
 		s.Database,
 	))
 	s.Require().NoError(err)
@@ -78,10 +83,14 @@ func (s *ManagerSchedulerSuite) TestScheduling() {
 	clientID := types.NewUserID()
 
 	chat := s.Store.Chat.Create().SetClientID(clientID).SaveX(s.Ctx)
+	s.Store.Profile.Create().SetID(clientID).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
 	s.createExpectingManagerProblem(chat.ID, clientID)
 	s.createExpectingManagerProblem(chat.ID, clientID)
 
 	m1, m2, m3 := types.NewUserID(), types.NewUserID(), types.NewUserID()
+	s.Store.Profile.Create().SetID(m1).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
+	s.Store.Profile.Create().SetID(m2).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
+	s.Store.Profile.Create().SetID(m3).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
 	s.Require().NoError(s.mPool.Put(s.Ctx, m3)) // Pool: [m3]
 
 	time.Sleep(period * 2)
@@ -113,11 +122,14 @@ func (s *ManagerSchedulerSuite) TestLessManagersThanProblems() {
 	clientID := types.NewUserID()
 
 	chat := s.Store.Chat.Create().SetClientID(clientID).SaveX(s.Ctx)
+	s.Store.Profile.Create().SetID(clientID).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
 	for i := 0; i < problems; i++ {
 		s.createExpectingManagerProblem(chat.ID, clientID)
 	}
 
-	s.Require().NoError(s.mPool.Put(s.Ctx, types.NewUserID()))
+	managerID := types.NewUserID()
+	s.Store.Profile.Create().SetID(managerID).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
+	s.Require().NoError(s.mPool.Put(s.Ctx, managerID))
 
 	for i := 0; i < 3; i++ {
 		s.runSchedulerFor(period * 2)
@@ -134,10 +146,13 @@ func (s *ManagerSchedulerSuite) TestMoreManagersThanProblems() {
 	clientID := types.NewUserID()
 
 	chat := s.Store.Chat.Create().SetClientID(clientID).SaveX(s.Ctx)
+	s.Store.Profile.Create().SetID(clientID).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
 	s.createExpectingManagerProblem(chat.ID, clientID)
 
 	for i := 0; i < managers; i++ {
-		s.Require().NoError(s.mPool.Put(s.Ctx, types.NewUserID()))
+		managerID := types.NewUserID()
+		s.Store.Profile.Create().SetID(managerID).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
+		s.Require().NoError(s.mPool.Put(s.Ctx, managerID))
 	}
 
 	for i := 0; i < 3; i++ {

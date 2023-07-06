@@ -78,6 +78,7 @@ func TestJob_Handle(t *testing.T) {
 		managerID,
 		createdAt,
 		body,
+		"",
 		false,
 	),
 	)).Return(nil)
@@ -90,6 +91,7 @@ func TestJob_Handle(t *testing.T) {
 		managerID,
 		createdAt,
 		body,
+		"",
 		false,
 	),
 	)).Return(nil)

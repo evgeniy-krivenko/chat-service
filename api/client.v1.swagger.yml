@@ -46,6 +46,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/GetHistoryResponse"
 
+  /getUserProfile:
+    post:
+      description: Get user info
+      parameters:
+        - $ref: "#/components/parameters/XRequestIDHeader"
+      responses:
+        '200':
+          description: User info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUserProfileResponse"
+
+  /login:
+    post:
+      security: [ ]
+      description: login with username and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        '200':
+          description: Success login
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+
 security:
   - bearerAuth: [ ]
 
@@ -166,3 +197,49 @@ components:
               type: boolean
             isService:
               type: boolean
+            authorName:
+              type: string
+
+    GetUserProfileResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/UserProfile"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    UserProfile:
+      required: [ id, firstName, lastName ]
+      properties:
+        id:
+          type: string
+          format: uuid
+          x-go-type: types.UserID
+          x-go-type-import:
+            path: "github.com/evgeniy-krivenko/chat-service/internal/types"
+        firstName:
+          type: string
+        lastName:
+          type: string
+
+    LoginRequest:
+      required: [ login, password ]
+      properties:
+        login:
+          type: string
+        password:
+          type: string
+
+    LoginResponse:
+      properties:
+        data:
+          $ref: "#/components/schemas/LoginInfo"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    LoginInfo:
+      required: [ token, user ]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserProfile"

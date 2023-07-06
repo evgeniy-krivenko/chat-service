@@ -52,6 +52,8 @@ type NewChatEvent struct {
 	CanTakeMoreProblems bool         `json:"canTakeMoreProblems"`
 	ChatId              types.ChatID `json:"chatId"`
 	ClientId            types.UserID `json:"clientId"`
+	FirstName           *string      `json:"firstName,omitempty"`
+	LastName            *string      `json:"lastName,omitempty"`
 }
 
 // NewMessageEvent defines model for NewMessageEvent.

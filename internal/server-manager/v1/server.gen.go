@@ -32,8 +32,10 @@ const (
 
 // Chat defines model for Chat.
 type Chat struct {
-	ChatId   types.ChatID `json:"chatId"`
-	ClientId types.UserID `json:"clientId"`
+	ChatId    types.ChatID `json:"chatId"`
+	ClientId  types.UserID `json:"clientId"`
+	FirstName *string      `json:"firstName,omitempty"`
+	LastName  *string      `json:"lastName,omitempty"`
 }
 
 // ChatId defines model for ChatId.
@@ -98,6 +100,37 @@ type GetFreeHandsBtnAvailability struct {
 type GetFreeHandsBtnAvailabilityResponse struct {
 	Data  *GetFreeHandsBtnAvailability `json:"data,omitempty"`
 	Error *Error                       `json:"error,omitempty"`
+}
+
+// GetManagerProfileResponse defines model for GetManagerProfileResponse.
+type GetManagerProfileResponse struct {
+	Data  *ManagerProfile `json:"data,omitempty"`
+	Error *Error          `json:"error,omitempty"`
+}
+
+// LoginInfo defines model for LoginInfo.
+type LoginInfo struct {
+	Token string         `json:"token"`
+	User  ManagerProfile `json:"user"`
+}
+
+// LoginRequest defines model for LoginRequest.
+type LoginRequest struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}
+
+// LoginResponse defines model for LoginResponse.
+type LoginResponse struct {
+	Data  *LoginInfo `json:"data,omitempty"`
+	Error *Error     `json:"error,omitempty"`
+}
+
+// ManagerProfile defines model for ManagerProfile.
+type ManagerProfile struct {
+	FirstName string       `json:"firstName"`
+	Id        types.UserID `json:"id"`
+	LastName  string       `json:"lastName"`
 }
 
 // Message defines model for Message.
@@ -168,6 +201,11 @@ type PostGetFreeHandsBtnAvailabilityParams struct {
 	XRequestID XRequestIDHeader `json:"X-Request-ID"`
 }
 
+// PostGetManagerProfileParams defines parameters for PostGetManagerProfile.
+type PostGetManagerProfileParams struct {
+	XRequestID XRequestIDHeader `json:"X-Request-ID"`
+}
+
 // PostSendMessageParams defines parameters for PostSendMessage.
 type PostSendMessageParams struct {
 	XRequestID XRequestIDHeader `json:"X-Request-ID"`
@@ -178,6 +216,9 @@ type PostCloseChatJSONRequestBody = ChatId
 
 // PostGetChatHistoryJSONRequestBody defines body for PostGetChatHistory for application/json ContentType.
 type PostGetChatHistoryJSONRequestBody = GetChatHistoryRequest
+
+// PostLoginJSONRequestBody defines body for PostLogin for application/json ContentType.
+type PostLoginJSONRequestBody = LoginRequest
 
 // PostSendMessageJSONRequestBody defines body for PostSendMessage for application/json ContentType.
 type PostSendMessageJSONRequestBody = SendMessageRequest
@@ -199,6 +240,12 @@ type ServerInterface interface {
 
 	// (POST /getFreeHandsBtnAvailability)
 	PostGetFreeHandsBtnAvailability(ctx echo.Context, params PostGetFreeHandsBtnAvailabilityParams) error
+
+	// (POST /getManagerProfile)
+	PostGetManagerProfile(ctx echo.Context, params PostGetManagerProfileParams) error
+
+	// (POST /login)
+	PostLogin(ctx echo.Context) error
 
 	// (POST /sendMessage)
 	PostSendMessage(ctx echo.Context, params PostSendMessageParams) error
@@ -374,6 +421,48 @@ func (w *ServerInterfaceWrapper) PostGetFreeHandsBtnAvailability(ctx echo.Contex
 	return err
 }
 
+// PostGetManagerProfile converts echo context to params.
+func (w *ServerInterfaceWrapper) PostGetManagerProfile(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PostGetManagerProfileParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "X-Request-ID" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Request-ID")]; found {
+		var XRequestID XRequestIDHeader
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for X-Request-ID, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithLocation("simple", false, "X-Request-ID", runtime.ParamLocationHeader, valueList[0], &XRequestID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter X-Request-ID: %s", err))
+		}
+
+		params.XRequestID = XRequestID
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter X-Request-ID is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PostGetManagerProfile(ctx, params)
+	return err
+}
+
+// PostLogin converts echo context to params.
+func (w *ServerInterfaceWrapper) PostLogin(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PostLogin(ctx)
+	return err
+}
+
 // PostSendMessage converts echo context to params.
 func (w *ServerInterfaceWrapper) PostSendMessage(ctx echo.Context) error {
 	var err error
@@ -440,6 +529,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/getChatHistory", wrapper.PostGetChatHistory)
 	router.POST(baseURL+"/getChats", wrapper.PostGetChats)
 	router.POST(baseURL+"/getFreeHandsBtnAvailability", wrapper.PostGetFreeHandsBtnAvailability)
+	router.POST(baseURL+"/getManagerProfile", wrapper.PostGetManagerProfile)
+	router.POST(baseURL+"/login", wrapper.PostLogin)
 	router.POST(baseURL+"/sendMessage", wrapper.PostSendMessage)
 
 }
@@ -447,29 +538,32 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xYbW/bNhD+K8RtHzZAtuRlBQoB+5CmL8nQrkHToQUyf6Cls8WGIlXy5MYL/N8HUi+W",
-	"I8Vx0zTLgH1KLL7dPc/d8TleQaLzQitUZCG+goIbniOh8b8+vsPPJVo6eX6MPEXjvgkFMWTVzwAUzxFi",
-	"+DiqZ45OnkMABj+XwmAKMZkSA7BJhjl3q+fa5JwghrIUKQRAq8Ktt2SEWkAAl6OFHtUf3R87bk3ojo5E",
-	"XmhDlcWUQQwLQVk5Gyc6D3G5QCVWowsjlqgudJhknEYWzVIkGApFaBSXod8e1uv1ujHQ+3yUcb8vl/Lt",
-	"HOLzK/jR4Bxi+CHcQBXWC0I3+ySFdXAFhdEFGhLot0mkQOWG7uT0nxbNd/S4y9D5xtRpa5qefcKEYD1d",
-	"B1C7GPc8bL9/vX9+zwfzrzK08eW1sDTsjf9HEOb+n9toh3XrKTeGr2DoXFsdK7VFt+Yd2kIri/3zU04+",
-	"QVQpJZ9JbFJnG8t1AGiMNrfZ98JP8ki8aOZf81enuNcuR27iOoAUiQvp1/ZsytFavsCBsWuQNBOD6vxp",
-	"Y99RbU2KNjGiIKFdlUm0Ii6UZcfv358y7zhz6yzjKmW2wETMRcJmpRUKrWVSL0SyNe8nypBJbonlpSU2",
-	"Q/ZXGUUH+BubRFH08xgCQFXmEJ8/iaIoeBJFk2kAuVAid19/jaKWARdlC1/zLkduzWjJjat+1vnVOvGG",
-	"K75A83aJRmqeokuHdvAP/VKXKj01eiYx996/NIjHXKX2X4iMV0guJo+FJW1WdZ39L+V5AElpbOVzD42C",
-	"L/BM/O0BzfllRejEEdrSO+mzu6N2XIfrNr52sfCmygN76pLh7tTZb7OirYZ3s6CN3WekDpdcSD4TUtCq",
-	"bwyvRmW3Qsy0lsiVO1uoU63l0Ng1Njb7tIumu235NoB2OXkHzN5syuR+6qJeUIuvvsiY6XR1e9H1s6b+",
-	"Lt/esM9TSZk2j1O0BJAY5ITpIW2Zl3LCEYkcYaAkiju6UuP0YBLFm7XxL9gw0WHtg6BMl/SsJv1/6h4P",
-	"dS36XVc71FWFvkdaLYf2151NBelJzwAUXtLeAsxCvcDZeIYqrTfuiIBv7H/qg5pgzfnla1QLB/1BVF/C",
-	"zYdJsJ/Rfq/hHmXLhXu4mLup9tWF3vWTmJRG0OrMjdW1GrlBc1g6j5tfL5vo/v3De6i7UH//+dFNuGdE",
-	"RRV5Qs21Z1mQu03hGVcX7KwsXHQzRwarFSg7PD2BAJZobCWmlxPniS5Q8UJADAfjaHwAgc8Hb2CYNF2K",
-	"h05XYbCtyB3OzIqF4pKRO62otCwTlhm0Wi4xdaLawc7dGleQ4FRbalsgf+TmkeGG+NpMCXuPEOtpFR5o",
-	"21roOgVUVdwWhRSJPzz8ZJ3VV533h31ieTv8nNj2H6qw8lD9EkX3d2qvN/QGbONehyWri8u4DrNw3qiT",
-	"HZS1bCmW17EhLHMr2VybhraGSTvIXquC7ou97wRmv50aAPMd2lIS03NmkVpMeIVJg+xiS+3fDO+rzhbu",
-	"3mBZvWIIxu0W4vFmwnBn+MCJcUO/dXN2WCZFZWaHQLubOv8+IKyPBv9ew74Iypgrk21GjHdx+dgzotcp",
-	"DuDnJ3gYxh30drZ3g4AeZZhcMN6Zy2YlkVY3AXjjEY8e01v7zQGYu/OYJU5l8/wc2o1+ueXyVfiF1XqI",
-	"kfbx6+J2OEY7sujxFpsB+fnAlWZIPe57CXfEnke1K/POpw4z10g0mG9v+ByXKHWRoyJWzYIASiNrxReH",
-	"odQJl5m2FD+Nnk5Cp+Gm638CAAD//84Ctuu0GQAA",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

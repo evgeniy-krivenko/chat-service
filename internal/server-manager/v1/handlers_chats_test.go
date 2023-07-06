@@ -60,8 +60,10 @@ func (s *HandlersSuite) TestGetChats_Success() {
 			ClientID: types.NewUserID(),
 		},
 		{
-			ID:       types.NewChatID(),
-			ClientID: types.NewUserID(),
+			ID:        types.NewChatID(),
+			ClientID:  types.NewUserID(),
+			FirstName: "Eric",
+			LastName:  "Cartman",
 		},
 	}
 
@@ -89,11 +91,14 @@ func (s *HandlersSuite) TestGetChats_Success() {
 					},
 					{
 						"chatId": %q,
-						"clientId": %q
+						"clientId": %q,
+						"firstName": %q,
+						"lastName": %q
 					}
 				]
 			}
-		}`, chats[0].ID, chats[0].ClientID, chats[1].ID, chats[1].ClientID), resp.Body.String())
+		}`, chats[0].ID, chats[0].ClientID, chats[1].ID, chats[1].ClientID, chats[1].FirstName, chats[1].LastName),
+		resp.Body.String())
 }
 
 func (s *HandlersSuite) TestGetChatHistory_BindRequestError() {

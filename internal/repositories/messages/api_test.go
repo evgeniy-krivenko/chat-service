@@ -4,6 +4,7 @@ package messagesrepo_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -40,6 +41,7 @@ func (s *MsgRepoAPISuite) Test_GetMessageByID() {
 		authorID := types.NewUserID()
 
 		// Create chat and problem.
+		s.createProfile(authorID)
 		problemID, chatID := s.createProblemAndChat(authorID)
 
 		msgID := types.NewMessageID()
@@ -84,6 +86,7 @@ func (s *MsgRepoAPISuite) Test_GetMessageByRequestID() {
 		authorID := types.NewUserID()
 
 		// Create chat and problem.
+		s.createProfile(authorID)
 		problemID, chatID := s.createProblemAndChat(authorID)
 
 		msgID := types.NewMessageID()
@@ -128,6 +131,7 @@ func (s *MsgRepoAPISuite) Test_CreateClientVisible() {
 	authorID := types.NewUserID()
 
 	// Create chat and problem.
+	s.createProfile(authorID)
 	problemID, chatID := s.createProblemAndChat(authorID)
 	initialRequestID := types.NewRequestID()
 
@@ -164,6 +168,7 @@ func (s *MsgRepoAPISuite) Test_CreateClientVisible() {
 func (s *MsgRepoAPISuite) Test_CreateClientService() {
 	authorID := types.NewUserID()
 	// Create chat and problem.
+	s.createProfile(authorID)
 	problemID, chatID := s.createProblemAndChat(authorID)
 
 	msg, err := s.repo.CreateClientService(s.Ctx, problemID, chatID, msgBody)
@@ -189,6 +194,7 @@ func (s *MsgRepoAPISuite) Test_CreateClientVisible_DuplicationError() {
 	authorID := types.NewUserID()
 
 	// Create chat and problem.
+	s.createProfile(authorID)
 	problemID, chatID := s.createProblemAndChat(authorID)
 	initialRequestID := types.NewRequestID()
 
@@ -205,6 +211,7 @@ func (s *MsgRepoAPISuite) Test_CreateFullVisible() {
 	authorID := types.NewUserID()
 
 	// Create chat and problem.
+	s.createProfile(authorID)
 	problemID, chatID := s.createProblemAndChat(authorID)
 	initialRequestID := types.NewRequestID()
 
@@ -248,4 +255,11 @@ func (s *MsgRepoAPISuite) createProblemAndChat(clientID types.UserID) (types.Pro
 	s.Require().NoError(err)
 
 	return problem.ID, chat.ID
+}
+
+func (s *MsgRepoAPISuite) createProfile(clientID types.UserID) {
+	s.Database.Profile(s.Ctx).Create().
+		SetID(clientID).
+		SetUpdatedAt(time.Now()).
+		SaveX(s.Ctx)
 }

@@ -18,6 +18,7 @@ func NewOptions(
 	msgRepo messageRepo,
 	outboxSvc outboxService,
 	problemsRepo problemsRepo,
+	profilesRepo profilesRepository,
 	txtor transactor,
 	options ...OptOptionsSetter,
 ) Options {
@@ -30,6 +31,7 @@ func NewOptions(
 	o.msgRepo = msgRepo
 	o.outboxSvc = outboxSvc
 	o.problemsRepo = problemsRepo
+	o.profilesRepo = profilesRepo
 	o.txtor = txtor
 
 	for _, opt := range options {
@@ -45,6 +47,7 @@ func (o *Options) Validate() error {
 	errs.Add(errors461e464ebed9.NewValidationError("msgRepo", _validate_Options_msgRepo(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("outboxSvc", _validate_Options_outboxSvc(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("problemsRepo", _validate_Options_problemsRepo(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("profilesRepo", _validate_Options_profilesRepo(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("txtor", _validate_Options_txtor(o)))
 	return errs.AsError()
 }
@@ -80,6 +83,13 @@ func _validate_Options_outboxSvc(o *Options) error {
 func _validate_Options_problemsRepo(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.problemsRepo, "required"); err != nil {
 		return fmt461e464ebed9.Errorf("field `problemsRepo` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_profilesRepo(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.profilesRepo, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `profilesRepo` did not pass the test: %w", err)
 	}
 	return nil
 }

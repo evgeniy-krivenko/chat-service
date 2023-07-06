@@ -19,6 +19,7 @@ func TestNewMessageEvent_Validate(t *testing.T) {
 		types.UserIDNil,
 		time.Unix(1, 1).UTC(),
 		"Manager will coming soon",
+		"",
 		true,
 	)
 
@@ -54,6 +55,8 @@ func TestNewNewChatEvent(t *testing.T) {
 		types.MustParse[types.RequestID]("cee5f290-bc30-11ed-b7fe-461e464ebed8"),
 		types.MustParse[types.ChatID]("31b4dc06-bc31-11ed-93cc-461e464ebed8"),
 		types.MustParse[types.UserID]("31b4dc06-bc31-11ed-93cc-461e464ebed8"),
+		"first",
+		"last",
 		true,
 	)
 

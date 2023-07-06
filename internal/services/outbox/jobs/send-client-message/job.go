@@ -91,6 +91,7 @@ func (j *Job) Handle(ctx context.Context, payload string) error {
 		msg.AuthorID,
 		msg.CreatedAt,
 		msg.Body,
+		"",
 		msg.IsService,
 	)); err != nil {
 		j.lg.Warn("publish message", zap.Stringer("message_id", msgID))

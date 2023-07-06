@@ -19,6 +19,8 @@ type Response struct {
 }
 
 type Chat struct {
-	ID       types.ChatID
-	ClientID types.UserID
+	ID        types.ChatID
+	ClientID  types.UserID
+	FirstName string
+	LastName  string
 }

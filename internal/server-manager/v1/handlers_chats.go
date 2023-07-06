@@ -73,8 +73,10 @@ func (h Handlers) PostGetChatHistory(eCtx echo.Context, params PostGetChatHistor
 
 func adaptGetChats(c getchats.Chat) Chat {
 	return Chat{
-		ChatId:   c.ID,
-		ClientId: c.ClientID,
+		ChatId:    c.ID,
+		ClientId:  c.ClientID,
+		FirstName: pointer.PtrWithZeroAsNil(c.FirstName),
+		LastName:  pointer.PtrWithZeroAsNil(c.LastName),
 	}
 }
 

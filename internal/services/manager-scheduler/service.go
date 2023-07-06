@@ -10,6 +10,7 @@ import (
 
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
+	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 	managerpool "github.com/evgeniy-krivenko/chat-service/internal/services/manager-pool"
 	managerassignedtoproblemjob "github.com/evgeniy-krivenko/chat-service/internal/services/outbox/jobs/manager-assigned-to-problem"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
@@ -23,6 +24,10 @@ type problemsRepo interface {
 	GetAvailableProblems(context.Context) ([]problemsrepo.Problem, error)
 	SetManagerForProblem(ctx context.Context, problemID types.ProblemID, managerID types.UserID) error
 	GetProblemRequestID(ctx context.Context, problemID types.ProblemID) (types.RequestID, error)
+}
+
+type profilesRepository interface {
+	GetProfileByID(ctx context.Context, id types.UserID) (profile *profilesrepo.Profile, err error)
 }
 
 type messageRepo interface {
@@ -46,11 +51,12 @@ type transactor interface {
 type Options struct {
 	period time.Duration `option:"mandatory" validate:"min=100ms,max=1m"`
 
-	mngrPool     managerpool.Pool `option:"mandatory" validate:"required"`
-	msgRepo      messageRepo      `option:"mandatory" validate:"required"`
-	outboxSvc    outboxService    `option:"mandatory" validate:"required"`
-	problemsRepo problemsRepo     `option:"mandatory" validate:"required"`
-	txtor        transactor       `option:"mandatory" validate:"required"`
+	mngrPool     managerpool.Pool   `option:"mandatory" validate:"required"`
+	msgRepo      messageRepo        `option:"mandatory" validate:"required"`
+	outboxSvc    outboxService      `option:"mandatory" validate:"required"`
+	problemsRepo problemsRepo       `option:"mandatory" validate:"required"`
+	profilesRepo profilesRepository `option:"mandatory" validate:"required"`
+	txtor        transactor         `option:"mandatory" validate:"required"`
 }
 
 type Service struct {
@@ -100,6 +106,12 @@ func (s *Service) scheduleManagersToProblems(ctx context.Context) error {
 		}
 
 		if err := s.setManager(ctx, managerID, p); err != nil {
+			if err := s.mngrPool.Put(ctx, managerID); err != nil {
+				s.lg.Warn("putting manager in pool after invalid set on problem", zap.Error(err))
+
+				return fmt.Errorf("putting manager in pool after invalid set on problem: %v", err)
+			}
+
 			return fmt.Errorf("set manager to problem: %v", err)
 		}
 	}
@@ -120,11 +132,16 @@ func (s *Service) setManager(ctx context.Context, managerID types.UserID, p prob
 			return fmt.Errorf("set manager %v for problem %v: %v", managerID, p.ID, err)
 		}
 
+		profile, err := s.profilesRepo.GetProfileByID(ctx, managerID)
+		if err != nil {
+			return fmt.Errorf("get profile for manager: %v", err)
+		}
+
 		msg, err := s.msgRepo.CreateClientService(
 			ctx,
 			p.ID,
 			p.ChatID,
-			fmt.Sprintf("Manager %s will answer you", managerID.String()),
+			fmt.Sprintf("Manager %s will answer you", profile.FirstName),
 		)
 		if err != nil {
 			return fmt.Errorf("create client service msg: %v", err)

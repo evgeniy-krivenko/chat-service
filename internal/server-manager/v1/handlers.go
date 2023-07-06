@@ -9,6 +9,8 @@ import (
 	freehands "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/free-hands"
 	getchathistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chat-history"
 	getchats "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-chats"
+	getmanagerprofile "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/get-manager-profile"
+	managerlogin "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/manager-login"
 	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/manager/send-message"
 )
 
@@ -40,6 +42,14 @@ type closeChatUseCase interface {
 	Handle(ctx context.Context, req closechat.Request) error
 }
 
+type getManagerProfile interface {
+	Handle(ctx context.Context, req getmanagerprofile.Request) (getmanagerprofile.Response, error)
+}
+
+type loginUseCase interface {
+	Handle(ctx context.Context, req managerlogin.Request) (managerlogin.Response, error)
+}
+
 //go:generate options-gen -out-filename=handler_options.gen.go -from-struct=Options
 type Options struct {
 	canReceiveProblemUseCase canReceiveProblemsUseCase `option:"mandatory" validate:"required"`
@@ -48,6 +58,8 @@ type Options struct {
 	getChatHistoryUseCase    getChatHistoryUseCase     `option:"mandatory" validate:"required"`
 	sendMessageUseCase       sendMessageUseCase        `option:"mandatory" validate:"required"`
 	closeChatUseCase         closeChatUseCase          `option:"mandatory" validate:"required"`
+	loginUseCase             loginUseCase              `option:"mandatory" validate:"required"`
+	getManagerProfile        getManagerProfile         `option:"mandatory" validate:"required"`
 }
 
 type Handlers struct {

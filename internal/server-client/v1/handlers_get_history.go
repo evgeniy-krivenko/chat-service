@@ -60,5 +60,6 @@ func adaptGetHistoryMsg(msg gethistory.Message) Message {
 		IsBlocked:  msg.IsBlocked,
 		IsReceived: msg.IsReceived,
 		IsService:  msg.IsService,
+		AuthorName: pointer.PtrWithZeroAsNil(msg.AuthorName),
 	}
 }

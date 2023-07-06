@@ -16,6 +16,7 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/store/job"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/problem"
+	"github.com/evgeniy-krivenko/chat-service/internal/store/profile"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -74,6 +75,7 @@ func columnChecker(table string) func(string) error {
 		job.Table:       job.ValidColumn,
 		message.Table:   message.ValidColumn,
 		problem.Table:   problem.ValidColumn,
+		profile.Table:   profile.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

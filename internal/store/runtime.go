@@ -10,6 +10,7 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/store/job"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/problem"
+	"github.com/evgeniy-krivenko/chat-service/internal/store/profile"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/schema"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
@@ -92,4 +93,10 @@ func init() {
 	problemDescID := problemFields[0].Descriptor()
 	// problem.DefaultID holds the default value on creation for the id field.
 	problem.DefaultID = problemDescID.Default.(func() types.ProblemID)
+	profileFields := schema.Profile{}.Fields()
+	_ = profileFields
+	// profileDescCreatedAt is the schema descriptor for created_at field.
+	profileDescCreatedAt := profileFields[4].Descriptor()
+	// profile.DefaultCreatedAt holds the default value on creation for the created_at field.
+	profile.DefaultCreatedAt = profileDescCreatedAt.Default.(func() time.Time)
 }

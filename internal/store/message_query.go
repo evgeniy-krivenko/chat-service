@@ -15,6 +15,7 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/store/message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/predicate"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/problem"
+	"github.com/evgeniy-krivenko/chat-service/internal/store/profile"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -27,6 +28,7 @@ type MessageQuery struct {
 	predicates  []predicate.Message
 	withChat    *ChatQuery
 	withProblem *ProblemQuery
+	withProfile *ProfileQuery
 	modifiers   []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -101,6 +103,28 @@ func (mq *MessageQuery) QueryProblem() *ProblemQuery {
 			sqlgraph.From(message.Table, message.FieldID, selector),
 			sqlgraph.To(problem.Table, problem.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, message.ProblemTable, message.ProblemColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryProfile chains the current query on the "profile" edge.
+func (mq *MessageQuery) QueryProfile() *ProfileQuery {
+	query := (&ProfileClient{config: mq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, selector),
+			sqlgraph.To(profile.Table, profile.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, message.ProfileTable, message.ProfileColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
 		return fromU, nil
@@ -302,6 +326,7 @@ func (mq *MessageQuery) Clone() *MessageQuery {
 		predicates:  append([]predicate.Message{}, mq.predicates...),
 		withChat:    mq.withChat.Clone(),
 		withProblem: mq.withProblem.Clone(),
+		withProfile: mq.withProfile.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
@@ -327,6 +352,17 @@ func (mq *MessageQuery) WithProblem(opts ...func(*ProblemQuery)) *MessageQuery {
 		opt(query)
 	}
 	mq.withProblem = query
+	return mq
+}
+
+// WithProfile tells the query-builder to eager-load the nodes that are connected to
+// the "profile" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MessageQuery) WithProfile(opts ...func(*ProfileQuery)) *MessageQuery {
+	query := (&ProfileClient{config: mq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withProfile = query
 	return mq
 }
 
@@ -408,9 +444,10 @@ func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Mess
 	var (
 		nodes       = []*Message{}
 		_spec       = mq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			mq.withChat != nil,
 			mq.withProblem != nil,
+			mq.withProfile != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -443,6 +480,12 @@ func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Mess
 	if query := mq.withProblem; query != nil {
 		if err := mq.loadProblem(ctx, query, nodes, nil,
 			func(n *Message, e *Problem) { n.Edges.Problem = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := mq.withProfile; query != nil {
+		if err := mq.loadProfile(ctx, query, nodes, nil,
+			func(n *Message, e *Profile) { n.Edges.Profile = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -500,6 +543,35 @@ func (mq *MessageQuery) loadProblem(ctx context.Context, query *ProblemQuery, no
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "problem_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (mq *MessageQuery) loadProfile(ctx context.Context, query *ProfileQuery, nodes []*Message, init func(*Message), assign func(*Message, *Profile)) error {
+	ids := make([]types.UserID, 0, len(nodes))
+	nodeids := make(map[types.UserID][]*Message)
+	for i := range nodes {
+		fk := nodes[i].AuthorID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(profile.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "author_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

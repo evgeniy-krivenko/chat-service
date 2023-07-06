@@ -252,8 +252,6 @@ func (s *Service) markAsVisibleForManager(ctx context.Context, v Verdict) error 
 }
 
 func (s *Service) writeToDLQ(ctx context.Context, msg kafka.Message, errMsg string) {
-	writeDLQMessages := s.backoffDLQ(s.dlqWriter.WriteMessages)
-
 	lastErr := protocol.Header{
 		Key:   "LAST_ERROR",
 		Value: []byte(errMsg),
@@ -268,7 +266,7 @@ func (s *Service) writeToDLQ(ctx context.Context, msg kafka.Message, errMsg stri
 	msg.Topic = ""
 
 	go func() {
-		if err := writeDLQMessages(ctx, msg); err != nil {
+		if err := s.dlqWriter.WriteMessages(ctx, msg); err != nil {
 			s.lg.Error("write msg to dlq after exponential backoff", zap.Error(err))
 			return
 		}
@@ -282,30 +280,6 @@ func (s *Service) backoffTx(f TxFunc) TxFunc {
 
 		for {
 			if err := f(ctx, f2); nil == err || delay >= s.backoffMaxElapsedTime {
-				return err
-			}
-
-			select {
-			case <-time.After(delay):
-			case <-ctx.Done():
-				return nil
-			}
-
-			delay = time.Duration(float64(delay) * s.expFactor)
-			if delay > s.backoffMaxElapsedTime {
-				delay = s.backoffMaxElapsedTime
-			}
-			delay += time.Duration(rand.NormFloat64() * s.expJitter * float64(time.Second))
-		}
-	}
-}
-
-func (s *Service) backoffDLQ(f DLQFunc) DLQFunc {
-	return func(ctx context.Context, msgs ...kafka.Message) error {
-		delay := s.backoffInitialInterval
-
-		for {
-			if err := f(ctx, msgs...); nil == err || delay >= s.backoffMaxElapsedTime {
 				return err
 			}
 

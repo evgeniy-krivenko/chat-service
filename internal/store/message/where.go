@@ -131,26 +131,6 @@ func AuthorIDNotIn(vs ...types.UserID) predicate.Message {
 	return predicate.Message(sql.FieldNotIn(FieldAuthorID, vs...))
 }
 
-// AuthorIDGT applies the GT predicate on the "author_id" field.
-func AuthorIDGT(v types.UserID) predicate.Message {
-	return predicate.Message(sql.FieldGT(FieldAuthorID, v))
-}
-
-// AuthorIDGTE applies the GTE predicate on the "author_id" field.
-func AuthorIDGTE(v types.UserID) predicate.Message {
-	return predicate.Message(sql.FieldGTE(FieldAuthorID, v))
-}
-
-// AuthorIDLT applies the LT predicate on the "author_id" field.
-func AuthorIDLT(v types.UserID) predicate.Message {
-	return predicate.Message(sql.FieldLT(FieldAuthorID, v))
-}
-
-// AuthorIDLTE applies the LTE predicate on the "author_id" field.
-func AuthorIDLTE(v types.UserID) predicate.Message {
-	return predicate.Message(sql.FieldLTE(FieldAuthorID, v))
-}
-
 // AuthorIDIsNil applies the IsNil predicate on the "author_id" field.
 func AuthorIDIsNil() predicate.Message {
 	return predicate.Message(sql.FieldIsNull(FieldAuthorID))
@@ -541,6 +521,33 @@ func HasProblemWith(preds ...predicate.Problem) predicate.Message {
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(ProblemInverseTable, FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, ProblemTable, ProblemColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasProfile applies the HasEdge predicate on the "profile" edge.
+func HasProfile() predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ProfileTable, ProfileColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasProfileWith applies the HasEdge predicate on the "profile" edge with a given conditions (other predicates).
+func HasProfileWith(preds ...predicate.Profile) predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ProfileInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ProfileTable, ProfileColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

@@ -69,6 +69,18 @@ func (f ProblemFunc) Mutate(ctx context.Context, m store.Mutation) (store.Value,
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *store.ProblemMutation", m)
 }
 
+// The ProfileFunc type is an adapter to allow the use of ordinary
+// function as Profile mutator.
+type ProfileFunc func(context.Context, *store.ProfileMutation) (store.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ProfileFunc) Mutate(ctx context.Context, m store.Mutation) (store.Value, error) {
+	if mv, ok := m.(*store.ProfileMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *store.ProfileMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, store.Mutation) bool
 

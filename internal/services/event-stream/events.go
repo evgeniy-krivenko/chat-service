@@ -28,6 +28,7 @@ type NewMessageEvent struct {
 	AuthorID    types.UserID    `validate:"omitempty"`
 	CreatedAt   time.Time       `validate:"required"`
 	MessageBody string          `validate:"required,max=3000"`
+	AuthorName  string          `validate:"omitempty"`
 	IsService   bool
 }
 
@@ -66,6 +67,8 @@ type NewChatEvent struct {
 	RequestID          types.RequestID `validate:"required"`
 	ChatID             types.ChatID    `validate:"required"`
 	ClientID           types.UserID    `validate:"required"`
+	FirstName          string          `validate:"omitempty"`
+	LastName           string          `validate:"omitempty"`
 	CanTakeMoreProblem bool
 }
 

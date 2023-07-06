@@ -15,6 +15,7 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/store/chat"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/message"
 	"github.com/evgeniy-krivenko/chat-service/internal/store/problem"
+	"github.com/evgeniy-krivenko/chat-service/internal/store/profile"
 	"github.com/evgeniy-krivenko/chat-service/internal/types"
 )
 
@@ -188,6 +189,25 @@ func (mc *MessageCreate) SetProblem(p *Problem) *MessageCreate {
 	return mc.SetProblemID(p.ID)
 }
 
+// SetProfileID sets the "profile" edge to the Profile entity by ID.
+func (mc *MessageCreate) SetProfileID(id types.UserID) *MessageCreate {
+	mc.mutation.SetProfileID(id)
+	return mc
+}
+
+// SetNillableProfileID sets the "profile" edge to the Profile entity by ID if the given value is not nil.
+func (mc *MessageCreate) SetNillableProfileID(id *types.UserID) *MessageCreate {
+	if id != nil {
+		mc = mc.SetProfileID(*id)
+	}
+	return mc
+}
+
+// SetProfile sets the "profile" edge to the Profile entity.
+func (mc *MessageCreate) SetProfile(p *Profile) *MessageCreate {
+	return mc.SetProfileID(p.ID)
+}
+
 // Mutation returns the MessageMutation object of the builder.
 func (mc *MessageCreate) Mutation() *MessageMutation {
 	return mc.mutation
@@ -313,10 +333,6 @@ func (mc *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := mc.mutation.AuthorID(); ok {
-		_spec.SetField(message.FieldAuthorID, field.TypeUUID, value)
-		_node.AuthorID = value
-	}
 	if value, ok := mc.mutation.IsVisibleForClient(); ok {
 		_spec.SetField(message.FieldIsVisibleForClient, field.TypeBool, value)
 		_node.IsVisibleForClient = value
@@ -381,6 +397,23 @@ func (mc *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.ProblemID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := mc.mutation.ProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.ProfileTable,
+			Columns: []string{message.ProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(profile.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.AuthorID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -519,18 +552,6 @@ func (u *MessageUpsert) ClearIsVisibleForManager() *MessageUpsert {
 	return u
 }
 
-// SetBody sets the "body" field.
-func (u *MessageUpsert) SetBody(v string) *MessageUpsert {
-	u.Set(message.FieldBody, v)
-	return u
-}
-
-// UpdateBody sets the "body" field to the value that was provided on create.
-func (u *MessageUpsert) UpdateBody() *MessageUpsert {
-	u.SetExcluded(message.FieldBody)
-	return u
-}
-
 // SetCheckedAt sets the "checked_at" field.
 func (u *MessageUpsert) SetCheckedAt(v time.Time) *MessageUpsert {
 	u.Set(message.FieldCheckedAt, v)
@@ -619,6 +640,9 @@ func (u *MessageUpsertOne) UpdateNewValues() *MessageUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		if _, exists := u.create.mutation.ID(); exists {
 			s.SetIgnore(message.FieldID)
+		}
+		if _, exists := u.create.mutation.Body(); exists {
+			s.SetIgnore(message.FieldBody)
 		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(message.FieldCreatedAt)
@@ -749,20 +773,6 @@ func (u *MessageUpsertOne) UpdateIsVisibleForManager() *MessageUpsertOne {
 func (u *MessageUpsertOne) ClearIsVisibleForManager() *MessageUpsertOne {
 	return u.Update(func(s *MessageUpsert) {
 		s.ClearIsVisibleForManager()
-	})
-}
-
-// SetBody sets the "body" field.
-func (u *MessageUpsertOne) SetBody(v string) *MessageUpsertOne {
-	return u.Update(func(s *MessageUpsert) {
-		s.SetBody(v)
-	})
-}
-
-// UpdateBody sets the "body" field to the value that was provided on create.
-func (u *MessageUpsertOne) UpdateBody() *MessageUpsertOne {
-	return u.Update(func(s *MessageUpsert) {
-		s.UpdateBody()
 	})
 }
 
@@ -1029,6 +1039,9 @@ func (u *MessageUpsertBulk) UpdateNewValues() *MessageUpsertBulk {
 			if _, exists := b.mutation.ID(); exists {
 				s.SetIgnore(message.FieldID)
 			}
+			if _, exists := b.mutation.Body(); exists {
+				s.SetIgnore(message.FieldBody)
+			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(message.FieldCreatedAt)
 			}
@@ -1159,20 +1172,6 @@ func (u *MessageUpsertBulk) UpdateIsVisibleForManager() *MessageUpsertBulk {
 func (u *MessageUpsertBulk) ClearIsVisibleForManager() *MessageUpsertBulk {
 	return u.Update(func(s *MessageUpsert) {
 		s.ClearIsVisibleForManager()
-	})
-}
-
-// SetBody sets the "body" field.
-func (u *MessageUpsertBulk) SetBody(v string) *MessageUpsertBulk {
-	return u.Update(func(s *MessageUpsert) {
-		s.SetBody(v)
-	})
-}
-
-// UpdateBody sets the "body" field to the value that was provided on create.
-func (u *MessageUpsertBulk) UpdateBody() *MessageUpsertBulk {
-	return u.Update(func(s *MessageUpsert) {
-		s.UpdateBody()
 	})
 }
 

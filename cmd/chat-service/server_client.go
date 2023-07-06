@@ -11,6 +11,7 @@ import (
 	chatsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/chats"
 	messagesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/messages"
 	problemsrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/problems"
+	profilesrepo "github.com/evgeniy-krivenko/chat-service/internal/repositories/profiles"
 	"github.com/evgeniy-krivenko/chat-service/internal/server"
 	clientevents "github.com/evgeniy-krivenko/chat-service/internal/server-client/events"
 	clientv1 "github.com/evgeniy-krivenko/chat-service/internal/server-client/v1"
@@ -19,6 +20,8 @@ import (
 	"github.com/evgeniy-krivenko/chat-service/internal/services/outbox"
 	"github.com/evgeniy-krivenko/chat-service/internal/store"
 	gethistory "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-history"
+	getuserprofile "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-user-profile"
+	"github.com/evgeniy-krivenko/chat-service/internal/usecases/client/login"
 	sendmessage "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/send-message"
 	websocketstream "github.com/evgeniy-krivenko/chat-service/internal/websocket-stream"
 )
@@ -39,6 +42,7 @@ func initServerClient(
 	msgRepo *messagesrepo.Repo,
 	chatRepo *chatsrepo.Repo,
 	problemRepo *problemsrepo.Repo,
+	profilesRepo *profilesrepo.Repo,
 	outboxSrv *outbox.Service,
 	db *store.Database,
 	stream eventstream.EventStream,
@@ -56,8 +60,29 @@ func initServerClient(
 	if err != nil {
 		return nil, fmt.Errorf("create send message usecase: %v", err)
 	}
+	getUserProfileUseCase, err := getuserprofile.New(getuserprofile.NewOptions(profilesRepo))
+	if err != nil {
+		return nil, fmt.Errorf("get user profile: %v", err)
+	}
 
-	v1Handlers, err := clientv1.NewHandlers(clientv1.NewOptions(getHistoryUseCase, sendMsgUseCase))
+	loginUseCase, err := login.New(login.NewOptions(
+		keycloakClient,
+		&keycloakclient.UserGetter{},
+		profilesRepo,
+
+		resource,
+		role,
+	))
+	if err != nil {
+		return nil, fmt.Errorf("login usecase: %v", err)
+	}
+
+	v1Handlers, err := clientv1.NewHandlers(clientv1.NewOptions(
+		getHistoryUseCase,
+		sendMsgUseCase,
+		getUserProfileUseCase,
+		loginUseCase,
+	))
 	if err != nil {
 		return nil, fmt.Errorf("create v1 handlers: %v", err)
 	}

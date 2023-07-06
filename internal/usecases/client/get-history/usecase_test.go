@@ -18,6 +18,11 @@ import (
 	gethistorymocks "github.com/evgeniy-krivenko/chat-service/internal/usecases/client/get-history/mocks"
 )
 
+const (
+	authorFirstName = "Eric"
+	authorLastName  = "Cartman"
+)
+
 type UseCaseSuite struct {
 	testingh.ContextSuite
 
@@ -180,6 +185,7 @@ func (s *UseCaseSuite) TestGetClientChatMessages_Success_SinglePage() {
 		s.Equal(expectedMsgs[i].IsVisibleForManager && !expectedMsgs[i].IsBlocked, resp.Messages[i].IsReceived)
 		s.Equal(expectedMsgs[i].IsBlocked, resp.Messages[i].IsBlocked)
 		s.Equal(expectedMsgs[i].IsService, resp.Messages[i].IsService)
+		s.Equal(expectedMsgs[i].AuthorFirstName, resp.Messages[i].AuthorName)
 	}
 
 	s.T().Run("msg received flag logic", func(t *testing.T) {
@@ -258,6 +264,8 @@ func (s *UseCaseSuite) createMessages(count int, authorID types.UserID, chatID t
 			ID:                  types.NewMessageID(),
 			ChatID:              chatID,
 			AuthorID:            authorID,
+			AuthorFirstName:     authorFirstName,
+			AuthorLastName:      authorLastName,
 			Body:                uuid.New().String(),
 			CreatedAt:           time.Now(),
 			IsVisibleForClient:  true,

@@ -79,6 +79,9 @@ func NewKeyCloakTokenAuth(introspector Introspector, resource, role string) echo
 		KeyLookup:  "header:Authorization",
 		AuthScheme: "Bearer",
 		Validator:  validator(introspector, resource, role),
+		Skipper: func(c echo.Context) bool {
+			return strings.HasSuffix(c.Path(), "/login")
+		},
 	})
 }
 

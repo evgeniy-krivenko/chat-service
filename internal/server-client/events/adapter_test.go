@@ -59,6 +59,7 @@ func TestAdapter_Adapt(t *testing.T) {
 				types.UserIDNil,
 				time.Unix(1, 1).UTC(),
 				"Manager will coming soon",
+				"Eric Cartman",
 				true,
 			),
 			expJSON: `{
@@ -67,6 +68,7 @@ func TestAdapter_Adapt(t *testing.T) {
 				"eventId": "d0ffbd36-bc30-11ed-8286-461e464ebed8",
 				"eventType": "NewMessageEvent",
 				"isService": true,
+				"authorName": "Eric Cartman",
 				"messageId": "cb36a888-bc30-11ed-b843-461e464ebed8",
 				"requestId": "cee5f290-bc30-11ed-b7fe-461e464ebed8"
 			}`,

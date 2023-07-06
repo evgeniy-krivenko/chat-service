@@ -164,14 +164,15 @@ func (s *ServiceIntegrationSuite) TestComplex() {
 			status = "abracadabra"
 			expBrokenMsgs++
 		}
-
-		chat := s.Database.Chat(s.Ctx).Create().SetClientID(types.NewUserID()).SaveX(s.Ctx)
+		authorID := types.NewUserID()
+		chat := s.Database.Chat(s.Ctx).Create().SetClientID(authorID).SaveX(s.Ctx)
 		problem := s.Database.Problem(s.Ctx).Create().SetChatID(chat.ID).SaveX(s.Ctx)
+		s.Database.Profile(s.Ctx).Create().SetID(authorID).SetUpdatedAt(time.Now()).SaveX(s.Ctx)
 
 		msg := s.Database.Message(s.Ctx).Create().
 			SetChatID(chat.ID).
 			SetProblemID(problem.ID).
-			SetAuthorID(types.NewUserID()).
+			SetAuthorID(authorID).
 			SetIsVisibleForClient(true).
 			SetIsVisibleForManager(false).
 			SetIsBlocked(false).

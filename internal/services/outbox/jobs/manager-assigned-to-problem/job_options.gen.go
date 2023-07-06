@@ -13,6 +13,7 @@ type OptOptionsSetter func(o *Options)
 func NewOptions(
 	chatRepo chatRepo,
 	msgRepo messageRepo,
+	profilesRepo profilesRepo,
 	mngrLoadSvc managerLoadService,
 	eventStream eventStream,
 	options ...OptOptionsSetter,
@@ -23,6 +24,7 @@ func NewOptions(
 
 	o.chatRepo = chatRepo
 	o.msgRepo = msgRepo
+	o.profilesRepo = profilesRepo
 	o.mngrLoadSvc = mngrLoadSvc
 	o.eventStream = eventStream
 
@@ -36,6 +38,7 @@ func (o *Options) Validate() error {
 	errs := new(errors461e464ebed9.ValidationErrors)
 	errs.Add(errors461e464ebed9.NewValidationError("chatRepo", _validate_Options_chatRepo(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("msgRepo", _validate_Options_msgRepo(o)))
+	errs.Add(errors461e464ebed9.NewValidationError("profilesRepo", _validate_Options_profilesRepo(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("mngrLoadSvc", _validate_Options_mngrLoadSvc(o)))
 	errs.Add(errors461e464ebed9.NewValidationError("eventStream", _validate_Options_eventStream(o)))
 	return errs.AsError()
@@ -51,6 +54,13 @@ func _validate_Options_chatRepo(o *Options) error {
 func _validate_Options_msgRepo(o *Options) error {
 	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.msgRepo, "required"); err != nil {
 		return fmt461e464ebed9.Errorf("field `msgRepo` did not pass the test: %w", err)
+	}
+	return nil
+}
+
+func _validate_Options_profilesRepo(o *Options) error {
+	if err := validator461e464ebed9.GetValidatorFor(o).Var(o.profilesRepo, "required"); err != nil {
+		return fmt461e464ebed9.Errorf("field `profilesRepo` did not pass the test: %w", err)
 	}
 	return nil
 }
